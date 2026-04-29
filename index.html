@@ -1,0 +1,900 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🤿 MATE ROV 世界賽備戰管理系統</title>
+<style>
+  :root {
+    --navy: #1F3864; --blue: #2F5496; --lblue: #BDD7EE;
+    --red: #C00000; --orange: #ED7D31; --yellow: #FFD966;
+    --green: #70AD47; --lgreen: #E2EFDA; --grey: #F2F2F2;
+    --white: #fff; --text: #1a1a1a; --border: #D0D7E3;
+    --shadow: 0 2px 12px rgba(0,0,0,0.10);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', 'PingFang TC', sans-serif; background: #EEF2F8; color: var(--text); }
+
+  /* ── NAV ── */
+  nav { background: var(--navy); color: #fff; padding: 0 20px;
+        display: flex; align-items: center; gap: 6px; height: 54px;
+        position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 8px rgba(0,0,0,.3); }
+  nav .logo { font-size: 1.15rem; font-weight: 700; margin-right: 12px; white-space: nowrap; }
+  .tab-btn { background: none; border: none; color: rgba(255,255,255,.75);
+             padding: 6px 13px; border-radius: 6px; cursor: pointer;
+             font-size: .88rem; font-weight: 600; transition: .15s; white-space: nowrap; }
+  .tab-btn:hover, .tab-btn.active { background: rgba(255,255,255,.18); color: #fff; }
+  .nav-spacer { flex: 1; }
+  #save-btn { background: var(--green); border: none; color: #fff; padding: 6px 14px;
+              border-radius: 6px; cursor: pointer; font-size: .85rem; font-weight: 700; }
+
+  /* ── LAYOUT ── */
+  .page { display: none; padding: 20px; max-width: 1200px; margin: 0 auto; }
+  .page.active { display: block; }
+  h1 { font-size: 1.4rem; color: var(--navy); margin-bottom: 16px; }
+  h2 { font-size: 1.05rem; color: var(--blue); margin: 18px 0 10px; border-left: 4px solid var(--blue); padding-left: 10px; }
+
+  /* ── CARDS ── */
+  .card { background: var(--white); border-radius: 10px; padding: 16px 20px;
+          box-shadow: var(--shadow); margin-bottom: 16px; }
+  .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px,1fr)); gap: 14px; }
+  .stat-card { background: var(--white); border-radius: 10px; padding: 16px;
+               box-shadow: var(--shadow); text-align: center; border-top: 4px solid var(--blue); }
+  .stat-num { font-size: 2rem; font-weight: 800; color: var(--navy); }
+  .stat-label { font-size: .8rem; color: #666; margin-top: 4px; }
+
+  /* ── PROGRESS BAR ── */
+  .prog-wrap { background: #E0E8F0; border-radius: 99px; height: 10px; overflow: hidden; }
+  .prog-bar { height: 100%; border-radius: 99px; transition: width .4s; }
+
+  /* ── TAGS / BADGES ── */
+  .badge { display: inline-block; padding: 2px 9px; border-radius: 99px;
+           font-size: .75rem; font-weight: 700; }
+  .badge.urgent { background: #FFD6D6; color: var(--red); }
+  .badge.high { background: #FCE4D6; color: var(--orange); }
+  .badge.mid { background: #FFF3CD; color: #856404; }
+  .badge.done { background: var(--lgreen); color: #375623; }
+  .badge.inprog { background: #D6EAF8; color: #1A5276; }
+
+  /* ── TASK TABLE ── */
+  table { width: 100%; border-collapse: collapse; font-size: .88rem; }
+  th { background: var(--navy); color: #fff; padding: 9px 10px; text-align: left; }
+  td { padding: 9px 10px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  tr:hover td { background: #F5F8FF; }
+  .task-done td { opacity: .55; text-decoration: line-through; }
+  .task-done td:first-child { text-decoration: none; }
+
+  select, input[type=text], input[type=date], textarea {
+    border: 1px solid var(--border); border-radius: 6px; padding: 5px 8px;
+    font-size: .85rem; width: 100%; font-family: inherit; background: #fff; }
+  select { width: auto; min-width: 100px; }
+  input[type=checkbox] { width: 16px; height: 16px; cursor: pointer; }
+  button.btn { padding: 6px 14px; border-radius: 6px; border: none; cursor: pointer;
+               font-weight: 600; font-size: .85rem; transition: .15s; }
+  button.btn:hover { opacity: .85; }
+  .btn-primary { background: var(--blue); color: #fff; }
+  .btn-danger { background: var(--red); color: #fff; }
+  .btn-sm { padding: 3px 9px; font-size: .78rem; }
+
+  /* ── GANTT ── */
+  .gantt-wrap { overflow-x: auto; }
+  .gantt-table { border-collapse: collapse; font-size: .78rem; min-width: 900px; }
+  .gantt-table th, .gantt-table td { border: 1px solid #dde3ee; padding: 4px 5px; white-space: nowrap; }
+  .gantt-table th { background: var(--navy); color: #fff; text-align: center; }
+  .gantt-cell { width: 22px; min-width: 22px; }
+  .g-bar { background: var(--blue); border-radius: 3px; opacity: .85; }
+  .g-exam { background: #F8696B; }
+  .g-pres { background: #4472C4; }
+  .g-eng { background: var(--orange); }
+  .g-admin { background: #7030A0; }
+  .g-weekend { background: #F0F0F0 !important; }
+
+  /* ── CHECKLIST ── */
+  .check-section { margin-bottom: 12px; }
+  .check-section h3 { font-size: .92rem; font-weight: 700; padding: 6px 12px;
+                      border-radius: 6px; margin-bottom: 6px; }
+  .check-section.sec-A h3 { background: #FFD6D6; color: var(--red); }
+  .check-section.sec-B h3 { background: #FCE4D6; color: var(--orange); }
+  .check-section.sec-C h3 { background: #FFF3CD; color: #7F6000; }
+  .check-section.sec-D h3 { background: var(--lgreen); color: #375623; }
+  .check-section.sec-E h3 { background: var(--lblue); color: var(--navy); }
+  .check-item { display: flex; align-items: center; gap: 10px; padding: 7px 12px;
+                border-bottom: 1px solid #EEF0F5; }
+  .check-item:hover { background: #F7FAFF; }
+  .check-item label { flex: 1; cursor: pointer; font-size: .88rem; }
+  .check-owner { font-size: .75rem; color: #888; white-space: nowrap; }
+  .check-time { font-size: .75rem; color: #aaa; white-space: nowrap; }
+  .checked label { text-decoration: line-through; color: #aaa; }
+
+  /* ── MEMBER CARDS ── */
+  .member-grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(230px,1fr)); gap: 14px; }
+  .member-card { background: var(--white); border-radius: 10px; padding: 14px 16px;
+                 box-shadow: var(--shadow); border-left: 4px solid var(--blue); }
+  .member-name { font-size: 1rem; font-weight: 700; color: var(--navy); }
+  .member-role { font-size: .78rem; color: #888; margin-bottom: 8px; }
+  .member-tasks { font-size: .82rem; }
+  .member-status { display: inline-block; padding: 2px 8px; border-radius: 99px;
+                   font-size: .72rem; font-weight: 700; margin-top: 6px; }
+  .ms-confirmed { background: #D5F5E3; color: #1E8449; }
+  .ms-pending   { background: #FEF9E7; color: #856404; }
+  .ms-no        { background: #FADBD8; color: #922B21; }
+
+  /* ── MODAL ── */
+  .modal-bg { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 200;
+              align-items: center; justify-content: center; }
+  .modal-bg.open { display: flex; }
+  .modal { background: #fff; border-radius: 12px; padding: 24px; width: 480px;
+           max-width: 95vw; box-shadow: 0 8px 40px rgba(0,0,0,.2); }
+  .modal h3 { font-size: 1.1rem; color: var(--navy); margin-bottom: 14px; }
+  .form-row { margin-bottom: 12px; }
+  .form-row label { display: block; font-size: .82rem; font-weight: 600; margin-bottom: 4px; }
+  .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 16px; }
+
+  /* ── TIMELINE ── */
+  .timeline { position: relative; padding-left: 28px; }
+  .timeline::before { content:''; position:absolute; left:10px; top:0; bottom:0;
+                      width:2px; background: var(--lblue); }
+  .tl-item { position: relative; margin-bottom: 14px; }
+  .tl-dot { position:absolute; left:-23px; top:4px; width:14px; height:14px;
+            border-radius:50%; border:3px solid var(--white); box-shadow: 0 0 0 2px var(--blue); }
+  .tl-dot.urgent { box-shadow: 0 0 0 2px var(--red); background: var(--red); }
+  .tl-dot.done   { background: var(--green); box-shadow: 0 0 0 2px var(--green); }
+  .tl-date { font-size: .75rem; color: #888; margin-bottom: 2px; }
+  .tl-content { background: var(--white); border-radius: 8px; padding: 10px 14px;
+                box-shadow: var(--shadow); font-size: .88rem; }
+
+  /* ── NOTES ── */
+  #notes-area { width:100%; height:180px; resize:vertical; padding:10px;
+                border:1px solid var(--border); border-radius:8px; font-size:.88rem; }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width:6px; height:6px; }
+  ::-webkit-scrollbar-track { background:#F0F4FB; }
+  ::-webkit-scrollbar-thumb { background:#B0BDD6; border-radius:3px; }
+
+  @media(max-width:600px){
+    nav { flex-wrap: wrap; height: auto; padding: 8px 12px; gap:4px; }
+    .tab-btn { font-size:.78rem; padding:4px 8px; }
+    .page { padding: 12px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="logo">🤿 ROV 備戰</div>
+  <button class="tab-btn active" onclick="showPage('dashboard')">📊 總覽</button>
+  <button class="tab-btn" onclick="showPage('tasks')">✅ 任務</button>
+  <button class="tab-btn" onclick="showPage('checklist')">📋 檢查清單</button>
+  <button class="tab-btn" onclick="showPage('gantt')">📅 甘特圖</button>
+  <button class="tab-btn" onclick="showPage('members')">👥 成員</button>
+  <button class="tab-btn" onclick="showPage('intel')">🔍 觀摩記錄</button>
+  <button class="tab-btn" onclick="showPage('notes')">📝 備忘</button>
+  <div class="nav-spacer"></div>
+  <button id="save-btn" onclick="saveAll()">💾 儲存</button>
+</nav>
+
+<!-- ═══════════════════ PAGE: DASHBOARD ═══════════════════ -->
+<div id="page-dashboard" class="page active">
+  <h1>📊 總覽 — MATE ROV 世界賽備戰</h1>
+  <div class="card-grid" id="stat-cards" style="margin-bottom:16px"></div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+    <div class="card">
+      <h2>⏰ 關鍵截止日</h2>
+      <div class="timeline" id="deadline-timeline"></div>
+    </div>
+    <div class="card">
+      <h2>🚦 任務進度（按類別）</h2>
+      <div id="progress-bars"></div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:16px">
+    <h2>🔴 未完成緊急任務</h2>
+    <table><thead><tr><th>任務</th><th>負責人</th><th>期限</th><th>操作</th></tr></thead>
+    <tbody id="urgent-table"></tbody></table>
+  </div>
+</div>
+
+<!-- ═══════════════════ PAGE: TASKS ═══════════════════ -->
+<div id="page-tasks" class="page">
+  <h1>✅ 任務管理</h1>
+  <div class="card" style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:10px">
+    <select id="filter-cat" onchange="renderTasks()">
+      <option value="">所有類別</option>
+      <option>🔴 緊急</option><option>🟠 高優先</option><option>🟡 中優先</option><option>🟢 持續</option>
+    </select>
+    <select id="filter-status" onchange="renderTasks()">
+      <option value="">所有狀態</option>
+      <option>待辦</option><option>進行中</option><option>已完成</option>
+    </select>
+    <select id="filter-owner" onchange="renderTasks()">
+      <option value="">所有負責人</option>
+    </select>
+    <input type="text" id="search-task" placeholder="搜尋任務…" style="width:180px" oninput="renderTasks()">
+    <button class="btn btn-primary" onclick="openAddTask()">＋ 新增任務</button>
+  </div>
+  <div class="card" style="padding:0;overflow:hidden">
+    <table>
+      <thead><tr><th style="width:30px"></th><th>#</th><th>任務</th><th>類別</th><th>負責人</th><th>期限</th><th>狀態</th><th>操作</th></tr></thead>
+      <tbody id="task-tbody"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ═══════════════════ PAGE: CHECKLIST ═══════════════════ -->
+<div id="page-checklist" class="page">
+  <h1>📋 Pre-Dive Checklist</h1>
+  <div style="display:flex;gap:10px;margin-bottom:12px;align-items:center;flex-wrap:wrap">
+    <span style="font-size:.88rem;color:#555">入水前必須全部勾選 ✓，方可入水</span>
+    <button class="btn btn-primary" onclick="resetChecklist()">🔄 重置清單</button>
+    <span id="check-progress-label" style="font-weight:700;color:var(--navy)"></span>
+  </div>
+  <div class="card" style="padding:8px 0">
+    <div id="checklist-container"></div>
+  </div>
+</div>
+
+<!-- ═══════════════════ PAGE: GANTT ═══════════════════ -->
+<div id="page-gantt" class="page">
+  <h1>📅 五週衝刺甘特圖</h1>
+  <div class="card" style="margin-bottom:12px;display:flex;gap:16px;flex-wrap:wrap;font-size:.82rem">
+    <span><span style="background:var(--red);display:inline-block;width:14px;height:14px;border-radius:3px;margin-right:4px"></span>考試週</span>
+    <span><span style="background:#4472C4;display:inline-block;width:14px;height:14px;border-radius:3px;margin-right:4px"></span>Presentation</span>
+    <span><span style="background:var(--orange);display:inline-block;width:14px;height:14px;border-radius:3px;margin-right:4px"></span>工程/設備</span>
+    <span><span style="background:#7030A0;display:inline-block;width:14px;height:14px;border-radius:3px;margin-right:4px"></span>行政/世界賽</span>
+    <span><span style="background:var(--green);display:inline-block;width:14px;height:14px;border-radius:3px;margin-right:4px"></span>協調訓練</span>
+  </div>
+  <div class="card" style="padding:0">
+    <div class="gantt-wrap" id="gantt-wrap"></div>
+  </div>
+</div>
+
+<!-- ═══════════════════ PAGE: MEMBERS ═══════════════════ -->
+<div id="page-members" class="page">
+  <h1>👥 成員任務管理</h1>
+  <div class="member-grid" id="member-grid"></div>
+</div>
+
+<!-- ═══════════════════ PAGE: INTEL ═══════════════════ -->
+<div id="page-intel" class="page">
+  <h1>🔍 跨隊學習日誌</h1>
+  <div class="card" style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:10px">
+    <button class="btn btn-primary" onclick="openAddIntel()">＋ 新增觀摩記錄</button>
+    <select id="intel-filter-cat" onchange="renderIntel()">
+      <option value="">所有類別</option>
+      <option>ROV機械設計</option><option>任務策略</option><option>Presentation技巧</option>
+      <option>電子系統</option><option>操控技術</option><option>團隊協作</option><option>其他</option>
+    </select>
+  </div>
+  <div id="intel-cards"></div>
+</div>
+
+<!-- ═══════════════════ PAGE: NOTES ═══════════════════ -->
+<div id="page-notes" class="page">
+  <h1>📝 備忘錄</h1>
+  <div class="card">
+    <textarea id="notes-area" placeholder="在此輸入任何備忘、臨時想法或跟進提醒…"></textarea>
+    <div style="margin-top:8px;display:flex;gap:8px">
+      <button class="btn btn-primary" onclick="saveNotes()">儲存備忘</button>
+      <span id="notes-saved" style="font-size:.82rem;color:var(--green);line-height:2;display:none">✓ 已儲存</span>
+    </div>
+  </div>
+  <div class="card" style="margin-top:0">
+    <h2>💬 教練金句</h2>
+    <blockquote style="border-left:4px solid var(--blue);padding:8px 16px;margin:8px 0;color:#444;font-style:italic">
+      「我們要贏人，一定要想法和思維，AI 可以幫到我們賦能，但想法和思維要靠我們自己去做。」
+    </blockquote>
+    <blockquote style="border-left:4px solid var(--green);padding:8px 16px;margin:8px 0;color:#444;font-style:italic">
+      「你花夠時間解決到那個問題，你的成績就自然會上去，這是一種正相關。」
+    </blockquote>
+    <blockquote style="border-left:4px solid var(--orange);padding:8px 16px;margin:8px 0;color:#444;font-style:italic">
+      「練習時要當作比賽，比賽時要當作練習，投入其中，避免『差不多』的心態。」
+    </blockquote>
+  </div>
+</div>
+
+<!-- ═══════════════════ MODAL: ADD/EDIT TASK ═══════════════════ -->
+<div class="modal-bg" id="task-modal">
+  <div class="modal">
+    <h3 id="modal-title">新增任務</h3>
+    <div class="form-row"><label>任務名稱</label><input type="text" id="m-name"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div class="form-row"><label>類別</label>
+        <select id="m-cat">
+          <option>🔴 緊急</option><option>🟠 高優先</option><option>🟡 中優先</option><option>🟢 持續</option>
+        </select></div>
+      <div class="form-row"><label>狀態</label>
+        <select id="m-status"><option>待辦</option><option>進行中</option><option>已完成</option></select></div>
+      <div class="form-row"><label>負責人</label><input type="text" id="m-owner"></div>
+      <div class="form-row"><label>期限</label><input type="date" id="m-due"></div>
+    </div>
+    <div class="form-row"><label>備註</label><textarea id="m-note" style="height:60px"></textarea></div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal('task-modal')">取消</button>
+      <button class="btn btn-primary" onclick="saveTask()">儲存</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ MODAL: ADD INTEL ═══════════════════ -->
+<div class="modal-bg" id="intel-modal">
+  <div class="modal">
+    <h3>新增觀摩記錄</h3>
+    <div class="form-row"><label>被觀摩隊伍</label><input type="text" id="i-team"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div class="form-row"><label>記錄人</label><input type="text" id="i-recorder"></div>
+      <div class="form-row"><label>類別</label>
+        <select id="i-cat">
+          <option>ROV機械設計</option><option>任務策略</option><option>Presentation技巧</option>
+          <option>電子系統</option><option>操控技術</option><option>團隊協作</option><option>其他</option>
+        </select></div>
+    </div>
+    <div class="form-row"><label>亮點描述（What）</label><textarea id="i-what" style="height:55px"></textarea></div>
+    <div class="form-row"><label>為何有效（Why）</label><textarea id="i-why" style="height:55px"></textarea></div>
+    <div class="form-row"><label>我隊可借鑒之處（How to Apply）</label><textarea id="i-how" style="height:55px"></textarea></div>
+    <div class="form-row"><label>跟進行動</label><input type="text" id="i-action"></div>
+    <div class="form-row"><label>狀態</label>
+      <select id="i-status"><option>待跟進</option><option>進行中</option><option>已完成</option><option>不適用</option></select></div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal('intel-modal')">取消</button>
+      <button class="btn btn-primary" onclick="saveIntel()">儲存</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════
+// DATA
+// ═══════════════════════════════════════════════════════
+const STORAGE_KEY = 'rov_data_v2';
+
+const DEFAULT_TASKS = [
+  {id:1,  name:'確認路承霖是否參加加拿大世界賽', cat:'🔴 緊急', owner:'路承霖+教練', due:'2026-04-29', status:'待辦', note:''},
+  {id:2,  name:'通過旅行社確認購票（$19,000方案）', cat:'🔴 緊急', owner:'教練', due:'2026-04-30', status:'待辦', note:'本週四確定'},
+  {id:3,  name:'確定住宿（College vs Airbnb）', cat:'🔴 緊急', owner:'教練+全員', due:'2026-04-29', status:'待辦', note:'最遲週三確定'},
+  {id:4,  name:'嘗試預約5月4日簽證辦理（指紋+照片）', cat:'🔴 緊急', owner:'各參賽成員家長', due:'2026-05-01', status:'待辦', note:'失敗改5月11日'},
+  {id:5,  name:'購買電流保護裝置（2個備份）', cat:'🔴 緊急', owner:'洪嘉濠', due:'2026-05-01', status:'待辦', note:''},
+  {id:6,  name:'Presentation第一次排練', cat:'🔴 緊急', owner:'周以軒+全員', due:'2026-04-29', status:'待辦', note:'即日起每週三四五中午'},
+  {id:7,  name:'解決周雲任務死機問題', cat:'🟠 高優先', owner:'洪嘉濠+工程組', due:'2026-05-02', status:'待辦', note:'5月2日前必須解決'},
+  {id:8,  name:'採購6個LV MEKA Crystal，測試對比T200', cat:'🟠 高優先', owner:'洪嘉濠', due:'2026-05-02', status:'待辦', note:''},
+  {id:9,  name:'升級天線線纜至≥18米', cat:'🟠 高優先', owner:'洪嘉濠', due:'2026-05-02', status:'待辦', note:'現有13米不足，賽場最深4米'},
+  {id:10, name:'確定場內溝通手勢系統', cat:'🟠 高優先', owner:'洪嘉濠、路承霖等', due:'2026-05-02', status:'待辦', note:'YES/NO紙牌'},
+  {id:11, name:'接收TT28 PD圖，改造Motor罩', cat:'🟠 高優先', owner:'何柏熹', due:'2026-05-02', status:'待辦', note:'電源裸露需符合世界賽安全規則'},
+  {id:12, name:'查閱世界賽電源/安全規則', cat:'🟠 高優先', owner:'何柏熹', due:'2026-05-02', status:'待辦', note:'可用AI輔助翻譯，需人工核實'},
+  {id:13, name:'每人提交放學後1–5時間表', cat:'🟠 高優先', owner:'全員', due:'2026-05-01', status:'待辦', note:''},
+  {id:14, name:'確認與福建中學交流時間', cat:'🟡 中優先', owner:'周以軒', due:'2026-05-04', status:'待辦', note:'5/4或週六中午，Online或香港'},
+  {id:15, name:'繪製BD圖並確認準確無誤', cat:'🟡 中優先', owner:'何柏熹', due:'2026-05-15', status:'待辦', note:''},
+  {id:16, name:'確認賽場水箱類型（wave/ice/frame）', cat:'🟡 中優先', owner:'工程組', due:'2026-05-15', status:'待辦', note:''},
+  {id:17, name:'測量場地對角線長度，確認線纜需求', cat:'🟡 中優先', owner:'洪嘉濠', due:'2026-05-15', status:'待辦', note:'可用勾股定理計算'},
+  {id:18, name:'嘗試PEG/ABS/碳纖材料製作', cat:'🟡 中優先', owner:'工程組', due:'2026-05-15', status:'待辦', note:''},
+  {id:19, name:'訓練場地嚴格按比賽標準設置', cat:'🟡 中優先', owner:'洪嘉濠', due:'2026-05-01', status:'待辦', note:''},
+  {id:20, name:'Mission排練分組（wave/frame tank）', cat:'🟡 中優先', owner:'鄧諾軒+工程組', due:'2026-05-06', status:'待辦', note:'宇教授負責指導'},
+  {id:21, name:'製作自評評分表，與評委表對照', cat:'🟡 中優先', owner:'周以軒', due:'2026-05-15', status:'待辦', note:''},
+  {id:22, name:'調整Foster位置與當前設置一致', cat:'🟡 中優先', owner:'工程組', due:'2026-05-15', status:'待辦', note:''},
+  {id:23, name:'每週三四五中午Presentation排練', cat:'🟢 持續', owner:'周以軒主導', due:'', status:'進行中', note:''},
+  {id:24, name:'放學後Mission排練+工程優化', cat:'🟢 持續', owner:'鄧諾軒/洪嘉濠', due:'', status:'進行中', note:''},
+  {id:25, name:'減少手機使用，5週衝刺全力備賽', cat:'🟢 持續', owner:'全員', due:'', status:'進行中', note:''},
+  {id:26, name:'群組內清晰請假及溝通', cat:'🟢 持續', owner:'全員', due:'', status:'進行中', note:''},
+  {id:27, name:'購買旅遊保險並確認實體保單', cat:'🟡 中優先', owner:'各家長', due:'2026-07-10', status:'待辦', note:'前往加拿大必須攜帶實體保單'},
+];
+
+const DEFAULT_MEMBERS = [
+  {name:'何柏熹', role:'BD圖 / Motor罩', canada: '❌ 不出行',
+   tasks:['接收TT28 PD圖，改造Motor罩','繪製BD圖','查閱世界賽電源安全規則'],
+   note:'家庭原因不出行，仍需完成設備工作後交接'},
+  {name:'周以軒', role:'CEO / Presentation', canada:'⏳ 待回報',
+   tasks:['主導每日中午Presentation排練','聯絡福建隊','製作自評評分表'],
+   note:''},
+  {name:'洪嘉濠', role:'LP / 工程', canada:'✅ 確認參加',
+   tasks:['解決死機問題','採購LV MEKA Crystal','升級天線≥18米','電流保護裝置'],
+   note:''},
+  {name:'梁卓軒', role:'工程（待確認）', canada:'✅ 確認參加',
+   tasks:['配合設備改進','Mission操控練習','Five Pan流程排練'],
+   note:''},
+  {name:'梁觀然', role:'操作 / 道具管理', canada:'⏳ 待回報',
+   tasks:['Pre-Dive Checklist執行','落水前道具確認','配合Mission排練'],
+   note:''},
+  {name:'路承霖', role:'協調（駱天）', canada:'⏳ 最終待確認',
+   tasks:['確定場內溝通手勢','協助場務協調','提交個人時間表'],
+   note:'仍在與家人商量'},
+  {name:'鄧諾軒', role:'Pilot', canada:'⏳ 待回報',
+   tasks:['Fishing+30秒停留專項練習','Five Pan完整流程排練','負責Mission分組排練'],
+   note:''},
+];
+
+const DEFAULT_CHECKLIST = [
+  {sec:'A', secName:'🔴 A｜設備結構檢查', items:[
+    {id:'a1',text:'Motor罩安裝完整，無裸露電線', owner:'梁觀然', time:'落水前15min', done:false},
+    {id:'a2',text:'Power Connector蓋已裝好', owner:'梁觀然', time:'落水前15min', done:false},
+    {id:'a3',text:'逆流電流保護裝置已安裝並測試', owner:'洪嘉濠', time:'落水前15min', done:false},
+    {id:'a4',text:'鋼纖盒防水封裝已檢查', owner:'洪嘉濠', time:'落水前15min', done:false},
+    {id:'a5',text:'天線長度確認（≥18米）', owner:'洪嘉濠', time:'落水前15min', done:false},
+  ]},
+  {sec:'B', secName:'🟠 B｜任務道具檢查', items:[
+    {id:'b1',text:'所有任務道具清點齊全（按任務單）', owner:'鄧諾軒', time:'落水前10min', done:false},
+    {id:'b2',text:'橙色環已確認位置及計分規則', owner:'梁觀然', time:'落水前10min', done:false},
+    {id:'b3',text:'Fishing任務道具完整（線/夾/鉤）', owner:'鄧諾軒', time:'落水前10min', done:false},
+    {id:'b4',text:'紅色方塊位置已確認並測試抓取', owner:'鄧諾軒', time:'落水前10min', done:false},
+    {id:'b5',text:'City爪具功能測試（叉+夾雙功能）', owner:'梁卓軒', time:'落水前10min', done:false},
+  ]},
+  {sec:'C', secName:'🟡 C｜系統與軟件檢查', items:[
+    {id:'c1',text:'ROV開機，系統無異常（無死機警告）', owner:'洪嘉濠', time:'落水前10min', done:false},
+    {id:'c2',text:'速度設定確認（避免≥75速導致死機）', owner:'鄧諾軒', time:'落水前5min', done:false},
+    {id:'c3',text:'攝像頭畫面清晰，角度正確', owner:'洪嘉濠', time:'落水前5min', done:false},
+    {id:'c4',text:'通訊手勢確認（YES/NO紙牌備用）', owner:'路承霖', time:'落水前5min', done:false},
+    {id:'c5',text:'相機緩存已清理', owner:'洪嘉濠', time:'落水前5min', done:false},
+  ]},
+  {sec:'D', secName:'🟢 D｜Presentation 準備', items:[
+    {id:'d1',text:'Presentation流程全員熟記，可脫稿', owner:'周以軒', time:'比賽前1hr', done:false},
+    {id:'d2',text:'自評評分表已填寫，與評委表對照準備好', owner:'周以軒', time:'比賽前1hr', done:false},
+    {id:'d3',text:'問答問題集已複習（設計原理+思路+結果）', owner:'周以軒', time:'比賽前1hr', done:false},
+  ]},
+  {sec:'E', secName:'🔵 E｜賽前最終確認', items:[
+    {id:'e1',text:'全員到位，無人缺席', owner:'路承霖', time:'落水前3min', done:false},
+    {id:'e2',text:'Checklist A–D全部勾選完畢', owner:'路承霖', time:'落水前3min', done:false},
+    {id:'e3',text:'教練/帶隊老師最終確認 → 可入水', owner:'教練', time:'落水前1min', done:false},
+  ]},
+];
+
+const DEFAULT_INTEL = [
+  {id:1, team:'福建隊', recorder:'周以軒', cat:'Presentation技巧',
+   what:'開場30秒用問題鉤住評委，不直接介紹設計',
+   why:'讓評委主動思考，提升互動感，高分策略',
+   how:'改寫我隊開場白，加入反問句引發評委興趣',
+   action:'修改Pres腳本第1-2頁', status:'待跟進'},
+  {id:2, team:'City隊', recorder:'梁觀然', cat:'ROV機械設計',
+   what:'爪具一邊有叉一邊正常爪，可同時勾+夾，一次取4件',
+   why:'減少往返次數，節省90秒以上任務時間',
+   how:'研究能否在現有爪具加裝可折疊叉臂',
+   action:'工程組評估改裝可行性', status:'待跟進'},
+];
+
+// ═══════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════
+let state = loadState();
+let editingTaskId = null;
+
+function loadState() {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) return JSON.parse(saved);
+  } catch(e){}
+  return {
+    tasks: JSON.parse(JSON.stringify(DEFAULT_TASKS)),
+    checklist: JSON.parse(JSON.stringify(DEFAULT_CHECKLIST)),
+    intel: JSON.parse(JSON.stringify(DEFAULT_INTEL)),
+    notes: '',
+  };
+}
+
+function saveAll() {
+  state.notes = document.getElementById('notes-area').value;
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  const btn = document.getElementById('save-btn');
+  btn.textContent = '✓ 已儲存';
+  setTimeout(()=>{ btn.textContent = '💾 儲存'; }, 1500);
+}
+
+// ═══════════════════════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════════════════════
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  event.currentTarget.classList.add('active');
+  if(id==='dashboard') renderDashboard();
+  if(id==='tasks') renderTasks();
+  if(id==='checklist') renderChecklist();
+  if(id==='gantt') renderGantt();
+  if(id==='members') renderMembers();
+  if(id==='intel') renderIntel();
+  if(id==='notes') document.getElementById('notes-area').value = state.notes||'';
+}
+
+// ═══════════════════════════════════════════════════════
+// DASHBOARD
+// ═══════════════════════════════════════════════════════
+function renderDashboard() {
+  const tasks = state.tasks;
+  const total = tasks.length;
+  const done = tasks.filter(t=>t.status==='已完成').length;
+  const inprog = tasks.filter(t=>t.status==='進行中').length;
+  const urgent = tasks.filter(t=>t.cat==='🔴 緊急' && t.status!=='已完成').length;
+  const pct = total ? Math.round(done/total*100) : 0;
+
+  document.getElementById('stat-cards').innerHTML = `
+    <div class="stat-card"><div class="stat-num">${total}</div><div class="stat-label">總任務數</div></div>
+    <div class="stat-card" style="border-top-color:var(--green)"><div class="stat-num" style="color:var(--green)">${done}</div><div class="stat-label">已完成</div></div>
+    <div class="stat-card" style="border-top-color:var(--orange)"><div class="stat-num" style="color:var(--orange)">${inprog}</div><div class="stat-label">進行中</div></div>
+    <div class="stat-card" style="border-top-color:var(--red)"><div class="stat-num" style="color:var(--red)">${urgent}</div><div class="stat-label">未完成緊急任務</div></div>
+    <div class="stat-card" style="border-top-color:var(--navy)">
+      <div class="stat-num">${pct}%</div><div class="stat-label">整體完成率</div>
+      <div class="prog-wrap" style="margin-top:6px"><div class="prog-bar" style="width:${pct}%;background:var(--navy)"></div></div>
+    </div>
+    <div class="stat-card" style="border-top-color:#7030A0">
+      <div class="stat-num" style="color:#7030A0">87</div><div class="stat-label">距世界賽天數</div>
+    </div>
+  `;
+
+  // deadlines
+  const deadlines = [
+    {date:'2026-04-29',label:'確認路承霖參賽 + 住宿決定',urgent:true},
+    {date:'2026-04-30',label:'機票通過旅行社確認（$19,000）',urgent:true},
+    {date:'2026-05-01',label:'預約簽證（5/4指紋+照片）',urgent:true},
+    {date:'2026-05-02',label:'死機問題解決 + 試水',urgent:true},
+    {date:'2026-05-04',label:'嘗試與福建中學交流'},
+    {date:'2026-05-06',label:'Mission排練分組確認'},
+    {date:'2026-05-15',label:'BD圖+Motor罩+Foster完成'},
+    {date:'2026-07-28',label:'✈️ 出發加拿大（暫定）'},
+  ];
+  const today = new Date(); today.setHours(0,0,0,0);
+  document.getElementById('deadline-timeline').innerHTML = deadlines.map(d=>{
+    const dt = new Date(d.date); dt.setHours(0,0,0,0);
+    const diff = Math.ceil((dt-today)/86400000);
+    const isDone = diff<0;
+    const cls = isDone?'done':(d.urgent&&diff<=3?'urgent':'');
+    const diffLabel = isDone?'已過期':(diff===0?'今日':diff+'天後');
+    return `<div class="tl-item">
+      <div class="tl-dot ${cls}"></div>
+      <div class="tl-date">${d.date} <span style="color:${isDone?'#aaa':d.urgent&&diff<=3?'var(--red)':'var(--blue)'};font-weight:700">${diffLabel}</span></div>
+      <div class="tl-content">${d.label}</div>
+    </div>`;
+  }).join('');
+
+  // progress bars
+  const cats = ['🔴 緊急','🟠 高優先','🟡 中優先','🟢 持續'];
+  const catColors = {'🔴 緊急':'var(--red)','🟠 高優先':'var(--orange)','🟡 中優先':'#D4AC0D','🟢 持續':'var(--green)'};
+  document.getElementById('progress-bars').innerHTML = cats.map(cat=>{
+    const ct = tasks.filter(t=>t.cat===cat);
+    const cd = ct.filter(t=>t.status==='已完成').length;
+    const pct = ct.length ? Math.round(cd/ct.length*100) : 0;
+    return `<div style="margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;font-size:.82rem;margin-bottom:3px">
+        <span>${cat}</span><span>${cd}/${ct.length} (${pct}%)</span></div>
+      <div class="prog-wrap"><div class="prog-bar" style="width:${pct}%;background:${catColors[cat]}"></div></div>
+    </div>`;
+  }).join('');
+
+  // urgent table
+  const urgentTasks = tasks.filter(t=>t.cat==='🔴 緊急'&&t.status!=='已完成');
+  document.getElementById('urgent-table').innerHTML = urgentTasks.map(t=>`
+    <tr>
+      <td>${t.name}</td>
+      <td>${t.owner}</td>
+      <td style="color:var(--red);font-weight:700">${t.due||'—'}</td>
+      <td><button class="btn btn-sm btn-primary" onclick="quickDone(${t.id})">✓ 完成</button></td>
+    </tr>`).join('') || '<tr><td colspan="4" style="text-align:center;color:var(--green);padding:16px">🎉 所有緊急任務已完成！</td></tr>';
+}
+
+function quickDone(id) {
+  const t = state.tasks.find(t=>t.id===id);
+  if(t) { t.status='已完成'; saveAll(); renderDashboard(); }
+}
+
+// ═══════════════════════════════════════════════════════
+// TASKS
+// ═══════════════════════════════════════════════════════
+function renderTasks() {
+  const cat = document.getElementById('filter-cat').value;
+  const status = document.getElementById('filter-status').value;
+  const owner = document.getElementById('filter-owner').value;
+  const search = document.getElementById('search-task').value.toLowerCase();
+
+  // populate owner filter
+  const owners = [...new Set(state.tasks.map(t=>t.owner))].sort();
+  const ownerSel = document.getElementById('filter-owner');
+  const curOwner = ownerSel.value;
+  ownerSel.innerHTML = '<option value="">所有負責人</option>' + owners.map(o=>`<option ${o===curOwner?'selected':''}>${o}</option>`).join('');
+
+  const filtered = state.tasks.filter(t=>
+    (!cat||t.cat===cat) &&
+    (!status||t.status===status) &&
+    (!owner||t.owner===owner) &&
+    (!search||t.name.toLowerCase().includes(search)||t.owner.toLowerCase().includes(search))
+  );
+
+  const statusBadge = {
+    '待辦':'<span class="badge urgent">待辦</span>',
+    '進行中':'<span class="badge inprog">進行中</span>',
+    '已完成':'<span class="badge done">已完成</span>',
+  };
+  const catColor = {'🔴 緊急':'#FFD6D6','🟠 高優先':'#FCE4D6','🟡 中優先':'#FFF3CD','🟢 持續':'#E2EFDA'};
+
+  document.getElementById('task-tbody').innerHTML = filtered.map(t=>`
+    <tr class="${t.status==='已完成'?'task-done':''}">
+      <td><input type="checkbox" ${t.status==='已完成'?'checked':''} onchange="toggleTask(${t.id})"></td>
+      <td style="font-size:.78rem;color:#888">${t.id}</td>
+      <td>
+        <div style="font-weight:600">${t.name}</div>
+        ${t.note?`<div style="font-size:.75rem;color:#888;margin-top:2px">${t.note}</div>`:''}
+      </td>
+      <td><span style="background:${catColor[t.cat]||'#eee'};padding:2px 8px;border-radius:99px;font-size:.75rem">${t.cat}</span></td>
+      <td style="font-size:.85rem">${t.owner}</td>
+      <td style="font-size:.82rem;${t.due&&isOverdue(t.due)&&t.status!=='已完成'?'color:var(--red);font-weight:700':''}">${t.due||'—'}</td>
+      <td>${statusBadge[t.status]||t.status}</td>
+      <td style="white-space:nowrap">
+        <button class="btn btn-sm btn-primary" onclick="editTask(${t.id})" style="margin-right:4px">✏️</button>
+        <button class="btn btn-sm btn-danger" onclick="deleteTask(${t.id})">🗑</button>
+      </td>
+    </tr>`).join('') || '<tr><td colspan="8" style="text-align:center;padding:20px;color:#aaa">無符合條件的任務</td></tr>';
+}
+
+function isOverdue(due) {
+  if(!due) return false;
+  const d = new Date(due); d.setHours(23,59,59);
+  return d < new Date();
+}
+
+function toggleTask(id) {
+  const t = state.tasks.find(t=>t.id===id);
+  if(t) { t.status = t.status==='已完成'?'待辦':'已完成'; saveAll(); renderTasks(); }
+}
+
+function openAddTask() {
+  editingTaskId = null;
+  document.getElementById('modal-title').textContent = '新增任務';
+  ['m-name','m-owner','m-due','m-note'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('m-cat').value='🔴 緊急';
+  document.getElementById('m-status').value='待辦';
+  document.getElementById('task-modal').classList.add('open');
+}
+
+function editTask(id) {
+  const t = state.tasks.find(t=>t.id===id);
+  if(!t) return;
+  editingTaskId = id;
+  document.getElementById('modal-title').textContent = '編輯任務';
+  document.getElementById('m-name').value = t.name;
+  document.getElementById('m-cat').value = t.cat;
+  document.getElementById('m-status').value = t.status;
+  document.getElementById('m-owner').value = t.owner;
+  document.getElementById('m-due').value = t.due;
+  document.getElementById('m-note').value = t.note;
+  document.getElementById('task-modal').classList.add('open');
+}
+
+function saveTask() {
+  const t = {
+    name: document.getElementById('m-name').value.trim(),
+    cat: document.getElementById('m-cat').value,
+    status: document.getElementById('m-status').value,
+    owner: document.getElementById('m-owner').value.trim(),
+    due: document.getElementById('m-due').value,
+    note: document.getElementById('m-note').value.trim(),
+  };
+  if(!t.name) return;
+  if(editingTaskId) {
+    const idx = state.tasks.findIndex(x=>x.id===editingTaskId);
+    if(idx>=0) state.tasks[idx] = {...state.tasks[idx],...t};
+  } else {
+    const maxId = state.tasks.reduce((m,x)=>Math.max(m,x.id),0);
+    state.tasks.push({id:maxId+1,...t});
+  }
+  saveAll(); closeModal('task-modal'); renderTasks();
+}
+
+function deleteTask(id) {
+  if(!confirm('確認刪除此任務？')) return;
+  state.tasks = state.tasks.filter(t=>t.id!==id);
+  saveAll(); renderTasks();
+}
+
+// ═══════════════════════════════════════════════════════
+// CHECKLIST
+// ═══════════════════════════════════════════════════════
+function renderChecklist() {
+  const total = state.checklist.reduce((s,sec)=>s+sec.items.length,0);
+  const done = state.checklist.reduce((s,sec)=>s+sec.items.filter(i=>i.done).length,0);
+  document.getElementById('check-progress-label').textContent = `${done} / ${total} 已完成`;
+
+  const secClass = {A:'sec-A',B:'sec-B',C:'sec-C',D:'sec-D',E:'sec-E'};
+  document.getElementById('checklist-container').innerHTML = state.checklist.map(sec=>`
+    <div class="check-section ${secClass[sec.sec]||''}">
+      <h3>${sec.secName}</h3>
+      ${sec.items.map(item=>`
+        <div class="check-item ${item.done?'checked':''}" id="ci-${item.id}">
+          <input type="checkbox" ${item.done?'checked':''} onchange="toggleCheck('${item.id}')">
+          <label for="cb-${item.id}" onclick="toggleCheck('${item.id}')">${item.text}</label>
+          <span class="check-owner">👤 ${item.owner}</span>
+          <span class="check-time">⏱ ${item.time}</span>
+        </div>`).join('')}
+    </div>`).join('');
+}
+
+function toggleCheck(id) {
+  state.checklist.forEach(sec=>sec.items.forEach(item=>{ if(item.id===id) item.done=!item.done; }));
+  saveAll(); renderChecklist();
+}
+
+function resetChecklist() {
+  if(!confirm('確認重置所有勾選項目？')) return;
+  state.checklist.forEach(sec=>sec.items.forEach(item=>item.done=false));
+  saveAll(); renderChecklist();
+}
+
+// ═══════════════════════════════════════════════════════
+// GANTT
+// ═══════════════════════════════════════════════════════
+function renderGantt() {
+  const start = new Date('2026-04-28');
+  const days = 35;
+  const dates = Array.from({length:days},(_,i)=>{ const d=new Date(start); d.setDate(start.getDate()+i); return d; });
+  const dayAbbr = ['日','一','二','三','四','五','六'];
+
+  const rows = [
+    {label:'📋 Pres排練（週三四五）', cls:'g-pres',   spans:dates.map(d=>[3,4,5].includes(d.getDay()))},
+    {label:'📋 Pres第一次排練',       cls:'g-pres',   spans:dates.map((_,i)=>i===1)},
+    {label:'🔧 死機問題解決',         cls:'g-eng',    spans:dates.map((_,i)=>i<5)},
+    {label:'🔧 電流保護裝置採購',     cls:'g-eng',    spans:dates.map((_,i)=>i<5)},
+    {label:'🔧 Motor罩改造',          cls:'g-eng',    spans:dates.map((_,i)=>i>=2&&i<10)},
+    {label:'🔧 LV MEKA測試',          cls:'g-eng',    spans:dates.map((_,i)=>i>=2&&i<8)},
+    {label:'🔧 天線升級',             cls:'g-eng',    spans:dates.map((_,i)=>i>=1&&i<7)},
+    {label:'🔧 場地標準化設置',       cls:'g-eng',    spans:dates.map(()=>true)},
+    {label:'✈️ 機票確認',             cls:'g-admin',  spans:dates.map((_,i)=>i<4)},
+    {label:'✈️ 住宿確認',             cls:'g-admin',  spans:dates.map((_,i)=>i<3)},
+    {label:'✈️ 簽證辦理',             cls:'g-admin',  spans:dates.map((_,i)=>i<15)},
+    {label:'🤝 福建隊交流',           cls:'g-green',  spans:dates.map((_,i)=>i>=6&&i<12)},
+    {label:'🤝 Mission排練分組',      cls:'g-green',  spans:dates.map((_,i)=>i>=5)},
+    {label:'🏫 考試週（初三）',        cls:'g-exam',   spans:dates.map((_,i)=>i>=14&&i<21)},
+  ];
+
+  // week header
+  const weekDates = ['Apr 28–May 3','May 4–10','May 11–17','May 18–24','May 25–Jun 1'];
+  const weekColors = ['#31849B','#375623','#7F6000','#833C00','#76024F'];
+
+  let html = '<table class="gantt-table"><thead>';
+  html += '<tr><th style="min-width:180px;text-align:left;padding:6px 10px">任務</th>';
+  for(let w=0;w<5;w++) {
+    html += `<th colspan="7" style="background:${weekColors[w]}">${weekDates[w]}</th>`;
+  }
+  html += '</tr><tr><th></th>';
+  dates.forEach(d=>{
+    const isWE = d.getDay()===0||d.getDay()===6;
+    html += `<th class="gantt-cell ${isWE?'g-weekend':''}" style="${isWE?'background:#555':''}">
+      <div>${d.getMonth()+1}/${d.getDate()}</div>
+      <div>${dayAbbr[d.getDay()]}</div></th>`;
+  });
+  html += '</tr></thead><tbody>';
+
+  rows.forEach(row=>{
+    html += `<tr><td style="padding:4px 8px;font-size:.8rem;font-weight:600;background:#F8F8F8">${row.label}</td>`;
+    row.spans.forEach((active,i)=>{
+      const d = dates[i];
+      const isWE = d.getDay()===0||d.getDay()===6;
+      html += `<td class="gantt-cell" style="background:${active?'':isWE?'#F0F0F0':'white'}">
+        ${active?`<div class="${row.cls} g-bar" style="height:14px;width:100%"></div>`:''}
+      </td>`;
+    });
+    html += '</tr>';
+  });
+
+  html += '</tbody></table>';
+  document.getElementById('gantt-wrap').innerHTML = html;
+}
+
+// ═══════════════════════════════════════════════════════
+// MEMBERS
+// ═══════════════════════════════════════════════════════
+function renderMembers() {
+  const canadaIcon = {'✅ 確認參加':'ms-confirmed','⏳ 待回報':'ms-pending','⏳ 最終待確認':'ms-pending','❌ 不出行':'ms-no'};
+  const tasksDone = (name) => {
+    const myTasks = state.tasks.filter(t=>t.owner.includes(name.slice(0,2)));
+    const done = myTasks.filter(t=>t.status==='已完成').length;
+    return `${done}/${myTasks.length}`;
+  };
+  document.getElementById('member-grid').innerHTML = DEFAULT_MEMBERS.map(m=>`
+    <div class="member-card">
+      <div class="member-name">👤 ${m.name}</div>
+      <div class="member-role">${m.role}</div>
+      <div>
+        <span class="member-status ${canadaIcon[m.canada]||'ms-pending'}">
+          加拿大：${m.canada}
+        </span>
+      </div>
+      <div class="member-tasks" style="margin-top:8px">
+        <div style="font-size:.75rem;color:#888;margin-bottom:4px">核心任務：</div>
+        ${m.tasks.map(t=>`<div style="padding:2px 0;border-bottom:1px solid #F0F0F0">• ${t}</div>`).join('')}
+      </div>
+      ${m.note?`<div style="margin-top:6px;font-size:.75rem;color:var(--orange);background:#FFF3E0;padding:4px 8px;border-radius:4px">⚠️ ${m.note}</div>`:''}
+    </div>`).join('');
+}
+
+// ═══════════════════════════════════════════════════════
+// INTEL
+// ═══════════════════════════════════════════════════════
+function renderIntel() {
+  const filter = document.getElementById('intel-filter-cat').value;
+  const items = state.intel.filter(i=>!filter||i.cat===filter);
+  const statusColor = {'待跟進':'#FFD6D6','進行中':'#FFF3CD','已完成':'#D5F5E3','不適用':'#F0F0F0'};
+
+  document.getElementById('intel-cards').innerHTML = items.map(i=>`
+    <div class="card" style="margin-bottom:12px;border-left:4px solid var(--blue)">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">
+        <div>
+          <span style="font-weight:700;font-size:1rem">🏆 ${i.team}</span>
+          <span class="badge inprog" style="margin-left:8px">${i.cat}</span>
+        </div>
+        <div style="display:flex;gap:6px;align-items:center">
+          <span style="background:${statusColor[i.status]};padding:2px 10px;border-radius:99px;font-size:.75rem;font-weight:700">${i.status}</span>
+          <button class="btn btn-sm" style="background:var(--orange);color:#fff" onclick="cycleStatus(${i.id})">↻ 狀態</button>
+          <button class="btn btn-sm btn-danger" onclick="deleteIntel(${i.id})">🗑</button>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;font-size:.85rem">
+        <div><div style="font-weight:700;color:var(--navy);margin-bottom:3px">📌 What</div>${i.what||'—'}</div>
+        <div><div style="font-weight:700;color:var(--navy);margin-bottom:3px">💡 Why</div>${i.why||'—'}</div>
+        <div><div style="font-weight:700;color:var(--navy);margin-bottom:3px">🔧 How to Apply</div>${i.how||'—'}</div>
+      </div>
+      ${i.action?`<div style="margin-top:8px;font-size:.82rem;background:#F0F8FF;padding:6px 10px;border-radius:6px">⚡ 跟進行動：${i.action} <span style="color:#888">（記錄人：${i.recorder}）</span></div>`:''}
+    </div>`).join('') || '<div class="card" style="text-align:center;color:#aaa;padding:30px">尚無觀摩記錄，點擊「新增」開始記錄</div>';
+}
+
+function cycleStatus(id) {
+  const order = ['待跟進','進行中','已完成','不適用'];
+  const item = state.intel.find(i=>i.id===id);
+  if(!item) return;
+  item.status = order[(order.indexOf(item.status)+1)%order.length];
+  saveAll(); renderIntel();
+}
+
+function deleteIntel(id) {
+  if(!confirm('確認刪除此記錄？')) return;
+  state.intel = state.intel.filter(i=>i.id!==id);
+  saveAll(); renderIntel();
+}
+
+function openAddIntel() {
+  ['i-team','i-recorder','i-what','i-why','i-how','i-action'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('i-cat').value='ROV機械設計';
+  document.getElementById('i-status').value='待跟進';
+  document.getElementById('intel-modal').classList.add('open');
+}
+
+function saveIntel() {
+  const item = {
+    team: document.getElementById('i-team').value.trim(),
+    recorder: document.getElementById('i-recorder').value.trim(),
+    cat: document.getElementById('i-cat').value,
+    what: document.getElementById('i-what').value.trim(),
+    why: document.getElementById('i-why').value.trim(),
+    how: document.getElementById('i-how').value.trim(),
+    action: document.getElementById('i-action').value.trim(),
+    status: document.getElementById('i-status').value,
+  };
+  if(!item.team) return;
+  const maxId = state.intel.reduce((m,x)=>Math.max(m,x.id),0);
+  state.intel.push({id:maxId+1,...item});
+  saveAll(); closeModal('intel-modal'); renderIntel();
+}
+
+// ═══════════════════════════════════════════════════════
+// MODAL
+// ═══════════════════════════════════════════════════════
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+}
+document.querySelectorAll('.modal-bg').forEach(bg=>{
+  bg.addEventListener('click',e=>{ if(e.target===bg) bg.classList.remove('open'); });
+});
+
+// NOTES
+function saveNotes() {
+  state.notes = document.getElementById('notes-area').value;
+  saveAll();
+  const el = document.getElementById('notes-saved');
+  el.style.display='inline';
+  setTimeout(()=>el.style.display='none',2000);
+}
+
+// ═══════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════
+renderDashboard();
+</script>
+</body>
+</html>
