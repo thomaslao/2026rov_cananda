@@ -37,11 +37,11 @@
   /* ── CARDS ── */
   .card { background: var(--white); border-radius: 10px; padding: 16px 20px;
           box-shadow: var(--shadow); margin-bottom: 16px; }
-  .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px,1fr)); gap: 14px; }
-  .stat-card { background: var(--white); border-radius: 10px; padding: 16px;
+  .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px,1fr)); gap: 9px; }
+  .stat-card { background: var(--white); border-radius: 7px; padding: 10px;
                box-shadow: var(--shadow); text-align: center; border-top: 4px solid var(--blue); }
-  .stat-num { font-size: 2rem; font-weight: 800; color: var(--navy); }
-  .stat-label { font-size: .8rem; color: #666; margin-top: 4px; }
+  .stat-num { font-size: 1.35rem; font-weight: 800; color: var(--navy); }
+  .stat-label { font-size: .72rem; color: #666; margin-top: 2px; }
 
   /* ── PROGRESS BAR ── */
   .prog-wrap { background: #E0E8F0; border-radius: 99px; height: 10px; overflow: hidden; }
@@ -146,6 +146,9 @@
   .timeline { position: relative; padding-left: 28px; }
   .timeline::before { content:''; position:absolute; left:10px; top:0; bottom:0;
                       width:2px; background: var(--lblue); }
+  thead th { cursor: default; }
+  thead th[onclick] { cursor: pointer; transition: background .15s; }
+  thead th[onclick]:hover { background: rgba(0,90,180,.07); }
   .tl-item { position: relative; margin-bottom: 14px; }
   .tl-dot { position:absolute; left:-23px; top:4px; width:14px; height:14px;
             border-radius:50%; border:3px solid var(--white); box-shadow: 0 0 0 2px var(--blue); }
@@ -156,6 +159,13 @@
                 box-shadow: var(--shadow); font-size: .88rem; }
 
   /* ── NOTES ── */
+  .quote-item { border-left: 4px solid var(--blue); padding: 8px 14px; margin: 8px 0; color: #444; font-style: italic; background: #f8f9ff; border-radius: 0 6px 6px 0; display:flex; align-items:flex-start; gap:8px; }
+  .quote-item:nth-child(3n+1) { border-color: var(--blue); background:#f0f5ff; }
+  .quote-item:nth-child(3n+2) { border-color: var(--green); background:#f0fff4; }
+  .quote-item:nth-child(3n+0) { border-color: var(--orange); background:#fff8f0; }
+  .quote-text { flex:1; font-size:.9rem; line-height:1.6; }
+  .quote-actions { display:flex; gap:4px; flex-shrink:0; opacity:.4; transition:opacity .2s; }
+  .quote-item:hover .quote-actions { opacity:1; }
   #notes-area { width:100%; height:180px; resize:vertical; padding:10px;
                 border:1px solid var(--border); border-radius:8px; font-size:.88rem; }
 
@@ -237,7 +247,16 @@
   </div>
   <div class="card" style="padding:0;overflow:hidden">
     <table>
-      <thead><tr><th style="width:30px"></th><th>#</th><th>任務</th><th>類別</th><th>負責人</th><th>期限</th><th>狀態</th><th>操作</th></tr></thead>
+      <thead><tr>
+  <th style="width:30px"></th>
+  <th style="width:36px">#</th>
+  <th onclick="setTaskSort('name')" style="cursor:pointer;user-select:none">任務 <span id="sort-icon-name"></span></th>
+  <th onclick="setTaskSort('cat')" style="cursor:pointer;user-select:none">類別 <span id="sort-icon-cat"></span></th>
+  <th onclick="setTaskSort('owner')" style="cursor:pointer;user-select:none">負責人 <span id="sort-icon-owner"></span></th>
+  <th onclick="setTaskSort('due')" style="cursor:pointer;user-select:none">期限 <span id="sort-icon-due"></span></th>
+  <th onclick="setTaskSort('status')" style="cursor:pointer;user-select:none">狀態 <span id="sort-icon-status"></span></th>
+  <th>操作</th>
+</tr></thead>
       <tbody id="task-tbody"></tbody>
     </table>
   </div>
@@ -317,16 +336,11 @@
     </div>
   </div>
   <div class="card" style="margin-top:0">
-    <h2>💬 教練金句</h2>
-    <blockquote style="border-left:4px solid var(--blue);padding:8px 16px;margin:8px 0;color:#444;font-style:italic">
-      「我們要贏人，一定要想法和思維，AI 可以幫到我們賦能，但想法和思維要靠我們自己去做。」
-    </blockquote>
-    <blockquote style="border-left:4px solid var(--green);padding:8px 16px;margin:8px 0;color:#444;font-style:italic">
-      「你花夠時間解決到那個問題，你的成績就自然會上去，這是一種正相關。」
-    </blockquote>
-    <blockquote style="border-left:4px solid var(--orange);padding:8px 16px;margin:8px 0;color:#444;font-style:italic">
-      「練習時要當作比賽，比賽時要當作練習，投入其中，避免『差不多』的心態。」
-    </blockquote>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+      <h2 style="margin:0">💬 教練金句</h2>
+      <button class="btn btn-primary" onclick="addQuote()" style="font-size:.8rem;padding:4px 12px">＋ 新增金句</button>
+    </div>
+    <div id="quotes-list"></div>
   </div>
 </div>
 
@@ -538,6 +552,22 @@ const DEFAULT_INTEL = [
 // STATE
 // ═══════════════════════════════════════════════════════
 let state = { tasks: [], members: [], checklist: JSON.parse(JSON.stringify(DEFAULT_CHECKLIST)), intel: [], notes: '' };
+let taskSort = { col: 'due', dir: 1 };
+
+function setTaskSort(col) {
+  if (taskSort.col === col) { taskSort.dir *= -1; }
+  else { taskSort.col = col; taskSort.dir = 1; }
+  renderTasks();
+}
+
+function applySortIcons() {
+  ['name','cat','owner','due','status'].forEach(c => {
+    const el = document.getElementById('sort-icon-' + c);
+    if (!el) return;
+    if (taskSort.col === c) { el.textContent = taskSort.dir === 1 ? ' ▲' : ' ▼'; el.style.color = 'var(--blue)'; }
+    else { el.textContent = ' ⇅'; el.style.color = '#ccc'; }
+  });
+}
 let editingTaskId = null;
 let editingMemberId = null;
 let memberTaskItems = []; // temp list while editing member modal
@@ -634,6 +664,25 @@ async function loadFromSupabase() {
   } catch(e) {
     console.warn('⚠️ notes fallback:', e.message);
   }
+
+  // ── QUOTES ──
+  try {
+    const { data: qd, error: qe } = await db.from('quotes').select('*').order('order_index');
+    if (qe) throw qe;
+    if (!qd || qd.length === 0) {
+      const seeds = DEFAULT_QUOTES.map((t,i) => ({ text:t, order_index:i }));
+      const { error: qi } = await db.from('quotes').insert(seeds);
+      if (qi) throw qi;
+      const { data: qr } = await db.from('quotes').select('*').order('order_index');
+      state.quotes = (qr||[]).map(q=>({ id:q.id, text:q.text }));
+    } else {
+      state.quotes = qd.map(q=>({ id:q.id, text:q.text }));
+    }
+  } catch(e) {
+    console.warn('⚠️ quotes fallback:', e.message);
+    if (!state.quotes || !state.quotes.length || state.quotes.some(q=>!q.text))
+      state.quotes = DEFAULT_QUOTES.map((t,i)=>({ id:i+1, text:t }));
+  }
 }
 
 function parseMemberTasks(m) {
@@ -668,7 +717,19 @@ function showPage(id, btn) {
   if(id==='gantt') renderGantt();
   if(id==='members') renderMembers();
   if(id==='intel') renderIntel();
-  if(id==='notes') document.getElementById('notes-area').value = state.notes||'';
+  if(id==='notes') {
+    // Parse quotes from combined notes content
+    const raw = state.notes || '';
+    const sep = raw.indexOf('\n\n__QUOTES__');
+    if (sep !== -1) {
+      document.getElementById('notes-area').value = raw.substring(0, sep);
+      try { state.quotes = JSON.parse(raw.substring(sep + 13)); } catch(e) { state.quotes = [...DEFAULT_QUOTES]; }
+    } else {
+      document.getElementById('notes-area').value = raw;
+      if (!state.quotes || !state.quotes.length) state.quotes = [...DEFAULT_QUOTES];
+    }
+    renderQuotes();
+  }
 }
 
 // ═══════════════════════════════════════════════════════
@@ -775,6 +836,21 @@ function renderTasks() {
     (!owner||t.owner===owner) &&
     (!search||t.name.toLowerCase().includes(search)||t.owner.toLowerCase().includes(search))
   );
+
+  // Sort
+  const catOrder = {'🔴 緊急':0,'🟠 高優先':1,'🟡 中優先':2,'🟢 持續':3};
+  const statusOrder = {'待辦':0,'進行中':1,'已完成':2};
+  filtered.sort((a,b)=>{
+    let va = a[taskSort.col]||''; let vb = b[taskSort.col]||'';
+    if(taskSort.col==='cat') { va = catOrder[va]??9; vb = catOrder[vb]??9; return (va-vb)*taskSort.dir; }
+    if(taskSort.col==='status') { va = statusOrder[va]??9; vb = statusOrder[vb]??9; return (va-vb)*taskSort.dir; }
+    if(taskSort.col==='due') {
+      if(!va && !vb) return 0; if(!va) return 1; if(!vb) return -1;
+      return (new Date(va)-new Date(vb))*taskSort.dir;
+    }
+    return va.toString().localeCompare(vb.toString(), 'zh-HK')*taskSort.dir;
+  });
+  applySortIcons();
 
   const statusBadge = {
     '待辦':'<span class="badge urgent">待辦</span>',
@@ -1019,18 +1095,19 @@ async function saveMember() {
 
   if (editingMemberId) {
     const { error } = await db.from('members').update(data).eq('id', editingMemberId);
-    if (!error) {
-      const idx = state.members.findIndex(x=>x.id===editingMemberId);
-      if (idx>=0) state.members[idx] = parseMemberTasks({ ...state.members[idx], ...data });
+    if (error) {
+      alert('❌ 更新失敗：' + error.message + '\n\n請確認 RLS 已關閉（見 DB 設定）');
+      return;
     }
+    const idx = state.members.findIndex(x=>x.id===editingMemberId);
+    if (idx>=0) state.members[idx] = parseMemberTasks({ ...state.members[idx], ...data });
   } else {
     const { data: row, error } = await db.from('members').insert([data]).select().single();
-    if (!error && row) state.members.push(parseMemberTasks(row));
-    else if (!row) {
-      // fallback: add locally with temp id
-      const tmpId = Date.now();
-      state.members.push(parseMemberTasks({ ...data, id: tmpId }));
+    if (error) {
+      alert('❌ 新增失敗：' + error.message + '\n\n請確認：\n1. members table 已建立\n2. RLS 已關閉（alter table members disable row level security）\n\n請點右上角「🗄 DB 設定」→「🔍 即時診斷連線狀態」查看詳情');
+      return;
     }
+    if (row) state.members.push(parseMemberTasks(row));
   }
   closeModal('member-modal');
   renderMembers();
@@ -1042,6 +1119,7 @@ async function deleteMember(id) {
   if (!m) return;
   if (!confirm(`確認刪除成員「${m.name}」？此操作無法復原。`)) return;
   const { error } = await db.from('members').delete().eq('id', id);
+  if (error) { alert('❌ 刪除失敗：' + error.message); return; }
   if (!error) {
     state.members = state.members.filter(x=>x.id!==id);
     renderMembers();
@@ -1227,6 +1305,54 @@ async function saveIntel() {
 // ═══════════════════════════════════════════════════════
 // MODAL
 // ═══════════════════════════════════════════════════════
+async function runDiag() {
+  const el = document.getElementById('diag-result');
+  el.innerHTML = '<div style="color:#888;font-size:.83rem">⏳ 測試中…</div>';
+  const tables = ['tasks','members','intel','checklist_items','notes','quotes'];
+  const results = [];
+  for (const tbl of tables) {
+    try {
+      const { data, error } = await db.from(tbl).select('id').limit(1);
+      if (error) {
+        const msg = error.message || '';
+        if (msg.includes('does not exist') || msg.includes('relation')) {
+          results.push({ tbl, status: 'missing', msg: 'Table 不存在' });
+        } else if (msg.includes('row-level security') || msg.includes('policy') || msg.includes('permission')) {
+          results.push({ tbl, status: 'rls', msg: 'RLS 阻擋讀取' });
+        } else {
+          results.push({ tbl, status: 'error', msg });
+        }
+      } else {
+        results.push({ tbl, status: 'ok', msg: `✅ 正常（${data?.length ?? 0} 筆）` });
+      }
+    } catch(e) {
+      results.push({ tbl, status: 'error', msg: e.message });
+    }
+  }
+  const icons = { ok:'✅', missing:'❌', rls:'🔒', error:'⚠️' };
+  const colors = { ok:'#2e7d32', missing:'#c62828', rls:'#e65100', error:'#6a1b9a' };
+  let html = '<div style="border:1px solid #ddd;border-radius:6px;overflow:hidden;font-size:.82rem">';
+  results.forEach((r,i) => {
+    html += `<div style="display:flex;justify-content:space-between;padding:7px 12px;background:${i%2?'#f9f9f9':'#fff'}">
+      <span style="font-weight:600;font-family:monospace">${r.tbl}</span>
+      <span style="color:${colors[r.status]}">${icons[r.status]} ${r.msg}</span>
+    </div>`;
+  });
+  html += '</div>';
+  const hasRls = results.some(r=>r.status==='rls');
+  const hasMissing = results.some(r=>r.status==='missing');
+  if (hasRls) {
+    html += '<div style="margin-top:8px;padding:8px 12px;background:#FFF3E0;border-radius:6px;font-size:.8rem;color:#e65100">🔒 <b>RLS 阻擋</b> — 請複製下方 SQL 並在 Supabase → SQL Editor 執行（包含最後的 disable row level security 部分）</div>';
+  }
+  if (hasMissing) {
+    html += '<div style="margin-top:8px;padding:8px 12px;background:#FFEBEE;border-radius:6px;font-size:.8rem;color:#c62828">❌ <b>Table 不存在</b> — 請執行下方完整 SQL 建立所有 table</div>';
+  }
+  if (!hasRls && !hasMissing) {
+    html += '<div style="margin-top:8px;padding:8px 12px;background:#E8F5E9;border-radius:6px;font-size:.8rem;color:#2e7d32">✅ 所有 table 連線正常！關閉此視窗並重新整理頁面。</div>';
+  }
+  el.innerHTML = html;
+}
+
 function closeModal(id) {
   document.getElementById(id).classList.remove('open');
 }
@@ -1235,12 +1361,72 @@ document.querySelectorAll('.modal-bg').forEach(bg=>{
 });
 
 // NOTES
-function saveNotes() {
+async function saveNotes() {
   state.notes = document.getElementById('notes-area').value;
-  db.from('notes').upsert({ id: 1, content: state.notes });
+  const { error } = await db.from('notes').upsert({ id: 1, content: state.notes });
+  if (error) {
+    alert('❌ 備忘儲存失敗：' + error.message + '\n\n請在 Supabase SQL Editor 執行：\nalter table notes disable row level security;');
+    return;
+  }
   const el = document.getElementById('notes-saved');
   el.style.display='inline';
   setTimeout(()=>el.style.display='none',2000);
+}
+
+// ── 教練金句 (stored in notes table as JSON suffix) ──
+const DEFAULT_QUOTES = [
+  '我們要贏人，一定要想法和思維，AI 可以幫到我們賦能，但想法和思維要靠我們自己去做。',
+  '你花夠時間解決到那個問題，你的成績就自然會上去，這是一種正相關。',
+  '練習時要當作比賽，比賽時要當作練習，投入其中，避免「差不多」的心態。'
+];
+if (!state.quotes) state.quotes = DEFAULT_QUOTES.map((t,i)=>({id:i+1, text:t}));
+
+function renderQuotes() {
+  const list = document.getElementById('quotes-list');
+  if (!list) return;
+  list.innerHTML = state.quotes.map((q, i) => `
+    <div class="quote-item">
+      <span class="quote-text">「${q.text}」</span>
+      <div class="quote-actions">
+        <button class="btn btn-sm btn-primary" onclick="editQuote(${i})" title="編輯">✏️</button>
+        <button class="btn btn-sm btn-danger" onclick="deleteQuote(${i})" title="刪除">🗑</button>
+      </div>
+    </div>`).join('') || '<div style="color:#aaa;font-size:.85rem">尚無金句</div>';
+}
+
+async function addQuote() {
+  const text = prompt('輸入新金句：');
+  if (!text || !text.trim()) return;
+  const { data, error } = await db.from('quotes').insert([{ text:text.trim(), order_index: state.quotes.length }]).select();
+  if (error) {
+    alert('❌ 新增金句失敗：' + error.message + '\n\n請先在 Supabase SQL Editor 執行：\ncreate table if not exists quotes (id bigserial primary key, text text not null, order_index integer default 0);\nalter table quotes disable row level security;');
+    return;
+  }
+  state.quotes.push({ id: data[0].id, text: text.trim() });
+  renderQuotes();
+  showToast('💬 金句已新增');
+}
+
+async function editQuote(i) {
+  const q = state.quotes[i];
+  const text = prompt('修改金句：', q.text);
+  if (text === null) return;
+  if (!text.trim()) { deleteQuote(i); return; }
+  const { error } = await db.from('quotes').update({ text: text.trim() }).eq('id', q.id);
+  if (error) { showToast('❌ 更新失敗：' + error.message); return; }
+  state.quotes[i].text = text.trim();
+  renderQuotes();
+  showToast('💬 金句已更新');
+}
+
+async function deleteQuote(i) {
+  if (!confirm('確定刪除這句金句？')) return;
+  const q = state.quotes[i];
+  const { error } = await db.from('quotes').delete().eq('id', q.id);
+  if (error) { showToast('❌ 刪除失敗：' + error.message); return; }
+  state.quotes.splice(i, 1);
+  renderQuotes();
+  showToast('🗑 金句已刪除');
 }
 
 // ── TOAST ──
@@ -1268,7 +1454,9 @@ function showToast(msg, duration=2200) {
 <div class="modal-bg" id="dbsetup-modal" onclick="if(event.target===this)closeModal('dbsetup-modal')">
   <div class="modal" style="max-width:700px;max-height:90vh;overflow-y:auto">
     <h3>🗄 Supabase 建表 SQL</h3>
-    <p style="margin:8px 0 12px;color:#555;font-size:.88rem">在 Supabase → SQL Editor 執行以下語句，建立全部 5 張 table，然後重新整理頁面即可自動匯入預設資料。</p>
+    <p style="margin:8px 0 8px;color:#555;font-size:.88rem">在 <a href="https://supabase.com/dashboard/project/funahmlcriyrpqelefah/sql/new" target="_blank" style="color:var(--blue);font-weight:600">Supabase SQL Editor ↗</a> 執行以下語句，建立全部 5 張 table，然後重新整理頁面。</p>
+    <div id="diag-result" style="margin-bottom:10px"></div>
+    <button class="btn btn-primary" onclick="runDiag()" style="margin-bottom:12px;font-size:.82rem">🔍 即時診斷連線狀態</button>
     <textarea id="sql-content" readonly style="width:100%;height:340px;font-family:monospace;font-size:.78rem;padding:10px;border:1px solid #ccc;border-radius:6px;resize:vertical;background:#f7f8fa">-- ① tasks
 create table if not exists tasks (
   id        bigserial primary key,
@@ -1331,7 +1519,15 @@ alter table tasks           disable row level security;
 alter table members         disable row level security;
 alter table intel           disable row level security;
 alter table checklist_items disable row level security;
-alter table notes           disable row level security;</textarea>
+alter table notes           disable row level security;
+
+-- ⑥ quotes（教練金句）
+create table if not exists quotes (
+  id      bigserial primary key,
+  text    text not null,
+  order_index integer default 0
+);
+alter table quotes disable row level security;</textarea>
     <div class="modal-actions" style="margin-top:12px">
       <button class="btn" onclick="closeModal('dbsetup-modal')">關閉</button>
       <button class="btn btn-primary" onclick="
