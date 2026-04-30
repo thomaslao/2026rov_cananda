@@ -74,6 +74,7 @@
   button.btn:hover { opacity: .85; }
   .btn-primary { background: var(--blue); color: #fff; }
   .btn-danger { background: var(--red); color: #fff; }
+  .btn-success { background: var(--green); color: #fff; }
   .btn-sm { padding: 3px 9px; font-size: .78rem; }
 
   /* ── GANTT ── */
@@ -107,10 +108,12 @@
   .checked label { text-decoration: line-through; color: #aaa; }
 
   /* ── MEMBER CARDS ── */
-  .member-grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(230px,1fr)); gap: 14px; }
+  .member-grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(260px,1fr)); gap: 14px; }
   .member-card { background: var(--white); border-radius: 10px; padding: 14px 16px;
-                 box-shadow: var(--shadow); border-left: 4px solid var(--blue); }
-  .member-name { font-size: 1rem; font-weight: 700; color: var(--navy); }
+                 box-shadow: var(--shadow); border-left: 4px solid var(--blue);
+                 position: relative; }
+  .member-card-actions { position: absolute; top: 10px; right: 10px; display: flex; gap: 5px; }
+  .member-name { font-size: 1rem; font-weight: 700; color: var(--navy); padding-right: 70px; }
   .member-role { font-size: .78rem; color: #888; margin-bottom: 8px; }
   .member-tasks { font-size: .82rem; }
   .member-status { display: inline-block; padding: 2px 8px; border-radius: 99px;
@@ -118,17 +121,26 @@
   .ms-confirmed { background: #D5F5E3; color: #1E8449; }
   .ms-pending   { background: #FEF9E7; color: #856404; }
   .ms-no        { background: #FADBD8; color: #922B21; }
+  .member-tasks-list { margin-top: 8px; }
+  .member-tasks-list .task-item { padding: 3px 0; border-bottom: 1px solid #F0F0F0; font-size: .82rem; display: flex; align-items: center; gap: 6px; }
 
   /* ── MODAL ── */
   .modal-bg { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 200;
               align-items: center; justify-content: center; }
   .modal-bg.open { display: flex; }
-  .modal { background: #fff; border-radius: 12px; padding: 24px; width: 480px;
-           max-width: 95vw; box-shadow: 0 8px 40px rgba(0,0,0,.2); }
+  .modal { background: #fff; border-radius: 12px; padding: 24px; width: 520px;
+           max-width: 95vw; max-height: 90vh; overflow-y: auto;
+           box-shadow: 0 8px 40px rgba(0,0,0,.2); }
   .modal h3 { font-size: 1.1rem; color: var(--navy); margin-bottom: 14px; }
   .form-row { margin-bottom: 12px; }
   .form-row label { display: block; font-size: .82rem; font-weight: 600; margin-bottom: 4px; }
   .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 16px; }
+
+  /* tasks input in member modal */
+  .task-input-row { display: flex; gap: 6px; margin-bottom: 6px; }
+  .task-input-row input { flex: 1; }
+  .task-input-row button { flex-shrink: 0; padding: 5px 10px; background: var(--red); color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: .8rem; }
+  #member-tasks-list-edit { margin-bottom: 8px; }
 
   /* ── TIMELINE ── */
   .timeline { position: relative; padding-left: 28px; }
@@ -147,6 +159,14 @@
   #notes-area { width:100%; height:180px; resize:vertical; padding:10px;
                 border:1px solid var(--border); border-radius:8px; font-size:.88rem; }
 
+
+  /* ── TOAST ── */
+  #toast { position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(80px);
+           background:var(--navy); color:#fff; padding:10px 22px; border-radius:8px;
+           font-size:.88rem; font-weight:600; z-index:999; opacity:0;
+           transition:all .3s cubic-bezier(.16,1,.3,1); pointer-events:none; box-shadow:0 4px 20px rgba(0,0,0,.3); }
+  #toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+
   /* Scrollbar */
   ::-webkit-scrollbar { width:6px; height:6px; }
   ::-webkit-scrollbar-track { background:#F0F4FB; }
@@ -164,22 +184,22 @@
 <!-- NAV -->
 <nav>
   <div class="logo">🤿 ROV 備戰</div>
-  <button class="tab-btn active" onclick="showPage('dashboard')">📊 總覽</button>
-  <button class="tab-btn" onclick="showPage('tasks')">✅ 任務</button>
-  <button class="tab-btn" onclick="showPage('checklist')">📋 檢查清單</button>
-  <button class="tab-btn" onclick="showPage('gantt')">📅 甘特圖</button>
-  <button class="tab-btn" onclick="showPage('members')">👥 成員</button>
-  <button class="tab-btn" onclick="showPage('intel')">🔍 觀摩記錄</button>
-  <button class="tab-btn" onclick="showPage('notes')">📝 備忘</button>
+  <button class="tab-btn active" onclick="showPage('dashboard',this)">📊 總覽</button>
+  <button class="tab-btn" onclick="showPage('tasks',this)">✅ 任務</button>
+  <button class="tab-btn" onclick="showPage('checklist',this)">📋 檢查清單</button>
+  <button class="tab-btn" onclick="showPage('gantt',this)">📅 甘特圖</button>
+  <button class="tab-btn" onclick="showPage('members',this)">👥 成員</button>
+  <button class="tab-btn" onclick="showPage('intel',this)">🔍 觀摩記錄</button>
+  <button class="tab-btn" onclick="showPage('notes',this)">📝 備忘</button>
   <div class="nav-spacer"></div>
   <button id="save-btn" onclick="saveAll()">💾 儲存</button>
+  <button class="tab-btn" onclick="document.getElementById('dbsetup-modal').classList.add('open')" style="margin-left:auto;background:rgba(255,200,0,.2);border:1px solid rgba(255,200,0,.4)">🗄 DB 設定</button>
 </nav>
 
 <!-- ═══════════════════ PAGE: DASHBOARD ═══════════════════ -->
 <div id="page-dashboard" class="page active">
   <h1>📊 總覽 — MATE ROV 世界賽備戰</h1>
   <div class="card-grid" id="stat-cards" style="margin-bottom:16px"></div>
-
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
     <div class="card">
       <h2>⏰ 關鍵截止日</h2>
@@ -190,7 +210,6 @@
       <div id="progress-bars"></div>
     </div>
   </div>
-
   <div class="card" style="margin-top:16px">
     <h2>🔴 未完成緊急任務</h2>
     <table><thead><tr><th>任務</th><th>負責人</th><th>期限</th><th>操作</th></tr></thead>
@@ -254,8 +273,23 @@
 
 <!-- ═══════════════════ PAGE: MEMBERS ═══════════════════ -->
 <div id="page-members" class="page">
+  <div id="member-db-status" style="display:none;padding:8px 14px;border-radius:6px;font-size:.82rem;margin-bottom:10px"></div>
   <h1>👥 成員任務管理</h1>
+  <div class="card" style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:10px;padding:12px 16px">
+    <input type="text" id="member-search" placeholder="搜尋成員姓名或角色…" style="width:220px" oninput="renderMembers()">
+    <select id="member-filter-canada" onchange="renderMembers()">
+      <option value="">所有出行狀態</option>
+      <option>✅ 確認參加</option>
+      <option>⏳ 待回報</option>
+      <option>❌ 不出行</option>
+    </select>
+    <button class="btn btn-primary" onclick="openAddMember()">＋ 新增成員</button>
+    <span id="member-count" style="font-size:.85rem;color:#666;margin-left:auto"></span>
+  </div>
   <div class="member-grid" id="member-grid"></div>
+  <div id="member-empty" style="display:none" class="card" style="text-align:center;color:#aaa;padding:30px">
+    尚無成員資料，點擊「新增成員」開始建立
+  </div>
 </div>
 
 <!-- ═══════════════════ PAGE: INTEL ═══════════════════ -->
@@ -319,6 +353,48 @@
   </div>
 </div>
 
+<!-- ═══════════════════ MODAL: ADD/EDIT MEMBER ═══════════════════ -->
+<div class="modal-bg" id="member-modal">
+  <div class="modal">
+    <h3 id="member-modal-title">新增成員</h3>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div class="form-row">
+        <label>姓名 <span style="color:var(--red)">*</span></label>
+        <input type="text" id="mm-name" placeholder="例：洪嘉濠">
+      </div>
+      <div class="form-row">
+        <label>角色/職責</label>
+        <input type="text" id="mm-role" placeholder="例：LP / 工程">
+      </div>
+    </div>
+    <div class="form-row">
+      <label>加拿大世界賽出行狀態</label>
+      <select id="mm-canada" style="width:100%">
+        <option value="✅ 確認參加">✅ 確認參加</option>
+        <option value="⏳ 待回報">⏳ 待回報</option>
+        <option value="⏳ 最終待確認">⏳ 最終待確認</option>
+        <option value="❌ 不出行">❌ 不出行</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <label>核心任務（每行一項）</label>
+      <div id="member-tasks-list-edit"></div>
+      <div class="task-input-row">
+        <input type="text" id="mm-task-input" placeholder="輸入任務後按新增…" onkeydown="if(event.key==='Enter'){addMemberTaskItem();event.preventDefault();}">
+        <button onclick="addMemberTaskItem()">＋ 新增</button>
+      </div>
+    </div>
+    <div class="form-row">
+      <label>備註</label>
+      <textarea id="mm-note" style="height:60px" placeholder="例：家庭原因不出行，仍需完成設備工作後交接"></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal('member-modal')">取消</button>
+      <button class="btn btn-primary" onclick="saveMember()">💾 儲存成員</button>
+    </div>
+  </div>
+</div>
+
 <!-- ═══════════════════ MODAL: ADD INTEL ═══════════════════ -->
 <div class="modal-bg" id="intel-modal">
   <div class="modal">
@@ -348,17 +424,15 @@
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 <script>
 // ═══════════════════════════════════════════════════════
-// ★ SUPABASE CONFIG  ← 改這兩行！
+// ★ SUPABASE CONFIG
 // ═══════════════════════════════════════════════════════
 const SUPABASE_URL = 'https://funahmlcriyrpqelefah.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ1bmFobWxjcml5cnBxZWxlZmFoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc1MTQ5MjQsImV4cCI6MjA5MzA5MDkyNH0.G6de9ZXI4s-AkyzW5poQwwZEVaoUJvw17cXFj90FP88';
 const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-
 // ═══════════════════════════════════════════════════════
-// DATA
+// DATA DEFAULTS
 // ═══════════════════════════════════════════════════════
-
 const DEFAULT_TASKS = [
   {id:1,  name:'確認路承霖是否參加加拿大世界賽', cat:'🔴 緊急', owner:'路承霖+教練', due:'2026-04-29', status:'待辦', note:''},
   {id:2,  name:'通過旅行社確認購票（$19,000方案）', cat:'🔴 緊急', owner:'教練', due:'2026-04-30', status:'待辦', note:'本週四確定'},
@@ -390,7 +464,7 @@ const DEFAULT_TASKS = [
 ];
 
 const DEFAULT_MEMBERS = [
-  {name:'何柏熹', role:'BD圖 / Motor罩', canada: '❌ 不出行',
+  {name:'何柏熹', role:'BD圖 / Motor罩', canada:'❌ 不出行',
    tasks:['接收TT28 PD圖，改造Motor罩','繪製BD圖','查閱世界賽電源安全規則'],
    note:'家庭原因不出行，仍需完成設備工作後交接'},
   {name:'周以軒', role:'CEO / Presentation', canada:'⏳ 待回報',
@@ -463,10 +537,11 @@ const DEFAULT_INTEL = [
 // ═══════════════════════════════════════════════════════
 // STATE
 // ═══════════════════════════════════════════════════════
-let state = { tasks: [], checklist: JSON.parse(JSON.stringify(DEFAULT_CHECKLIST)), intel: [], notes: '' };
+let state = { tasks: [], members: [], checklist: JSON.parse(JSON.stringify(DEFAULT_CHECKLIST)), intel: [], notes: '' };
 let editingTaskId = null;
+let editingMemberId = null;
+let memberTaskItems = []; // temp list while editing member modal
 
-// saveAll is kept as empty stub so existing UI code doesn't break
 function saveAll() {}
 
 // ═══════════════════════════════════════════════════════
@@ -474,42 +549,100 @@ function saveAll() {}
 // ═══════════════════════════════════════════════════════
 async function loadFromSupabase() {
   // ── TASKS ──
-  let { data: td, error: te } = await db.from('tasks').select('*').order('id');
-  if (te) { console.error('tasks:', te.message); td = []; }
-  if (td.length === 0) {
-    const seeds = DEFAULT_TASKS.map(t => ({ name:t.name, cat:t.cat, owner:t.owner, due:t.due||null, status:t.status, note:t.note||'' }));
-    await db.from('tasks').insert(seeds);
-    const { data: re } = await db.from('tasks').select('*').order('id');
-    state.tasks = re || [];
-  } else { state.tasks = td; }
+  try {
+    let { data: td, error: te } = await db.from('tasks').select('*').order('id');
+    if (te) throw te;
+    if (!td || td.length === 0) {
+      const seeds = DEFAULT_TASKS.map(t => ({ name:t.name, cat:t.cat, owner:t.owner, due:t.due||null, status:t.status, note:t.note||'' }));
+      const { error: ie } = await db.from('tasks').insert(seeds);
+      if (ie) throw ie;
+      const { data: re } = await db.from('tasks').select('*').order('id');
+      state.tasks = re || DEFAULT_TASKS;
+    } else { state.tasks = td; }
+  } catch(e) {
+    console.warn('⚠️ tasks fallback to default:', e.message);
+    state.tasks = DEFAULT_TASKS.map((t,i) => ({...t, id:i+1}));
+  }
+
+  // ── MEMBERS ──
+  try {
+    let { data: md, error: me } = await db.from('members').select('*').order('id');
+    if (me) throw new Error('讀取失敗：' + me.message);
+    if (!md || md.length === 0) {
+      const seeds = DEFAULT_MEMBERS.map(m => ({
+        name:m.name, role:m.role, canada:m.canada,
+        tasks:JSON.stringify(m.tasks), note:m.note||''
+      }));
+      const { error: ie } = await db.from('members').insert(seeds);
+      if (ie) {
+        const msg = ie.message||'';
+        if (msg.includes('row-level security') || msg.includes('RLS') || msg.includes('policy')) {
+          throw new Error('RLS 阻擋寫入 — 請在 Supabase SQL Editor 執行：alter table members disable row level security;');
+        }
+        throw new Error('新增預設資料失敗：' + msg);
+      }
+      const { data: re } = await db.from('members').select('*').order('id');
+      state.members = (re || []).map(parseMemberTasks);
+    } else { state.members = md.map(parseMemberTasks); }
+    setMemberDbStatus('ok');
+  } catch(e) {
+    console.warn('⚠️ members fallback to default:', e.message);
+    state.members = DEFAULT_MEMBERS.map((m,i) => parseMemberTasks({...m, id:i+1, tasks:JSON.stringify(m.tasks)}));
+    setMemberDbStatus('error', e.message);
+  }
 
   // ── INTEL ──
-  let { data: id2, error: ie } = await db.from('intel').select('*').order('id');
-  if (ie) { console.error('intel:', ie.message); id2 = []; }
-  if (id2.length === 0) {
-    const seeds = DEFAULT_INTEL.map(i => ({ team:i.team, recorder:i.recorder, cat:i.cat, what:i.what, why:i.why, how:i.how, action:i.action, status:i.status }));
-    await db.from('intel').insert(seeds);
-    const { data: re } = await db.from('intel').select('*').order('id');
-    state.intel = re || [];
-  } else { state.intel = id2; }
+  try {
+    let { data: id2, error: ie } = await db.from('intel').select('*').order('id');
+    if (ie) throw ie;
+    if (!id2 || id2.length === 0) {
+      const seeds = DEFAULT_INTEL.map(i => ({ team:i.team, recorder:i.recorder, cat:i.cat, what:i.what, why:i.why, how:i.how, action:i.action, status:i.status }));
+      const { error: se } = await db.from('intel').insert(seeds);
+      if (se) throw se;
+      const { data: re } = await db.from('intel').select('*').order('id');
+      state.intel = re || DEFAULT_INTEL;
+    } else { state.intel = id2; }
+  } catch(e) {
+    console.warn('⚠️ intel fallback to default:', e.message);
+    state.intel = DEFAULT_INTEL.map((x,i) => ({...x, id:i+1}));
+  }
 
   // ── CHECKLIST ──
-  let { data: cd, error: ce } = await db.from('checklist_items').select('*').order('order_index');
-  if (ce) { console.error('checklist:', ce.message); cd = []; }
-  if (cd.length === 0) {
-    const seeds = [];
-    let oi = 0;
-    DEFAULT_CHECKLIST.forEach(sec => sec.items.forEach(item => {
-      seeds.push({ item_id:item.id, sec:sec.sec, sec_name:sec.secName, text:item.text, owner:item.owner, time:item.time, done:false, order_index:oi++ });
-    }));
-    await db.from('checklist_items').insert(seeds);
-    const { data: re } = await db.from('checklist_items').select('*').order('order_index');
-    rebuildChecklist(re || []);
-  } else { rebuildChecklist(cd); }
+  try {
+    let { data: cd, error: ce } = await db.from('checklist_items').select('*').order('order_index');
+    if (ce) throw ce;
+    if (!cd || cd.length === 0) {
+      const seeds = [];
+      let oi = 0;
+      DEFAULT_CHECKLIST.forEach(sec => sec.items.forEach(item => {
+        seeds.push({ item_id:item.id, sec:sec.sec, sec_name:sec.secName, text:item.text, owner:item.owner, time:item.time, done:false, order_index:oi++ });
+      }));
+      const { error: se } = await db.from('checklist_items').insert(seeds);
+      if (se) throw se;
+      const { data: re } = await db.from('checklist_items').select('*').order('order_index');
+      rebuildChecklist(re || []);
+    } else { rebuildChecklist(cd); }
+  } catch(e) {
+    console.warn('⚠️ checklist fallback to default:', e.message);
+    state.checklist = JSON.parse(JSON.stringify(DEFAULT_CHECKLIST));
+  }
 
   // ── NOTES ──
-  const { data: nd } = await db.from('notes').select('content').eq('id', 1).single();
-  if (nd) state.notes = nd.content || '';
+  try {
+    const { data: nd } = await db.from('notes').select('content').eq('id', 1).single();
+    if (nd) state.notes = nd.content || '';
+  } catch(e) {
+    console.warn('⚠️ notes fallback:', e.message);
+  }
+}
+
+function parseMemberTasks(m) {
+  let tasks = m.tasks;
+  if (typeof tasks === 'string') {
+    try { tasks = JSON.parse(tasks); } catch(e) { tasks = tasks.split('\n').filter(Boolean); }
+  }
+  if (!Array.isArray(tasks)) tasks = [];
+  return { ...m, tasks };
 }
 
 function rebuildChecklist(rows) {
@@ -524,11 +657,11 @@ function rebuildChecklist(rows) {
 // ═══════════════════════════════════════════════════════
 // NAVIGATION
 // ═══════════════════════════════════════════════════════
-function showPage(id) {
+function showPage(id, btn) {
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
   document.getElementById('page-'+id).classList.add('active');
-  event.currentTarget.classList.add('active');
+  if(btn) btn.classList.add('active');
   if(id==='dashboard') renderDashboard();
   if(id==='tasks') renderTasks();
   if(id==='checklist') renderChecklist();
@@ -563,46 +696,46 @@ function renderDashboard() {
     </div>
   `;
 
-  // deadlines
-  const deadlines = [
-    {date:'2026-04-29',label:'確認路承霖參賽 + 住宿決定',urgent:true},
-    {date:'2026-04-30',label:'機票通過旅行社確認（$19,000）',urgent:true},
-    {date:'2026-05-01',label:'預約簽證（5/4指紋+照片）',urgent:true},
-    {date:'2026-05-02',label:'死機問題解決 + 試水',urgent:true},
-    {date:'2026-05-04',label:'嘗試與福建中學交流'},
-    {date:'2026-05-06',label:'Mission排練分組確認'},
-    {date:'2026-05-15',label:'BD圖+Motor罩+Foster完成'},
-    {date:'2026-07-28',label:'✈️ 出發加拿大（暫定）'},
-  ];
+  // ── 關鍵截止日：動態從 tasks table 讀取有 due 日期且未完成的任務 ──
   const today = new Date(); today.setHours(0,0,0,0);
-  document.getElementById('deadline-timeline').innerHTML = deadlines.map(d=>{
-    const dt = new Date(d.date); dt.setHours(0,0,0,0);
-    const diff = Math.ceil((dt-today)/86400000);
-    const isDone = diff<0;
-    const cls = isDone?'done':(d.urgent&&diff<=3?'urgent':'');
-    const diffLabel = isDone?'已過期':(diff===0?'今日':diff+'天後');
-    return `<div class="tl-item">
-      <div class="tl-dot ${cls}"></div>
-      <div class="tl-date">${d.date} <span style="color:${isDone?'#aaa':d.urgent&&diff<=3?'var(--red)':'var(--blue)'};font-weight:700">${diffLabel}</span></div>
-      <div class="tl-content">${d.label}</div>
-    </div>`;
-  }).join('');
+  const deadlineTasks = tasks
+    .filter(t => t.due && t.status !== '已完成')
+    .sort((a,b) => new Date(a.due) - new Date(b.due))
+    .slice(0, 12); // 最多顯示12項
 
-  // progress bars
+  document.getElementById('deadline-timeline').innerHTML = deadlineTasks.length
+    ? deadlineTasks.map(d=>{
+        const dt = new Date(d.due); dt.setHours(0,0,0,0);
+        const diff = Math.ceil((dt-today)/86400000);
+        const isOverdue = diff < 0;
+        const isUrgent = !isOverdue && diff <= 3;
+        const cls = isOverdue ? 'done' : (isUrgent ? 'urgent' : '');
+        const diffLabel = isOverdue ? `逾期${Math.abs(diff)}天` : (diff===0 ? '今日截止' : diff+'天後');
+        const diffColor = isOverdue ? '#aaa' : (isUrgent ? 'var(--red)' : 'var(--blue)');
+        return `<div class="tl-item">
+          <div class="tl-dot ${cls}"></div>
+          <div class="tl-date">${d.due} <span style="color:${diffColor};font-weight:700">${diffLabel}</span>
+            <span style="font-size:.7rem;color:#999;margin-left:4px">${d.cat||''}</span></div>
+          <div class="tl-content">${d.name}
+            ${d.owner ? `<span style="font-size:.73rem;color:#888;margin-left:6px">👤 ${d.owner}</span>` : ''}
+          </div>
+        </div>`;
+      }).join('')
+    : '<div style="color:#aaa;font-size:.85rem;padding:12px 0">目前無待辦截止任務</div>';
+
   const cats = ['🔴 緊急','🟠 高優先','🟡 中優先','🟢 持續'];
   const catColors = {'🔴 緊急':'var(--red)','🟠 高優先':'var(--orange)','🟡 中優先':'#D4AC0D','🟢 持續':'var(--green)'};
   document.getElementById('progress-bars').innerHTML = cats.map(cat=>{
     const ct = tasks.filter(t=>t.cat===cat);
-    const cd = ct.filter(t=>t.status==='已完成').length;
-    const pct = ct.length ? Math.round(cd/ct.length*100) : 0;
+    const cd2 = ct.filter(t=>t.status==='已完成').length;
+    const p2 = ct.length ? Math.round(cd2/ct.length*100) : 0;
     return `<div style="margin-bottom:10px">
       <div style="display:flex;justify-content:space-between;font-size:.82rem;margin-bottom:3px">
-        <span>${cat}</span><span>${cd}/${ct.length} (${pct}%)</span></div>
-      <div class="prog-wrap"><div class="prog-bar" style="width:${pct}%;background:${catColors[cat]}"></div></div>
+        <span>${cat}</span><span>${cd2}/${ct.length} (${p2}%)</span></div>
+      <div class="prog-wrap"><div class="prog-bar" style="width:${p2}%;background:${catColors[cat]}"></div></div>
     </div>`;
   }).join('');
 
-  // urgent table
   const urgentTasks = tasks.filter(t=>t.cat==='🔴 緊急'&&t.status!=='已完成');
   document.getElementById('urgent-table').innerHTML = urgentTasks.map(t=>`
     <tr>
@@ -631,11 +764,10 @@ function renderTasks() {
   const owner = document.getElementById('filter-owner').value;
   const search = document.getElementById('search-task').value.toLowerCase();
 
-  // populate owner filter
   const owners = [...new Set(state.tasks.map(t=>t.owner))].sort();
   const ownerSel = document.getElementById('filter-owner');
   const curOwner = ownerSel.value;
-  ownerSel.innerHTML = '<option value="">所有負責人</option>' + owners.map(o=>`<option ${o===curOwner?'selected':''}>${o}</option>`).join('');
+  ownerSel.innerHTML = '<option value="">所有負責人</option>' + owners.map(o=>`<option ${o===curOwner?'selected':''}>` + o + '</option>').join('');
 
   const filtered = state.tasks.filter(t=>
     (!cat||t.cat===cat) &&
@@ -704,8 +836,7 @@ function editTask(id) {
   document.getElementById('m-cat').value = t.cat;
   document.getElementById('m-status').value = t.status;
   document.getElementById('m-owner').value = t.owner;
-  document.getElementById('m-due').value = t.due;
-  document.getElementById('m-note').value = t.note;
+  document.getElementById('m-due').value = t.due||'';  document.getElementById('m-note').value = t.note;
   document.getElementById('task-modal').classList.add('open');
 }
 
@@ -736,6 +867,188 @@ async function deleteTask(id) {
   state.tasks = state.tasks.filter(t=>t.id!==id);
   renderTasks();
   renderDashboard();
+}
+
+// ═══════════════════════════════════════════════════════
+// MEMBERS  ★ CRUD
+// ═══════════════════════════════════════════════════════
+function setMemberDbStatus(type, msg='') {
+  const el = document.getElementById('member-db-status');
+  if (!el) return;
+  if (type === 'ok') {
+    el.style.display = 'none';
+  } else {
+    el.style.display = 'block';
+    el.style.background = '#FFF3CD';
+    el.style.border = '1px solid #FFCA28';
+    el.style.color = '#7B5800';
+    el.innerHTML = `⚠️ <strong>members table 連線異常</strong>，目前顯示預設資料（修改不會儲存）。<br><small style="opacity:.8">錯誤：${msg}</small><br><small>請點右上角「🗄 DB 設定」建立 table 後重新整理。</small>`;
+  }
+}
+
+function renderMembers() {
+  const search = (document.getElementById('member-search')||{}).value||'';
+  const canadaFilter = (document.getElementById('member-filter-canada')||{}).value||'';
+
+  let list = state.members.filter(m => {
+    const matchSearch = !search || m.name.includes(search) || (m.role||''). includes(search);
+    const matchCanada = !canadaFilter || (m.canada||'').includes(canadaFilter.trim());
+    return matchSearch && matchCanada;
+  });
+
+  const canadaIcon = {'✅ 確認參加':'ms-confirmed','⏳ 待回報':'ms-pending','⏳ 最終待確認':'ms-pending','❌ 不出行':'ms-no'};
+
+  document.getElementById('member-count').textContent = `共 ${state.members.length} 位成員`;
+  const grid = document.getElementById('member-grid');
+  const empty = document.getElementById('member-empty');
+
+  if (list.length === 0) {
+    grid.innerHTML = '';
+    empty.style.display = 'block';
+    return;
+  }
+  empty.style.display = 'none';
+
+  // Link tasks from state.tasks where owner matches member name
+  const getLinkedTasks = (name) => {
+    return state.tasks.filter(t => {
+      const owners = (t.owner||'').split(/[+\/,、]/).map(o=>o.trim());
+      return owners.some(o => o.includes(name) || name.includes(o));
+    });
+  };
+
+  grid.innerHTML = list.map(m => {
+    const statusCls = canadaIcon[m.canada]||'ms-pending';
+    const linked = getLinkedTasks(m.name);
+    const doneCount = linked.filter(t=>t.status==='已完成').length;
+    const progress = linked.length ? `${doneCount}/${linked.length} 完成` : '';
+    // Use member's own core tasks (from members.tasks) as primary list
+    const coreList = Array.isArray(m.tasks) ? m.tasks : [];
+    // Show linked tasks from tasks table grouped by status
+    const pendingLinked = linked.filter(t=>t.status!=='已完成');
+    const doneLinked = linked.filter(t=>t.status==='已完成');
+    return `
+    <div class="member-card">
+      <div class="member-card-actions">
+        <button class="btn btn-sm btn-primary" onclick="editMember(${m.id})" title="編輯成員">✏️</button>
+        <button class="btn btn-sm btn-danger" onclick="deleteMember(${m.id})" title="刪除成員">🗑</button>
+      </div>
+      <div class="member-name">👤 ${m.name}</div>
+      <div class="member-role">${m.role||'（未設定角色）'}</div>
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+        <span class="member-status ${statusCls}">加拿大：${m.canada||'未知'}</span>
+        ${progress ? `<span style="font-size:.72rem;background:#E3F2FD;color:#1565C0;padding:1px 7px;border-radius:10px">📋 ${progress}</span>` : ''}
+      </div>
+      ${coreList.length ? `
+      <div class="member-tasks-list" style="margin-top:8px">
+        <div style="font-size:.75rem;color:#888;margin-bottom:4px">📌 核心任務：</div>
+        ${coreList.map(t=>`<div class="task-item">• ${t}</div>`).join('')}
+      </div>` : ''}
+      ${linked.length ? `
+      <div style="margin-top:8px;border-top:1px solid #eee;padding-top:8px">
+        <div style="font-size:.75rem;color:#888;margin-bottom:4px">🗂 任務表負責項目（${linked.length}項）：</div>
+        ${pendingLinked.map(t=>`<div style="font-size:.75rem;padding:2px 0;color:#333">⏳ ${t.name}</div>`).join('')}
+        ${doneLinked.map(t=>`<div style="font-size:.75rem;padding:2px 0;color:#aaa;text-decoration:line-through">✅ ${t.name}</div>`).join('')}
+      </div>` : ''}
+      ${m.note ? `<div style="margin-top:6px;font-size:.75rem;color:var(--orange);background:#FFF3E0;padding:4px 8px;border-radius:4px">⚠️ ${m.note}</div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+function openAddMember() {
+  editingMemberId = null;
+  memberTaskItems = [];
+  document.getElementById('member-modal-title').textContent = '新增成員';
+  ['mm-name','mm-role','mm-note'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('mm-canada').value = '⏳ 待回報';
+  document.getElementById('mm-task-input').value = '';
+  renderMemberTaskList();
+  document.getElementById('member-modal').classList.add('open');
+}
+
+function editMember(id) {
+  const m = state.members.find(x=>x.id===id);
+  if (!m) return;
+  editingMemberId = id;
+  memberTaskItems = [...(m.tasks||[])];
+  document.getElementById('member-modal-title').textContent = '編輯成員：' + m.name;
+  document.getElementById('mm-name').value = m.name;
+  document.getElementById('mm-role').value = m.role||'';
+  document.getElementById('mm-canada').value = m.canada||'⏳ 待回報';
+  document.getElementById('mm-note').value = m.note||'';
+  document.getElementById('mm-task-input').value = '';
+  renderMemberTaskList();
+  document.getElementById('member-modal').classList.add('open');
+}
+
+function renderMemberTaskList() {
+  const el = document.getElementById('member-tasks-list-edit');
+  if (!memberTaskItems.length) { el.innerHTML = '<div style="font-size:.78rem;color:#aaa;margin-bottom:6px">（尚無任務）</div>'; return; }
+  el.innerHTML = memberTaskItems.map((t,i)=>`
+    <div class="task-input-row" style="margin-bottom:4px">
+      <input type="text" value="${t.replace(/"/g,'&quot;')}" onchange="memberTaskItems[${i}]=this.value">
+      <button onclick="removeMemberTaskItem(${i})" title="刪除此任務">✕</button>
+    </div>`).join('');
+}
+
+function addMemberTaskItem() {
+  const inp = document.getElementById('mm-task-input');
+  const val = inp.value.trim();
+  if (!val) return;
+  memberTaskItems.push(val);
+  inp.value = '';
+  renderMemberTaskList();
+  inp.focus();
+}
+
+function removeMemberTaskItem(idx) {
+  memberTaskItems.splice(idx, 1);
+  renderMemberTaskList();
+}
+
+async function saveMember() {
+  const name = document.getElementById('mm-name').value.trim();
+  if (!name) { alert('請輸入成員姓名'); return; }
+  const data = {
+    name,
+    role: document.getElementById('mm-role').value.trim(),
+    canada: document.getElementById('mm-canada').value,
+    tasks: JSON.stringify(memberTaskItems),
+    note: document.getElementById('mm-note').value.trim(),
+  };
+
+  if (editingMemberId) {
+    const { error } = await db.from('members').update(data).eq('id', editingMemberId);
+    if (!error) {
+      const idx = state.members.findIndex(x=>x.id===editingMemberId);
+      if (idx>=0) state.members[idx] = parseMemberTasks({ ...state.members[idx], ...data });
+    }
+  } else {
+    const { data: row, error } = await db.from('members').insert([data]).select().single();
+    if (!error && row) state.members.push(parseMemberTasks(row));
+    else if (!row) {
+      // fallback: add locally with temp id
+      const tmpId = Date.now();
+      state.members.push(parseMemberTasks({ ...data, id: tmpId }));
+    }
+  }
+  closeModal('member-modal');
+  renderMembers();
+  showToast(editingMemberId ? '✅ 成員資料已更新' : '✅ 新成員已新增');
+}
+
+async function deleteMember(id) {
+  const m = state.members.find(x=>x.id===id);
+  if (!m) return;
+  if (!confirm(`確認刪除成員「${m.name}」？此操作無法復原。`)) return;
+  const { error } = await db.from('members').delete().eq('id', id);
+  if (!error) {
+    state.members = state.members.filter(x=>x.id!==id);
+    renderMembers();
+    showToast('🗑 成員已刪除');
+  } else {
+    alert('刪除失敗，請稍後再試');
+  }
 }
 
 // ═══════════════════════════════════════════════════════
@@ -783,7 +1096,6 @@ function renderGantt() {
   const dates = Array.from({length:days},(_,i)=>{ const d=new Date(start); d.setDate(start.getDate()+i); return d; });
   const dayAbbr = ['日','一','二','三','四','五','六'];
 
-  // Map task categories to gantt CSS classes
   function catToCls(cat) {
     if (!cat) return 'g-eng';
     if (cat.includes('緊急')) return 'g-exam';
@@ -793,7 +1105,6 @@ function renderGantt() {
     return 'g-admin';
   }
 
-  // Build rows from state.tasks (only tasks with due date, sorted by due)
   const rows = state.tasks
     .filter(t => t.due)
     .sort((a, b) => (a.due > b.due ? 1 : -1))
@@ -807,15 +1118,12 @@ function renderGantt() {
       };
     });
 
-  // week header
   const weekDates = ['Apr 28–May 3','May 4–10','May 11–17','May 18–24','May 25–Jun 1'];
   const weekColors = ['#31849B','#375623','#7F6000','#833C00','#76024F'];
 
   let html = '<table class="gantt-table"><thead>';
   html += '<tr><th style="min-width:180px;text-align:left;padding:6px 10px">任務</th>';
-  for(let w=0;w<5;w++) {
-    html += `<th colspan="7" style="background:${weekColors[w]}">${weekDates[w]}</th>`;
-  }
+  for(let w=0;w<5;w++) { html += `<th colspan="7" style="background:${weekColors[w]}">${weekDates[w]}</th>`; }
   html += '</tr><tr><th></th>';
   dates.forEach(d=>{
     const isWE = d.getDay()===0||d.getDay()===6;
@@ -834,44 +1142,15 @@ function renderGantt() {
       row.spans.forEach((active,i)=>{
         const d = dates[i];
         const isWE = d.getDay()===0||d.getDay()===6;
-        html += `<td class="gantt-cell" style="background:${active?'':isWE?'#F0F0F0':'white'}">
+        html += `<td class="gantt-cell" style="background:${active?''  :isWE?'#F0F0F0':'white'}">
           ${active?`<div class="${row.cls} g-bar" style="height:14px;width:100%;${row.done?'opacity:.4':''}"></div>`:''}
         </td>`;
       });
       html += '</tr>';
     });
   }
-
   html += '</tbody></table>';
   document.getElementById('gantt-wrap').innerHTML = html;
-}
-
-// ═══════════════════════════════════════════════════════
-
-// MEMBERS
-// ═══════════════════════════════════════════════════════
-function renderMembers() {
-  const canadaIcon = {'✅ 確認參加':'ms-confirmed','⏳ 待回報':'ms-pending','⏳ 最終待確認':'ms-pending','❌ 不出行':'ms-no'};
-  const tasksDone = (name) => {
-    const myTasks = state.tasks.filter(t=>t.owner.includes(name.slice(0,2)));
-    const done = myTasks.filter(t=>t.status==='已完成').length;
-    return `${done}/${myTasks.length}`;
-  };
-  document.getElementById('member-grid').innerHTML = DEFAULT_MEMBERS.map(m=>`
-    <div class="member-card">
-      <div class="member-name">👤 ${m.name}</div>
-      <div class="member-role">${m.role}</div>
-      <div>
-        <span class="member-status ${canadaIcon[m.canada]||'ms-pending'}">
-          加拿大：${m.canada}
-        </span>
-      </div>
-      <div class="member-tasks" style="margin-top:8px">
-        <div style="font-size:.75rem;color:#888;margin-bottom:4px">核心任務：</div>
-        ${m.tasks.map(t=>`<div style="padding:2px 0;border-bottom:1px solid #F0F0F0">• ${t}</div>`).join('')}
-      </div>
-      ${m.note?`<div style="margin-top:6px;font-size:.75rem;color:var(--orange);background:#FFF3E0;padding:4px 8px;border-radius:4px">⚠️ ${m.note}</div>`:''}
-    </div>`).join('');
 }
 
 // ═══════════════════════════════════════════════════════
@@ -964,6 +1243,14 @@ function saveNotes() {
   setTimeout(()=>el.style.display='none',2000);
 }
 
+// ── TOAST ──
+function showToast(msg, duration=2200) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), duration);
+}
+
 // ═══════════════════════════════════════════════════════
 // INIT
 // ═══════════════════════════════════════════════════════
@@ -973,6 +1260,88 @@ function saveNotes() {
   document.body.style.opacity = '1';
   renderDashboard();
 })();
-
 </script>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- MODAL: DB SETUP SQL -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div class="modal-bg" id="dbsetup-modal" onclick="if(event.target===this)closeModal('dbsetup-modal')">
+  <div class="modal" style="max-width:700px;max-height:90vh;overflow-y:auto">
+    <h3>🗄 Supabase 建表 SQL</h3>
+    <p style="margin:8px 0 12px;color:#555;font-size:.88rem">在 Supabase → SQL Editor 執行以下語句，建立全部 5 張 table，然後重新整理頁面即可自動匯入預設資料。</p>
+    <textarea id="sql-content" readonly style="width:100%;height:340px;font-family:monospace;font-size:.78rem;padding:10px;border:1px solid #ccc;border-radius:6px;resize:vertical;background:#f7f8fa">-- ① tasks
+create table if not exists tasks (
+  id        bigserial primary key,
+  name      text not null,
+  cat       text,
+  owner     text,
+  due       date,
+  status    text default '待辦',
+  note      text default ''
+);
+
+-- ② members
+create table if not exists members (
+  id      bigserial primary key,
+  name    text not null,
+  role    text,
+  canada  text,
+  tasks   text,
+  note    text default ''
+);
+
+-- ③ intel
+create table if not exists intel (
+  id        bigserial primary key,
+  team      text,
+  recorder  text,
+  cat       text,
+  what      text,
+  why       text,
+  how       text,
+  action    text,
+  status    text default '待跟進'
+);
+
+-- ④ checklist_items
+create table if not exists checklist_items (
+  id          bigserial primary key,
+  item_id     text not null unique,
+  sec         text not null,
+  sec_name    text not null,
+  text        text not null,
+  owner       text,
+  time        text,
+  done        boolean default false,
+  order_index integer not null
+);
+
+-- ⑤ notes
+create table if not exists notes (
+  id      integer primary key default 1,
+  content text default ''
+);
+insert into notes (id, content) values (1, '') on conflict (id) do nothing;
+
+-- ══════════════════════════════════════════════
+-- ⚠️ 必須執行：關閉 RLS（Row Level Security）
+-- Supabase 預設啟用 RLS，會阻擋 anon key 寫入
+-- ══════════════════════════════════════════════
+alter table tasks           disable row level security;
+alter table members         disable row level security;
+alter table intel           disable row level security;
+alter table checklist_items disable row level security;
+alter table notes           disable row level security;</textarea>
+    <div class="modal-actions" style="margin-top:12px">
+      <button class="btn" onclick="closeModal('dbsetup-modal')">關閉</button>
+      <button class="btn btn-primary" onclick="
+        const el=document.getElementById('sql-content');
+        el.select(); document.execCommand('copy');
+        showToast('✅ SQL 已複製到剪貼板');
+      ">📋 複製 SQL</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
 </html>
