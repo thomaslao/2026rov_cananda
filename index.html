@@ -345,11 +345,19 @@
   </div>
 </div>
 
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 <script>
+// ═══════════════════════════════════════════════════════
+// ★ SUPABASE CONFIG  ← 改這兩行！
+// ═══════════════════════════════════════════════════════
+const SUPABASE_URL = 'https://funahmlcriyrpqelefah.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ1bmFobWxjcml5cnBxZWxlZmFoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc1MTQ5MjQsImV4cCI6MjA5MzA5MDkyNH0.G6de9ZXI4s-AkyzW5poQwwZEVaoUJvw17cXFj90FP88';
+const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+
 // ═══════════════════════════════════════════════════════
 // DATA
 // ═══════════════════════════════════════════════════════
-const STORAGE_KEY = 'rov_data_v2';
 
 const DEFAULT_TASKS = [
   {id:1,  name:'確認路承霖是否參加加拿大世界賽', cat:'🔴 緊急', owner:'路承霖+教練', due:'2026-04-29', status:'待辦', note:''},
@@ -455,28 +463,62 @@ const DEFAULT_INTEL = [
 // ═══════════════════════════════════════════════════════
 // STATE
 // ═══════════════════════════════════════════════════════
-let state = loadState();
+let state = { tasks: [], checklist: JSON.parse(JSON.stringify(DEFAULT_CHECKLIST)), intel: [], notes: '' };
 let editingTaskId = null;
 
-function loadState() {
-  try {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) return JSON.parse(saved);
-  } catch(e){}
-  return {
-    tasks: JSON.parse(JSON.stringify(DEFAULT_TASKS)),
-    checklist: JSON.parse(JSON.stringify(DEFAULT_CHECKLIST)),
-    intel: JSON.parse(JSON.stringify(DEFAULT_INTEL)),
-    notes: '',
-  };
+// saveAll is kept as empty stub so existing UI code doesn't break
+function saveAll() {}
+
+// ═══════════════════════════════════════════════════════
+// SUPABASE LOAD
+// ═══════════════════════════════════════════════════════
+async function loadFromSupabase() {
+  // ── TASKS ──
+  let { data: td, error: te } = await db.from('tasks').select('*').order('id');
+  if (te) { console.error('tasks:', te.message); td = []; }
+  if (td.length === 0) {
+    const seeds = DEFAULT_TASKS.map(t => ({ name:t.name, cat:t.cat, owner:t.owner, due:t.due||null, status:t.status, note:t.note||'' }));
+    await db.from('tasks').insert(seeds);
+    const { data: re } = await db.from('tasks').select('*').order('id');
+    state.tasks = re || [];
+  } else { state.tasks = td; }
+
+  // ── INTEL ──
+  let { data: id2, error: ie } = await db.from('intel').select('*').order('id');
+  if (ie) { console.error('intel:', ie.message); id2 = []; }
+  if (id2.length === 0) {
+    const seeds = DEFAULT_INTEL.map(i => ({ team:i.team, recorder:i.recorder, cat:i.cat, what:i.what, why:i.why, how:i.how, action:i.action, status:i.status }));
+    await db.from('intel').insert(seeds);
+    const { data: re } = await db.from('intel').select('*').order('id');
+    state.intel = re || [];
+  } else { state.intel = id2; }
+
+  // ── CHECKLIST ──
+  let { data: cd, error: ce } = await db.from('checklist_items').select('*').order('order_index');
+  if (ce) { console.error('checklist:', ce.message); cd = []; }
+  if (cd.length === 0) {
+    const seeds = [];
+    let oi = 0;
+    DEFAULT_CHECKLIST.forEach(sec => sec.items.forEach(item => {
+      seeds.push({ item_id:item.id, sec:sec.sec, sec_name:sec.secName, text:item.text, owner:item.owner, time:item.time, done:false, order_index:oi++ });
+    }));
+    await db.from('checklist_items').insert(seeds);
+    const { data: re } = await db.from('checklist_items').select('*').order('order_index');
+    rebuildChecklist(re || []);
+  } else { rebuildChecklist(cd); }
+
+  // ── NOTES ──
+  const { data: nd } = await db.from('notes').select('content').eq('id', 1).single();
+  if (nd) state.notes = nd.content || '';
 }
 
-function saveAll() {
-  state.notes = document.getElementById('notes-area').value;
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-  const btn = document.getElementById('save-btn');
-  btn.textContent = '✓ 已儲存';
-  setTimeout(()=>{ btn.textContent = '💾 儲存'; }, 1500);
+function rebuildChecklist(rows) {
+  const map = {};
+  rows.forEach(r => {
+    if (!map[r.sec]) map[r.sec] = { sec:r.sec, secName:r.sec_name, items:[] };
+    map[r.sec].items.push({ id:r.item_id, text:r.text, owner:r.owner, time:r.time, done:r.done });
+  });
+  state.checklist = Object.values(map);
 }
 
 // ═══════════════════════════════════════════════════════
@@ -571,9 +613,13 @@ function renderDashboard() {
     </tr>`).join('') || '<tr><td colspan="4" style="text-align:center;color:var(--green);padding:16px">🎉 所有緊急任務已完成！</td></tr>';
 }
 
-function quickDone(id) {
+async function quickDone(id) {
   const t = state.tasks.find(t=>t.id===id);
-  if(t) { t.status='已完成'; saveAll(); renderDashboard(); }
+  if(!t) return;
+  await db.from('tasks').update({ status: '已完成' }).eq('id', id);
+  t.status = '已完成';
+  renderDashboard();
+  renderTasks();
 }
 
 // ═══════════════════════════════════════════════════════
@@ -630,9 +676,14 @@ function isOverdue(due) {
   return d < new Date();
 }
 
-function toggleTask(id) {
+async function toggleTask(id) {
   const t = state.tasks.find(t=>t.id===id);
-  if(t) { t.status = t.status==='已完成'?'待辦':'已完成'; saveAll(); renderTasks(); }
+  if(!t) return;
+  const ns = t.status==='已完成'?'待辦':'已完成';
+  await db.from('tasks').update({ status: ns }).eq('id', id);
+  t.status = ns;
+  renderTasks();
+  renderDashboard();
 }
 
 function openAddTask() {
@@ -658,30 +709,33 @@ function editTask(id) {
   document.getElementById('task-modal').classList.add('open');
 }
 
-function saveTask() {
+async function saveTask() {
   const t = {
     name: document.getElementById('m-name').value.trim(),
     cat: document.getElementById('m-cat').value,
     status: document.getElementById('m-status').value,
     owner: document.getElementById('m-owner').value.trim(),
-    due: document.getElementById('m-due').value,
+    due: document.getElementById('m-due').value || null,
     note: document.getElementById('m-note').value.trim(),
   };
   if(!t.name) return;
   if(editingTaskId) {
-    const idx = state.tasks.findIndex(x=>x.id===editingTaskId);
-    if(idx>=0) state.tasks[idx] = {...state.tasks[idx],...t};
+    await db.from('tasks').update(t).eq('id', editingTaskId);
+    const i = state.tasks.findIndex(x=>x.id===editingTaskId);
+    if(i>=0) state.tasks[i] = {...state.tasks[i],...t};
   } else {
-    const maxId = state.tasks.reduce((m,x)=>Math.max(m,x.id),0);
-    state.tasks.push({id:maxId+1,...t});
+    const { data } = await db.from('tasks').insert([t]).select().single();
+    if(data) state.tasks.push(data);
   }
-  saveAll(); closeModal('task-modal'); renderTasks();
+  closeModal('task-modal'); renderTasks(); renderDashboard();
 }
 
-function deleteTask(id) {
+async function deleteTask(id) {
   if(!confirm('確認刪除此任務？')) return;
+  await db.from('tasks').delete().eq('id', id);
   state.tasks = state.tasks.filter(t=>t.id!==id);
-  saveAll(); renderTasks();
+  renderTasks();
+  renderDashboard();
 }
 
 // ═══════════════════════════════════════════════════════
@@ -706,15 +760,18 @@ function renderChecklist() {
     </div>`).join('');
 }
 
-function toggleCheck(id) {
-  state.checklist.forEach(sec=>sec.items.forEach(item=>{ if(item.id===id) item.done=!item.done; }));
-  saveAll(); renderChecklist();
+async function toggleCheck(id) {
+  let newDone;
+  state.checklist.forEach(sec=>sec.items.forEach(item=>{ if(item.id===id){ item.done=!item.done; newDone=item.done; } }));
+  await db.from('checklist_items').update({ done: newDone }).eq('item_id', id);
+  renderChecklist();
 }
 
-function resetChecklist() {
+async function resetChecklist() {
   if(!confirm('確認重置所有勾選項目？')) return;
   state.checklist.forEach(sec=>sec.items.forEach(item=>item.done=false));
-  saveAll(); renderChecklist();
+  await db.from('checklist_items').update({ done: false }).gte('order_index', 0);
+  renderChecklist();
 }
 
 // ═══════════════════════════════════════════════════════
@@ -834,18 +891,21 @@ function renderIntel() {
     </div>`).join('') || '<div class="card" style="text-align:center;color:#aaa;padding:30px">尚無觀摩記錄，點擊「新增」開始記錄</div>';
 }
 
-function cycleStatus(id) {
+async function cycleStatus(id) {
   const order = ['待跟進','進行中','已完成','不適用'];
   const item = state.intel.find(i=>i.id===id);
   if(!item) return;
-  item.status = order[(order.indexOf(item.status)+1)%order.length];
-  saveAll(); renderIntel();
+  const next = order[(order.indexOf(item.status)+1)%order.length];
+  await db.from('intel').update({ status: next }).eq('id', id);
+  item.status = next;
+  renderIntel();
 }
 
-function deleteIntel(id) {
+async function deleteIntel(id) {
   if(!confirm('確認刪除此記錄？')) return;
+  await db.from('intel').delete().eq('id', id);
   state.intel = state.intel.filter(i=>i.id!==id);
-  saveAll(); renderIntel();
+  renderIntel();
 }
 
 function openAddIntel() {
@@ -855,7 +915,7 @@ function openAddIntel() {
   document.getElementById('intel-modal').classList.add('open');
 }
 
-function saveIntel() {
+async function saveIntel() {
   const item = {
     team: document.getElementById('i-team').value.trim(),
     recorder: document.getElementById('i-recorder').value.trim(),
@@ -867,9 +927,9 @@ function saveIntel() {
     status: document.getElementById('i-status').value,
   };
   if(!item.team) return;
-  const maxId = state.intel.reduce((m,x)=>Math.max(m,x.id),0);
-  state.intel.push({id:maxId+1,...item});
-  saveAll(); closeModal('intel-modal'); renderIntel();
+  const { data } = await db.from('intel').insert([item]).select().single();
+  if(data) state.intel.push(data);
+  closeModal('intel-modal'); renderIntel();
 }
 
 // ═══════════════════════════════════════════════════════
@@ -885,7 +945,7 @@ document.querySelectorAll('.modal-bg').forEach(bg=>{
 // NOTES
 function saveNotes() {
   state.notes = document.getElementById('notes-area').value;
-  saveAll();
+  db.from('notes').upsert({ id: 1, content: state.notes });
   const el = document.getElementById('notes-saved');
   el.style.display='inline';
   setTimeout(()=>el.style.display='none',2000);
@@ -894,7 +954,12 @@ function saveNotes() {
 // ═══════════════════════════════════════════════════════
 // INIT
 // ═══════════════════════════════════════════════════════
-renderDashboard();
+(async function init() {
+  document.body.style.opacity = '0.5';
+  await loadFromSupabase();
+  document.body.style.opacity = '1';
+  renderDashboard();
+})();
+
 </script>
-</body>
 </html>

@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ROV 備戰系統 Debug 版</title>
+<style>
+  :root {
+    --navy:#1F3864; --blue:#2F5496; --lblue:#BDD7EE; --red:#C00000; --orange:#ED7D31;
+    --green:#70AD47; --lgreen:#E2EFDA; --grey:#F2F2F2; --white:#fff; --text:#1a1a1a; --border:#D0D7E3;
+    --shadow:0 2px 12px rgba(0,0,0,0.10);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Segoe UI','PingFang TC',sans-serif;background:#EEF2F8;color:var(--text)}
+  nav{background:var(--navy);color:#fff;padding:0 20px;display:flex;align-items:center;gap:6px;min-height:54px;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.3);flex-wrap:wrap}
+  nav .logo{font-size:1.05rem;font-weight:700;margin-right:12px;white-space:nowrap}
+  .tab-btn,.mini-btn{background:none;border:none;color:rgba(255,255,255,.85);padding:6px 12px;border-radius:6px;cursor:pointer;font-size:.85rem;font-weight:600}
+  .tab-btn:hover,.tab-btn.active,.mini-btn:hover{background:rgba(255,255,255,.18);color:#fff}
+  .mini-btn.green{background:var(--green);color:#fff}
+  .mini-btn.red{background:var(--red);color:#fff}
+  .mini-btn.orange{background:var(--orange);color:#fff}
+  .mini-btn.blue{background:var(--blue);color:#fff}
+  .page{display:none;padding:20px;max-width:1280px;margin:0 auto}
+  .page.active{display:block}
+  h1{font-size:1.4rem;color:var(--navy);margin-bottom:16px}
+  h2{font-size:1.05rem;color:var(--blue);margin:18px 0 10px;border-left:4px solid var(--blue);padding-left:10px}
+  h3{font-size:.95rem;color:var(--navy);margin-bottom:10px}
+  .card{background:var(--white);border-radius:10px;padding:16px 20px;box-shadow:var(--shadow);margin-bottom:16px}
+  .grid2{display:grid;grid-template-columns:1.15fr .85fr;gap:16px}
+  .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+  .badge{display:inline-block;padding:3px 9px;border-radius:99px;font-size:.75rem;font-weight:700}
+  .ok{background:var(--lgreen);color:#375623}.warn{background:#FFF3CD;color:#856404}.err{background:#FFD6D6;color:var(--red)}
+  pre{background:#0f172a;color:#dbeafe;border-radius:10px;padding:14px;overflow:auto;font-size:.8rem;line-height:1.45;max-height:420px}
+  table{width:100%;border-collapse:collapse;font-size:.88rem}
+  th{background:var(--navy);color:#fff;padding:9px 10px;text-align:left}
+  td{padding:9px 10px;border-bottom:1px solid var(--border);vertical-align:top}
+  tr:hover td{background:#F5F8FF}
+  input,select,textarea{border:1px solid var(--border);border-radius:6px;padding:8px 10px;font-size:.88rem;width:100%;font-family:inherit;background:#fff}
+  textarea{min-height:88px}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  .row > *{flex:1}
+  .row .fit{flex:0 0 auto}
+  .intel-card{background:#fff;border-radius:12px;box-shadow:var(--shadow);padding:16px;border-left:4px solid var(--blue);margin-bottom:14px}
+  .intel-head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;flex-wrap:wrap;margin-bottom:10px}
+  .intel-cols{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+  .muted{color:#6b7280;font-size:.82rem}
+  .pill{display:inline-block;background:#EAF2FB;color:var(--blue);padding:3px 8px;border-radius:999px;font-size:.75rem;font-weight:700}
+  .status-btn{padding:6px 10px;border:none;border-radius:8px;background:var(--orange);color:#fff;font-weight:700;cursor:pointer}
+  .danger-btn{padding:6px 10px;border:none;border-radius:8px;background:var(--red);color:#fff;font-weight:700;cursor:pointer}
+  .small{font-size:.8rem}
+  .debug-box{border:1px dashed var(--border);border-radius:10px;padding:12px;background:#fafcff}
+  .mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+  @media(max-width:900px){.grid2,.grid3,.intel-cols{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<nav>
+  <div class="logo">🛠️ ROV Debug</div>
+  <button class="tab-btn active" onclick="showPage('debug', event)">🧪 Debug</button>
+  <button class="tab-btn" onclick="showPage('intel', event)">🔍 觀摩記錄</button>
+  <button class="tab-btn" onclick="showPage('raw', event)">🗄️ Raw Data</button>
+  <button class="mini-btn blue" onclick="reloadIntel()">↻ Reload</button>
+  <button class="mini-btn orange" onclick="seedTestingRecord()">＋ 寫入 testing</button>
+  <button class="mini-btn red" onclick="cleanupTest2Test3()">🧹 刪除 test2/test3</button>
+</nav>
+
+<div id="page-debug" class="page active">
+  <h1>🧪 Supabase 偵錯總覽</h1>
+  <div class="grid2">
+    <div>
+      <div class="card">
+        <h2>連線資訊</h2>
+        <div class="debug-box small">
+          <p><b>Project URL：</b><span id="dbg-url" class="mono"></span></p>
+          <p><b>目前頁面：</b><span id="dbg-page" class="mono"></span></p>
+          <p><b>最後更新：</b><span id="dbg-time">—</span></p>
+          <p><b>狀態：</b><span id="dbg-status" class="badge warn">檢查中</span></p>
+        </div>
+      </div>
+      <div class="card">
+        <h2>診斷結果</h2>
+        <table>
+          <tbody>
+            <tr><td>是否讀到 Supabase</td><td id="check-connect">—</td></tr>
+            <tr><td>intel 筆數</td><td id="check-count">—</td></tr>
+            <tr><td>是否存在 testing</td><td id="check-testing">—</td></tr>
+            <tr><td>是否存在 test2 / test3</td><td id="check-test23">—</td></tr>
+            <tr><td>目前 team 名單</td><td id="check-teams">—</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="card">
+        <h2>快速操作</h2>
+        <div class="row">
+          <button class="mini-btn blue fit" onclick="reloadIntel()">重新載入資料</button>
+          <button class="mini-btn orange fit" onclick="seedTestingRecord()">新增 testing</button>
+          <button class="mini-btn red fit" onclick="cleanupTest2Test3()">刪除 test2 / test3</button>
+          <button class="mini-btn green fit" onclick="copyTeams()">複製 team 名單</button>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="card">
+        <h2>Console 指令</h2>
+        <pre>state.intel
+
+db.from('intel').select('*').order('id').then(console.log)
+
+location.href
+
+window.__debugIntel</pre>
+      </div>
+      <div class="card">
+        <h2>操作日誌</h2>
+        <pre id="op-log">尚未執行操作</pre>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="page-intel" class="page">
+  <h1>🔍 跨隊學習日誌（Debug）</h1>
+  <div class="card row">
+    <div>
+      <label class="small">篩選類別</label>
+      <select id="intel-filter-cat" onchange="renderIntel()">
+        <option value="">所有類別</option>
+        <option>ROV機械設計</option><option>任務策略</option><option>Presentation技巧</option>
+        <option>電子系統</option><option>操控技術</option><option>團隊協作</option><option>其他</option>
+      </select>
+    </div>
+    <div>
+      <label class="small">搜尋隊名</label>
+      <input id="team-filter" oninput="renderIntel()" placeholder="例如 testing / 福建隊 / City隊">
+    </div>
+    <div class="fit" style="align-self:end">
+      <button class="mini-btn blue" onclick="reloadIntel()">重新讀取</button>
+    </div>
+  </div>
+  <div id="intel-cards"></div>
+</div>
+
+<div id="page-raw" class="page">
+  <h1>🗄️ Raw JSON</h1>
+  <div class="card">
+    <h2>intel table 原始回傳</h2>
+    <pre id="raw-json">載入中…</pre>
+  </div>
+</div>
+
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+<script>
+const SUPABASE_URL = 'https://funahmlcriyrpqelefah.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ1bmFobWxjcml5cnBxZWxlZmFoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc1MTQ5MjQsImV4cCI6MjA5MzA5MDkyNH0.G6de9ZXI4s-AkyzW5poQwwZEVaoUJvw17cXFj90FP88';
+const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+let state = { intel: [] };
+window.__debugIntel = [];
+
+function log(msg, obj) {
+  const time = new Date().toLocaleString('zh-TW');
+  const line = `[${time}] ${msg}` + (obj ? `\n${JSON.stringify(obj, null, 2)}` : '');
+  const el = document.getElementById('op-log');
+  el.textContent = line + '\n\n' + (el.textContent || '');
+}
+
+function setStatus(text, cls='warn') {
+  const el = document.getElementById('dbg-status');
+  el.className = 'badge ' + cls;
+  el.textContent = text;
+}
+
+function showPage(id, ev) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  if (ev) ev.currentTarget.classList.add('active');
+  if (id === 'intel') renderIntel();
+  if (id === 'raw') renderRaw();
+}
+
+async function reloadIntel() {
+  setStatus('讀取中', 'warn');
+  try {
+    const { data, error } = await db.from('intel').select('*').order('id');
+    if (error) throw error;
+    state.intel = data || [];
+    window.__debugIntel = state.intel;
+    document.getElementById('dbg-time').textContent = new Date().toLocaleString('zh-TW');
+    setStatus('已連線', 'ok');
+    renderDebug();
+    renderIntel();
+    renderRaw();
+    log('已重新載入 intel 資料', { count: state.intel.length, teams: state.intel.map(r => r.team) });
+  } catch (err) {
+    setStatus('連線失敗', 'err');
+    document.getElementById('check-connect').innerHTML = '<span class="badge err">失敗</span>';
+    log('讀取失敗', { message: err.message });
+  }
+}
+
+function renderDebug() {
+  const teams = state.intel.map(r => r.team).filter(Boolean);
+  const hasTesting = teams.includes('testing');
+  const hasTest2 = teams.includes('test2');
+  const hasTest3 = teams.includes('test3');
+  document.getElementById('dbg-url').textContent = SUPABASE_URL;
+  document.getElementById('dbg-page').textContent = location.href;
+  document.getElementById('check-connect').innerHTML = '<span class="badge ok">成功</span>';
+  document.getElementById('check-count').textContent = String(state.intel.length);
+  document.getElementById('check-testing').innerHTML = hasTesting ? '<span class="badge ok">有 testing</span>' : '<span class="badge warn">沒有 testing</span>';
+  document.getElementById('check-test23').innerHTML = (hasTest2 || hasTest3)
+    ? `<span class="badge err">${[hasTest2?'test2':'',hasTest3?'test3':''].filter(Boolean).join('、')}</span>`
+    : '<span class="badge ok">沒有 test2/test3</span>';
+  document.getElementById('check-teams').textContent = teams.join('，') || '—';
+}
+
+function renderIntel() {
+  const filterCat = document.getElementById('intel-filter-cat')?.value || '';
+  const teamKw = (document.getElementById('team-filter')?.value || '').trim().toLowerCase();
+  const rows = state.intel.filter(r => (!filterCat || r.cat === filterCat) && (!teamKw || (r.team || '').toLowerCase().includes(teamKw)));
+  const wrap = document.getElementById('intel-cards');
+  if (!wrap) return;
+  wrap.innerHTML = rows.map(r => `
+    <div class="intel-card">
+      <div class="intel-head">
+        <div>
+          <div style="font-size:1.1rem;font-weight:800;color:var(--navy)">🏆 ${r.team || '—'} <span class="pill">${r.cat || '未分類'}</span></div>
+          <div class="muted">記錄人：${r.recorder || '—'} ｜ id: ${r.id ?? '—'}</div>
+        </div>
+        <div class="row" style="gap:8px">
+          <span class="badge ${r.status==='已完成'?'ok':r.status==='進行中'?'warn':'err'}">${r.status || '待跟進'}</span>
+          <button class="status-btn" onclick="cycleStatus(${r.id}, '${(r.status||'').replace(/'/g, "\\'")}')">↻ 狀態</button>
+          <button class="danger-btn" onclick="deleteIntel(${r.id})">🗑</button>
+        </div>
+      </div>
+      <div class="intel-cols">
+        <div><h3>📌 What</h3><div>${escapeHtml(r.what || '—')}</div></div>
+        <div><h3>💡 Why</h3><div>${escapeHtml(r.why || '—')}</div></div>
+        <div><h3>🔧 How to Apply</h3><div>${escapeHtml(r.how || '—')}</div></div>
+      </div>
+      <div class="debug-box" style="margin-top:12px">⚡ 跟進行動：${escapeHtml(r.action || '—')}</div>
+    </div>
+  `).join('') || '<div class="card">沒有符合條件的資料。</div>';
+}
+
+function renderRaw() {
+  const el = document.getElementById('raw-json');
+  if (el) el.textContent = JSON.stringify(state.intel, null, 2);
+}
+
+function escapeHtml(v) {
+  return String(v)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;')
+    .replace(/\n/g, '<br>');
+}
+
+async function seedTestingRecord() {
+  try {
+    const payload = {
+      team: 'testing',
+      recorder: 'debug-user',
+      cat: 'ROV機械設計',
+      what: 'debug 測試資料',
+      why: '確認 GitHub / local / Supabase 是否一致',
+      how: '觀察頁面是否即時讀到 testing',
+      action: '完成後可刪除',
+      status: '待跟進'
+    };
+    const { error } = await db.from('intel').insert([payload]);
+    if (error) throw error;
+    log('已寫入 testing', payload);
+    await reloadIntel();
+  } catch (err) {
+    log('寫入 testing 失敗', { message: err.message });
+    alert('寫入失敗：' + err.message);
+  }
+}
+
+async function cleanupTest2Test3() {
+  try {
+    const { error } = await db.from('intel').delete().in('team', ['test2','test3']);
+    if (error) throw error;
+    log('已刪除 test2 / test3');
+    await reloadIntel();
+  } catch (err) {
+    log('刪除 test2/test3 失敗', { message: err.message });
+    alert('刪除失敗：' + err.message);
+  }
+}
+
+async function deleteIntel(id) {
+  if (!confirm('確定刪除這筆記錄？')) return;
+  try {
+    const { error } = await db.from('intel').delete().eq('id', id);
+    if (error) throw error;
+    log('已刪除單筆 intel', { id });
+    await reloadIntel();
+  } catch (err) {
+    log('刪除單筆失敗', { id, message: err.message });
+    alert('刪除失敗：' + err.message);
+  }
+}
+
+async function cycleStatus(id, current) {
+  const seq = ['待跟進','進行中','已完成','不適用'];
+  const idx = seq.indexOf(current);
+  const next = seq[(idx + 1) % seq.length] || '待跟進';
+  try {
+    const { error } = await db.from('intel').update({ status: next }).eq('id', id);
+    if (error) throw error;
+    log('已更新狀態', { id, from: current, to: next });
+    await reloadIntel();
+  } catch (err) {
+    log('更新狀態失敗', { id, message: err.message });
+    alert('更新失敗：' + err.message);
+  }
+}
+
+async function copyTeams() {
+  const txt = state.intel.map(r => `${r.id}: ${r.team}`).join('\n');
+  try {
+    await navigator.clipboard.writeText(txt);
+    log('已複製 team 名單');
+    alert('已複製 team 名單');
+  } catch {
+    alert(txt || '沒有資料');
+  }
+}
+
+reloadIntel();
+</script>
+</body>
+</html>
