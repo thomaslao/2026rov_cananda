@@ -783,22 +783,29 @@ function renderGantt() {
   const dates = Array.from({length:days},(_,i)=>{ const d=new Date(start); d.setDate(start.getDate()+i); return d; });
   const dayAbbr = ['日','一','二','三','四','五','六'];
 
-  const rows = [
-    {label:'📋 Pres排練（週三四五）', cls:'g-pres',   spans:dates.map(d=>[3,4,5].includes(d.getDay()))},
-    {label:'📋 Pres第一次排練',       cls:'g-pres',   spans:dates.map((_,i)=>i===1)},
-    {label:'🔧 死機問題解決',         cls:'g-eng',    spans:dates.map((_,i)=>i<5)},
-    {label:'🔧 電流保護裝置採購',     cls:'g-eng',    spans:dates.map((_,i)=>i<5)},
-    {label:'🔧 Motor罩改造',          cls:'g-eng',    spans:dates.map((_,i)=>i>=2&&i<10)},
-    {label:'🔧 LV MEKA測試',          cls:'g-eng',    spans:dates.map((_,i)=>i>=2&&i<8)},
-    {label:'🔧 天線升級',             cls:'g-eng',    spans:dates.map((_,i)=>i>=1&&i<7)},
-    {label:'🔧 場地標準化設置',       cls:'g-eng',    spans:dates.map(()=>true)},
-    {label:'✈️ 機票確認',             cls:'g-admin',  spans:dates.map((_,i)=>i<4)},
-    {label:'✈️ 住宿確認',             cls:'g-admin',  spans:dates.map((_,i)=>i<3)},
-    {label:'✈️ 簽證辦理',             cls:'g-admin',  spans:dates.map((_,i)=>i<15)},
-    {label:'🤝 福建隊交流',           cls:'g-green',  spans:dates.map((_,i)=>i>=6&&i<12)},
-    {label:'🤝 Mission排練分組',      cls:'g-green',  spans:dates.map((_,i)=>i>=5)},
-    {label:'🏫 考試週（初三）',        cls:'g-exam',   spans:dates.map((_,i)=>i>=14&&i<21)},
-  ];
+  // Map task categories to gantt CSS classes
+  function catToCls(cat) {
+    if (!cat) return 'g-eng';
+    if (cat.includes('緊急')) return 'g-exam';
+    if (cat.includes('高優先')) return 'g-eng';
+    if (cat.includes('中優先')) return 'g-pres';
+    if (cat.includes('持續')) return 'g-green';
+    return 'g-admin';
+  }
+
+  // Build rows from state.tasks (only tasks with due date, sorted by due)
+  const rows = state.tasks
+    .filter(t => t.due)
+    .sort((a, b) => (a.due > b.due ? 1 : -1))
+    .map(t => {
+      const due = new Date(t.due); due.setHours(23, 59, 59);
+      return {
+        label: t.name || '（無標題）',
+        cls: catToCls(t.cat),
+        done: t.status === '完成',
+        spans: dates.map(d => d >= start && d <= due)
+      };
+    });
 
   // week header
   const weekDates = ['Apr 28–May 3','May 4–10','May 11–17','May 18–24','May 25–Jun 1'];
@@ -818,23 +825,29 @@ function renderGantt() {
   });
   html += '</tr></thead><tbody>';
 
-  rows.forEach(row=>{
-    html += `<tr><td style="padding:4px 8px;font-size:.8rem;font-weight:600;background:#F8F8F8">${row.label}</td>`;
-    row.spans.forEach((active,i)=>{
-      const d = dates[i];
-      const isWE = d.getDay()===0||d.getDay()===6;
-      html += `<td class="gantt-cell" style="background:${active?'':isWE?'#F0F0F0':'white'}">
-        ${active?`<div class="${row.cls} g-bar" style="height:14px;width:100%"></div>`:''}
-      </td>`;
+  if (rows.length === 0) {
+    html += `<tr><td colspan="${days+1}" style="text-align:center;padding:20px;color:#aaa">尚無設有截止日期的任務</td></tr>`;
+  } else {
+    rows.forEach(row=>{
+      const doneStyle = row.done ? 'opacity:.45;text-decoration:line-through;' : '';
+      html += `<tr><td style="padding:4px 8px;font-size:.8rem;font-weight:600;background:#F8F8F8;${doneStyle}">${row.label}</td>`;
+      row.spans.forEach((active,i)=>{
+        const d = dates[i];
+        const isWE = d.getDay()===0||d.getDay()===6;
+        html += `<td class="gantt-cell" style="background:${active?'':isWE?'#F0F0F0':'white'}">
+          ${active?`<div class="${row.cls} g-bar" style="height:14px;width:100%;${row.done?'opacity:.4':''}"></div>`:''}
+        </td>`;
+      });
+      html += '</tr>';
     });
-    html += '</tr>';
-  });
+  }
 
   html += '</tbody></table>';
   document.getElementById('gantt-wrap').innerHTML = html;
 }
 
 // ═══════════════════════════════════════════════════════
+
 // MEMBERS
 // ═══════════════════════════════════════════════════════
 function renderMembers() {
