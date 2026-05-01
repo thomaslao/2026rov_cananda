@@ -63,6 +63,10 @@
   tr:hover td { background: #F5F8FF; }
   .task-done td { opacity: .55; text-decoration: line-through; }
   .task-done td:first-child { text-decoration: none; }
+  .task-overdue td { background: #FFF0F0 !important; }
+  .task-overdue:hover td { background: #FFE6E6 !important; }
+  .task-row-clickable { cursor: pointer; }
+  .task-row-clickable td.no-click { cursor: default; }
 
   select, input[type=text], input[type=date], textarea {
     border: 1px solid var(--border); border-radius: 6px; padding: 5px 8px;
@@ -131,6 +135,7 @@
   .modal { background: #fff; border-radius: 12px; padding: 24px; width: 520px;
            max-width: 95vw; max-height: 90vh; overflow-y: auto;
            box-shadow: 0 8px 40px rgba(0,0,0,.2); }
+  .modal.wide { width: 620px; }
   .modal h3 { font-size: 1.1rem; color: var(--navy); margin-bottom: 14px; }
   .form-row { margin-bottom: 12px; }
   .form-row label { display: block; font-size: .82rem; font-weight: 600; margin-bottom: 4px; }
@@ -255,9 +260,10 @@
   <th onclick="setTaskSort('name')" style="cursor:pointer;user-select:none">任務 <span id="sort-icon-name"></span></th>
   <th onclick="setTaskSort('cat')" style="cursor:pointer;user-select:none">類別 <span id="sort-icon-cat"></span></th>
   <th onclick="setTaskSort('owner')" style="cursor:pointer;user-select:none">負責人 <span id="sort-icon-owner"></span></th>
+  <th onclick="setTaskSort('start_date')" style="cursor:pointer;user-select:none">起始日 <span id="sort-icon-start_date"></span></th>
   <th onclick="setTaskSort('due')" style="cursor:pointer;user-select:none">期限 <span id="sort-icon-due"></span></th>
   <th onclick="setTaskSort('status')" style="cursor:pointer;user-select:none">狀態 <span id="sort-icon-status"></span></th>
-  <th>操作</th>
+  <th style="width:60px">操作</th>
 </tr></thead>
       <tbody id="task-tbody"></tbody>
     </table>
@@ -369,6 +375,54 @@
     <div class="modal-actions">
       <button class="btn" onclick="closeModal('task-modal')">取消</button>
       <button class="btn btn-primary" onclick="saveTask()">儲存</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ MODAL: TASK DETAIL (click row) ═══════════════════ -->
+<div class="modal-bg" id="task-detail-modal" onclick="if(event.target===this)closeModal('task-detail-modal')">
+  <div class="modal wide">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+      <h3 id="detail-modal-title" style="margin-bottom:0;flex:1;padding-right:10px">任務詳情</h3>
+      <button class="btn btn-sm" style="background:#eee;color:#333" onclick="closeModal('task-detail-modal')">✕ 關閉</button>
+    </div>
+    <!-- View mode -->
+    <div id="detail-view-mode">
+      <table style="width:100%;font-size:.88rem;border-collapse:collapse;margin-bottom:12px">
+        <tr><td style="padding:6px 10px;width:90px;color:#888;font-weight:600;border-bottom:1px solid #f0f0f0">類別</td><td style="padding:6px 10px;border-bottom:1px solid #f0f0f0" id="dv-cat"></td></tr>
+        <tr><td style="padding:6px 10px;color:#888;font-weight:600;border-bottom:1px solid #f0f0f0">狀態</td><td style="padding:6px 10px;border-bottom:1px solid #f0f0f0" id="dv-status"></td></tr>
+        <tr><td style="padding:6px 10px;color:#888;font-weight:600;border-bottom:1px solid #f0f0f0">負責人</td><td style="padding:6px 10px;border-bottom:1px solid #f0f0f0" id="dv-owner"></td></tr>
+        <tr><td style="padding:6px 10px;color:#888;font-weight:600;border-bottom:1px solid #f0f0f0">起始日</td><td style="padding:6px 10px;border-bottom:1px solid #f0f0f0" id="dv-start"></td></tr>
+        <tr><td style="padding:6px 10px;color:#888;font-weight:600;border-bottom:1px solid #f0f0f0">截止日</td><td style="padding:6px 10px;border-bottom:1px solid #f0f0f0" id="dv-due"></td></tr>
+        <tr><td style="padding:6px 10px;color:#888;font-weight:600">備註</td><td style="padding:6px 10px;white-space:pre-wrap" id="dv-note"></td></tr>
+      </table>
+      <div class="modal-actions" style="margin-top:8px">
+        <button class="btn btn-primary" onclick="switchToEditMode()">✏️ 編輯此任務</button>
+      </div>
+    </div>
+    <!-- Edit mode (reuse task-modal fields logic) -->
+    <div id="detail-edit-mode" style="display:none">
+      <div class="form-row"><label>任務名稱</label><input type="text" id="de-name"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div class="form-row"><label>類別</label>
+          <select id="de-cat">
+            <option>🔴 緊急</option><option>🟠 高優先</option><option>🟡 中優先</option><option>🟢 持續</option>
+          </select></div>
+        <div class="form-row"><label>狀態</label>
+          <select id="de-status"><option>待辦</option><option>進行中</option><option>已完成</option></select></div>
+        <div class="form-row"><label>負責人</label><input type="text" id="de-owner"></div>
+        <div class="form-row"><label>起始日期</label><input type="date" id="de-start" onchange="updateDetailDurationLabel()"></div>
+        <div class="form-row"><label>期限（截止日）</label><input type="date" id="de-due" onchange="updateDetailDurationLabel()"></div>
+        <div class="form-row" style="grid-column:1/-1">
+          <label style="font-size:.78rem;color:#888" id="de-duration-label"></label>
+        </div>
+      </div>
+      <div class="form-row"><label>備註</label><textarea id="de-note" style="height:70px"></textarea></div>
+      <div class="modal-actions">
+        <button class="btn" onclick="switchToViewMode()">← 返回詳情</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteTaskFromDetail()" style="margin-right:auto">🗑 刪除</button>
+        <button class="btn btn-primary" onclick="saveDetailTask()">💾 儲存</button>
+      </div>
     </div>
   </div>
 </div>
@@ -567,7 +621,7 @@ function setTaskSort(col) {
 }
 
 function applySortIcons() {
-  ['name','cat','owner','due','status'].forEach(c => {
+  ['name','cat','owner','start_date','due','status'].forEach(c => {
     const el = document.getElementById('sort-icon-' + c);
     if (!el) return;
     if (taskSort.col === c) { el.textContent = taskSort.dir === 1 ? ' ▲' : ' ▼'; el.style.color = 'var(--blue)'; }
@@ -865,9 +919,12 @@ function renderTasks() {
   };
   const catColor = {'🔴 緊急':'#FFD6D6','🟠 高優先':'#FCE4D6','🟡 中優先':'#FFF3CD','🟢 持續':'#E2EFDA'};
 
-  document.getElementById('task-tbody').innerHTML = filtered.map(t=>`
-    <tr class="${t.status==='已完成'?'task-done':''}">
-      <td><input type="checkbox" ${t.status==='已完成'?'checked':''} onchange="toggleTask(${t.id})"></td>
+  document.getElementById('task-tbody').innerHTML = filtered.map(t=>{
+    const overdue = t.due && isOverdue(t.due) && t.status!=='已完成';
+    const rowCls = [t.status==='已完成'?'task-done':'', overdue?'task-overdue':'', 'task-row-clickable'].filter(Boolean).join(' ');
+    return `
+    <tr class="${rowCls}" onclick="openTaskDetail(${t.id})">
+      <td class="no-click" onclick="event.stopPropagation()"><input type="checkbox" ${t.status==='已完成'?'checked':''} onchange="toggleTask(${t.id})"></td>
       <td style="font-size:.78rem;color:#888">${t.id}</td>
       <td>
         <div style="font-weight:600">${t.name}</div>
@@ -875,13 +932,14 @@ function renderTasks() {
       </td>
       <td><span style="background:${catColor[t.cat]||'#eee'};padding:2px 8px;border-radius:99px;font-size:.75rem">${t.cat}</span></td>
       <td style="font-size:.85rem">${t.owner}</td>
-      <td style="font-size:.82rem;${t.due&&isOverdue(t.due)&&t.status!=='已完成'?'color:var(--red);font-weight:700':''}">${t.due||'—'}</td>
+      <td style="font-size:.82rem;color:#666">${t.start_date||'—'}</td>
+      <td style="font-size:.82rem;${overdue?'color:var(--red);font-weight:700':''}">${t.due||'—'}</td>
       <td>${statusBadge[t.status]||t.status}</td>
-      <td style="white-space:nowrap">
-        <button class="btn btn-sm btn-primary" onclick="editTask(${t.id})" style="margin-right:4px">✏️</button>
-        <button class="btn btn-sm btn-danger" onclick="deleteTask(${t.id})">🗑</button>
+      <td class="no-click" style="white-space:nowrap" onclick="event.stopPropagation()">
+        <button class="btn btn-sm btn-primary" onclick="editTask(${t.id})" style="margin-right:4px" title="編輯">✏️</button>
+        <button class="btn btn-sm btn-danger" onclick="deleteTask(${t.id})" title="刪除">🗑</button>
       </td>
-    </tr>`).join('') || '<tr><td colspan="8" style="text-align:center;padding:20px;color:#aaa">無符合條件的任務</td></tr>';
+    </tr>`}).join('') || '<tr><td colspan="9" style="text-align:center;padding:20px;color:#aaa">無符合條件的任務</td></tr>';
 }
 
 function isOverdue(due) {
@@ -954,6 +1012,98 @@ async function deleteTask(id) {
   state.tasks = state.tasks.filter(t=>t.id!==id);
   renderTasks();
   renderDashboard();
+}
+
+// ── TASK DETAIL MODAL (click row) ──
+let detailTaskId = null;
+
+const statusBadgeMap = {
+  '待辦':'<span class="badge urgent">待辦</span>',
+  '進行中':'<span class="badge inprog">進行中</span>',
+  '已完成':'<span class="badge done">已完成</span>',
+};
+
+function openTaskDetail(id) {
+  const t = state.tasks.find(t=>t.id===id);
+  if(!t) return;
+  detailTaskId = id;
+  // Fill view mode
+  document.getElementById('detail-modal-title').textContent = t.name;
+  const catColor = {'🔴 緊急':'#FFD6D6','🟠 高優先':'#FCE4D6','🟡 中優先':'#FFF3CD','🟢 持續':'#E2EFDA'};
+  document.getElementById('dv-cat').innerHTML = `<span style="background:${catColor[t.cat]||'#eee'};padding:2px 8px;border-radius:99px;font-size:.82rem">${t.cat||'—'}</span>`;
+  document.getElementById('dv-status').innerHTML = statusBadgeMap[t.status]||t.status;
+  document.getElementById('dv-owner').textContent = t.owner||'—';
+  document.getElementById('dv-start').textContent = t.start_date||'—';
+  const overdue = t.due && isOverdue(t.due) && t.status!=='已完成';
+  document.getElementById('dv-due').innerHTML = t.due
+    ? `<span style="${overdue?'color:var(--red);font-weight:700':''}">${t.due}${overdue?' ⚠️ 已逾期':''}</span>`
+    : '—';
+  document.getElementById('dv-note').textContent = t.note||'（無備註）';
+  // Show view, hide edit
+  document.getElementById('detail-view-mode').style.display='block';
+  document.getElementById('detail-edit-mode').style.display='none';
+  document.getElementById('task-detail-modal').classList.add('open');
+}
+
+function switchToEditMode() {
+  const t = state.tasks.find(t=>t.id===detailTaskId);
+  if(!t) return;
+  document.getElementById('de-name').value = t.name;
+  document.getElementById('de-cat').value = t.cat;
+  document.getElementById('de-status').value = t.status;
+  document.getElementById('de-owner').value = t.owner||'';
+  document.getElementById('de-start').value = t.start_date||'';
+  document.getElementById('de-due').value = t.due||'';
+  document.getElementById('de-note').value = t.note||'';
+  updateDetailDurationLabel();
+  document.getElementById('detail-view-mode').style.display='none';
+  document.getElementById('detail-edit-mode').style.display='block';
+}
+
+function switchToViewMode() {
+  document.getElementById('detail-view-mode').style.display='block';
+  document.getElementById('detail-edit-mode').style.display='none';
+  openTaskDetail(detailTaskId); // refresh view
+}
+
+function updateDetailDurationLabel() {
+  const s = document.getElementById('de-start').value;
+  const d = document.getElementById('de-due').value;
+  const el = document.getElementById('de-duration-label');
+  if(s && d) {
+    const diff = Math.round((new Date(d)-new Date(s))/86400000);
+    el.textContent = diff>=0 ? `⏱ 共 ${diff} 天` : '⚠️ 起始日晚於截止日';
+    el.style.color = diff<0?'var(--red)':'#555';
+  } else { el.textContent=''; }
+}
+
+async function saveDetailTask() {
+  const t = {
+    name: document.getElementById('de-name').value.trim(),
+    cat: document.getElementById('de-cat').value,
+    status: document.getElementById('de-status').value,
+    owner: document.getElementById('de-owner').value.trim(),
+    start_date: document.getElementById('de-start').value||null,
+    due: document.getElementById('de-due').value||null,
+    note: document.getElementById('de-note').value.trim(),
+  };
+  if(!t.name) return;
+  await db.from('tasks').update(t).eq('id', detailTaskId);
+  const i = state.tasks.findIndex(x=>x.id===detailTaskId);
+  if(i>=0) state.tasks[i] = {...state.tasks[i],...t};
+  document.getElementById('detail-modal-title').textContent = t.name;
+  renderTasks(); renderDashboard();
+  switchToViewMode();
+  showToast('✅ 任務已更新');
+}
+
+async function deleteTaskFromDetail() {
+  if(!confirm('確認刪除此任務？')) return;
+  await db.from('tasks').delete().eq('id', detailTaskId);
+  state.tasks = state.tasks.filter(t=>t.id!==detailTaskId);
+  closeModal('task-detail-modal');
+  renderTasks(); renderDashboard();
+  showToast('🗑 任務已刪除');
 }
 
 // ═══════════════════════════════════════════════════════
@@ -1800,6 +1950,16 @@ async function confirmImport() {
   <div class="modal" style="max-width:600px">
     <h3>📋 版本更新說明</h3>
     <div style="max-height:480px;overflow-y:auto;padding-right:4px">
+
+      <div style="border-left:4px solid #E85D04;padding:10px 14px;margin-bottom:12px;background:#fff8f0;border-radius:0 8px 8px 0">
+        <div style="font-weight:700;color:#E85D04;font-size:.95rem">v1.4 <span style="font-size:.78rem;color:#888;font-weight:400">2026-05-01</span></div>
+        <ul style="margin:6px 0 0 16px;font-size:.85rem;line-height:1.8;color:#333">
+          <li>🖱️ 任務列可點擊彈出詳情視窗，顯示全部欄位並可直接編輯儲存</li>
+          <li>🔴 逾期未完成任務整列以淺紅色背景顯示，一目了然</li>
+          <li>📅 任務列表新增「起始日」欄位顯示，支援排序</li>
+          <li>🗑 詳情視窗內可直接刪除任務</li>
+        </ul>
+      </div>
 
       <div style="border-left:4px solid var(--blue);padding:10px 14px;margin-bottom:12px;background:#f0f5ff;border-radius:0 8px 8px 0">
         <div style="font-weight:700;color:var(--navy);font-size:.95rem">v1.3 <span style="font-size:.78rem;color:#888;font-weight:400">2026-05-01</span></div>
