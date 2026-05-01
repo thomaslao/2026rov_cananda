@@ -203,7 +203,8 @@
   <button class="tab-btn" onclick="showPage('notes',this)">📝 備忘</button>
   <div class="nav-spacer"></div>
   <button id="save-btn" onclick="saveAll()">💾 儲存</button>
-  <button class="tab-btn" onclick="document.getElementById('dbsetup-modal').classList.add('open')" style="margin-left:auto;background:rgba(255,200,0,.2);border:1px solid rgba(255,200,0,.4)">🗄 DB 設定</button>
+  <button class="tab-btn" onclick="document.getElementById('changelog-modal').classList.add('open')" style="background:rgba(100,200,255,.18);border:1px solid rgba(100,200,255,.35);color:#fff" title="版本更新說明">📋 更新說明</button>
+  <button class="tab-btn" onclick="document.getElementById('dbsetup-modal').classList.add('open')" style="margin-left:0;background:rgba(255,200,0,.2);border:1px solid rgba(255,200,0,.4)">🗄 DB 設定</button>
 </nav>
 
 <!-- ═══════════════════ PAGE: DASHBOARD ═══════════════════ -->
@@ -244,6 +245,7 @@
     </select>
     <input type="text" id="search-task" placeholder="搜尋任務…" style="width:180px" oninput="renderTasks()">
     <button class="btn btn-primary" onclick="openAddTask()">＋ 新增任務</button>
+    <button class="btn" style="background:#7030A0;color:#fff" onclick="openImportModal()">📥 批量滙入</button>
   </div>
   <div class="card" style="padding:0;overflow:hidden">
     <table>
@@ -357,7 +359,11 @@
       <div class="form-row"><label>狀態</label>
         <select id="m-status"><option>待辦</option><option>進行中</option><option>已完成</option></select></div>
       <div class="form-row"><label>負責人</label><input type="text" id="m-owner"></div>
-      <div class="form-row"><label>期限</label><input type="date" id="m-due"></div>
+      <div class="form-row"><label>起始日期</label><input type="date" id="m-start" onchange="updateDurationLabel()"></div>
+      <div class="form-row"><label>期限（截止日）</label><input type="date" id="m-due" onchange="updateDurationLabel()"></div>
+      <div class="form-row" id="m-duration-row" style="grid-column:1/-1">
+        <label style="font-size:.78rem;color:#888" id="m-duration-label"></label>
+      </div>
     </div>
     <div class="form-row"><label>備註</label><textarea id="m-note" style="height:60px"></textarea></div>
     <div class="modal-actions">
@@ -897,7 +903,8 @@ async function toggleTask(id) {
 function openAddTask() {
   editingTaskId = null;
   document.getElementById('modal-title').textContent = '新增任務';
-  ['m-name','m-owner','m-due','m-note'].forEach(id=>document.getElementById(id).value='');
+  ['m-name','m-owner','m-start','m-due','m-note'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('m-duration-label').textContent = '';
   document.getElementById('m-cat').value='🔴 緊急';
   document.getElementById('m-status').value='待辦';
   document.getElementById('task-modal').classList.add('open');
@@ -912,7 +919,10 @@ function editTask(id) {
   document.getElementById('m-cat').value = t.cat;
   document.getElementById('m-status').value = t.status;
   document.getElementById('m-owner').value = t.owner;
-  document.getElementById('m-due').value = t.due||'';  document.getElementById('m-note').value = t.note;
+  document.getElementById('m-start').value = t.start_date||'';
+  document.getElementById('m-due').value = t.due||'';
+  document.getElementById('m-note').value = t.note;
+  updateDurationLabel();
   document.getElementById('task-modal').classList.add('open');
 }
 
@@ -922,6 +932,7 @@ async function saveTask() {
     cat: document.getElementById('m-cat').value,
     status: document.getElementById('m-status').value,
     owner: document.getElementById('m-owner').value.trim(),
+    start_date: document.getElementById('m-start').value || null,
     due: document.getElementById('m-due').value || null,
     note: document.getElementById('m-note').value.trim(),
   };
@@ -1437,6 +1448,297 @@ function showToast(msg, duration=2200) {
   setTimeout(() => t.classList.remove('show'), duration);
 }
 
+
+// ── duration label helper ──
+function updateDurationLabel() {
+  const s = document.getElementById('m-start').value;
+  const e = document.getElementById('m-due').value;
+  const lbl = document.getElementById('m-duration-label');
+  if (!lbl) return;
+  if (s && e) {
+    const days = Math.round((new Date(e)-new Date(s))/(1000*60*60*24));
+    lbl.textContent = days >= 0 ? `📅 共 ${days} 天（${s} → ${e}）` : '⚠️ 截止日不能早於起始日';
+    lbl.style.color = days < 0 ? 'var(--red)' : '#666';
+  } else { lbl.textContent = ''; }
+}
+
+// ═══════════════════════════════════════════════════════
+// BATCH IMPORT
+// ═══════════════════════════════════════════════════════
+let importMode = 'auto';
+let importParsed = [];
+
+function openImportModal() {
+  importParsed = [];
+  document.getElementById('import-textarea').value = '';
+  document.getElementById('import-preview').innerHTML = '';
+  document.getElementById('import-count').textContent = '';
+  document.getElementById('import-confirm-btn').style.display = 'none';
+  switchImportTab('auto');
+  document.getElementById('import-modal').classList.add('open');
+}
+
+function switchImportTab(mode) {
+  importMode = mode;
+  document.getElementById('import-tab-auto').style.cssText = mode==='auto' ? 'background:var(--blue);color:#fff' : 'background:#eee;color:#333';
+  document.getElementById('import-tab-csv').style.cssText  = mode==='csv'  ? 'background:var(--blue);color:#fff' : 'background:#eee;color:#333';
+  document.getElementById('import-auto-hint').style.display = mode==='auto' ? '' : 'none';
+  document.getElementById('import-csv-hint').style.display  = mode==='csv'  ? '' : 'none';
+  document.getElementById('import-csv-upload').style.display = mode==='csv' ? '' : 'none';
+  document.getElementById('import-textarea').placeholder = mode==='auto'
+    ? '貼入群組對話記錄，例如：\n今天完成了新的PCB設計…\n明天完成測試\nPoster Abstract重寫…'
+    : 'name,cat,owner,due,status,note\nPoster Abstract重寫,🔴 緊急,邵安喬,2026-05-07,待辦,AI評分後大幅重寫\n45度角任務測試,🟠 高優先,梁觀然,2026-05-02,進行中,';
+}
+
+function loadCsvFile(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  document.getElementById('csv-file-name').textContent = '📄 ' + file.name;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    // Strip BOM if present
+    let text = e.target.result;
+    if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
+    document.getElementById('import-textarea').value = text;
+    showToast('✅ 檔案已載入，點「🔍 解析預覽」確認');
+  };
+  reader.readAsText(file, 'UTF-8');
+}
+
+function parseImport() {
+  const raw = document.getElementById('import-textarea').value.trim();
+  if (!raw) { showToast('請先貼入內容'); return; }
+  importParsed = importMode === 'csv' ? parseCsvTasks(raw) : parseAutoTasks(raw);
+  renderImportPreview();
+}
+
+function parseCsvTasks(raw) {
+  const catMap = {
+    '緊急':'🔴 緊急','🔴':'🔴 緊急','🔴 緊急':'🔴 緊急',
+    '高優先':'🟠 高優先','高':'🟠 高優先','🟠':'🟠 高優先','🟠 高優先':'🟠 高優先',
+    '中優先':'🟡 中優先','中':'🟡 中優先','🟡':'🟡 中優先','🟡 中優先':'🟡 中優先',
+    '持續':'🟢 持續','🟢':'🟢 持續','🟢 持續':'🟢 持續'
+  };
+  const statusMap = {'待辦':'待辦','進行中':'進行中','已完成':'已完成',
+    'done':'已完成','todo':'待辦','in_progress':'進行中','inprog':'進行中','completed':'已完成'};
+
+  const lines = raw.split('\n').map(l=>l.trim()).filter(Boolean);
+  // Detect if first row is header (name/cat/owner/due/status/note)
+  let dataLines = lines;
+  if (lines.length > 0) {
+    const h = lines[0].toLowerCase();
+    if (h.startsWith('name') || h.startsWith('任務') || h.startsWith('task')) {
+      dataLines = lines.slice(1); // skip header row
+    }
+  }
+
+  return dataLines.map(line => {
+    // Handle quoted CSV fields
+    const cols = [];
+    let cur = '', inQ = false;
+    for (let i=0;i<line.length;i++) {
+      const c = line[i];
+      if (c==='"') { inQ=!inQ; }
+      else if (c===',' && !inQ) { cols.push(cur.trim()); cur=''; }
+      else { cur+=c; }
+    }
+    cols.push(cur.trim());
+
+    // Map to exact Supabase columns: name, cat, owner, due, status, note
+    const rawCat = cols[1] || '';
+    const cat = catMap[rawCat.trim()] || (rawCat.match(/[🔴🟠🟡🟢]/) ? rawCat.trim() : '🟡 中優先');
+    const rawStatus = (cols[4]||'').trim().toLowerCase();
+    const due = cols[3] ? cols[3].trim() : null;
+    return {
+      name:   (cols[0]||'').trim(),
+      cat,
+      owner:  (cols[2]||'').trim(),
+      due:    (due && due.match(/^\d{4}-\d{2}-\d{2}$/)) ? due : null,
+      status: statusMap[rawStatus] || (cols[4]||'待辦').trim() || '待辦',
+      note:   (cols[5]||'').trim()
+    };
+  }).filter(t => t.name && t.name.length > 0);
+}
+
+function parseAutoTasks(raw) {
+  const tasks = [];
+  const lines = raw.split('\n');
+
+  const actionPatterns = [
+    /今[天日]完成[了了]?(.{4,50})/,
+    /今[天日].*?完成(.{4,50})/,
+    /今[天日].*?([完優修設打調測校][成化改計印試準].{3,35})/,
+    /明[天日].*?完成(.{4,40})/,
+    /明[天日][計劃計划打算]?[:：]?(.{4,40})/,
+    /已完成(.{4,40})/,
+    /正在(.{4,40})/,
+    /需要(.{4,40})/,
+    /請(.{3,30})[做完成提交上傳整理]/,
+    /^[-•·]\s*(.{4,50})/,
+    /^([A-Za-z\u4e00-\u9fff].{4,55})[需要待][要辦]/,
+  ];
+
+  const urgentKW = ['緊急','立即','今天','今日','ASAP','马上','馬上'];
+  const highKW   = ['明天','明日','本週','本周','儘快','盡快','優先'];
+  const doneKW   = ['已完成','完成了','done','已上傳','已發送','已發出','已更新','已打印'];
+  const inProgKW = ['正在','進行中','繼續','continuing','測試中','開始'];
+
+  const ownerMap = {
+    '邵安喬':'邵安喬','安喬':'邵安喬',
+    '周以軒':'周以軒','以軒':'周以軒',
+    '洪嘉濠':'洪嘉濠','嘉濠':'洪嘉濠',
+    '梁觀然':'梁觀然','觀然':'梁觀然',
+    '路承霖':'路承霖','承霖':'路承霖',
+    '梁卓軒':'梁卓軒','卓軒':'梁卓軒',
+    '李卓翹':'李卓翹','卓翹':'李卓翹',
+    '何柏熹':'何柏熹','柏熹':'何柏熹',
+    '鄧諾軒':'鄧諾軒','諾軒':'鄧諾軒',
+  };
+
+  function detectOwner(text) {
+    for (const [k,v] of Object.entries(ownerMap)) {
+      if (text.includes(k)) return v;
+    }
+    const m = text.match(/@([\u4e00-\u9fff]{2,4})/);
+    return m ? m[1] : '';
+  }
+
+  function detectCat(text) {
+    if (urgentKW.some(k=>text.includes(k))) return '🔴 緊急';
+    if (highKW.some(k=>text.includes(k)))   return '🟠 高優先';
+    if (text.includes('持續')||text.includes('每日')||text.includes('每天')) return '🟢 持續';
+    return '🟡 中優先';
+  }
+
+  function detectStatus(text) {
+    if (doneKW.some(k=>text.includes(k)))   return '已完成';
+    if (inProgKW.some(k=>text.includes(k))) return '進行中';
+    return '待辦';
+  }
+
+  function extractDate(text) {
+    const m1 = text.match(/(\d{4})[/-](\d{1,2})[/-](\d{1,2})/);
+    if (m1) return `${m1[1]}-${m1[2].padStart(2,'0')}-${m1[3].padStart(2,'0')}`;
+    const m2 = text.match(/(\d{1,2})[月\/](\d{1,2})[日号]?/);
+    if (m2) return `2026-${m2[1].padStart(2,'0')}-${m2[2].padStart(2,'0')}`;
+    return null;
+  }
+
+  function cleanTask(text) {
+    return text.replace(/[！。，、：:!.]+$/, '').replace(/^[了的地得，。！]/, '').trim();
+  }
+
+  const seen = new Set();
+  lines.forEach(line => {
+    line = line.trim();
+    if (!line || line.length < 5) return;
+    if (line.startsWith('http') || line.startsWith('@')) return;
+
+    for (const pat of actionPatterns) {
+      const m = line.match(pat);
+      if (m) {
+        const raw = (m[1] || m[0]).trim();
+        const taskName = cleanTask(raw.substring(0, 60));
+        if (taskName.length < 4 || seen.has(taskName)) continue;
+        seen.add(taskName);
+        tasks.push({
+          name: taskName,
+          cat: detectCat(line),
+          owner: detectOwner(line),
+          due: extractDate(line),
+          status: detectStatus(line),
+          note: line.substring(0, 120)
+        });
+        break;
+      }
+    }
+  });
+
+  if (tasks.length === 0) {
+    lines.filter(l=>l.trim().length>4 && !l.startsWith('http') && !l.startsWith('@'))
+      .slice(0,30).forEach(line=>{
+        const taskName = cleanTask(line.trim().substring(0,60));
+        if (taskName.length<4 || seen.has(taskName)) return;
+        seen.add(taskName);
+        tasks.push({ name:taskName, cat:'🟡 中優先', owner:detectOwner(line), due:extractDate(line), status:detectStatus(line), note:'' });
+      });
+  }
+  return tasks;
+}
+
+function renderImportPreview() {
+  const count = importParsed.length;
+  document.getElementById('import-count').textContent = count > 0 ? `已解析 ${count} 條任務` : '未能解析任務，請確認格式';
+  document.getElementById('import-confirm-btn').style.display = count > 0 ? '' : 'none';
+
+  if (count === 0) {
+    document.getElementById('import-preview').innerHTML = '<p style="color:#999;font-size:.85rem;padding:10px">未能識別任何任務。請嘗試 CSV 格式，或確認文字中有明確動作描述。</p>';
+    return;
+  }
+
+  const catColor = {'🔴 緊急':'#FFD6D6','🟠 高優先':'#FCE4D6','🟡 中優先':'#FFF3CD','🟢 持續':'#D5F5E3'};
+
+  let html = `<table style="width:100%;font-size:.8rem;border-collapse:collapse">
+    <thead><tr style="background:var(--navy);color:#fff">
+      <th style="padding:5px 7px">✓</th>
+      <th style="padding:5px 7px;text-align:left">任務名稱</th>
+      <th style="padding:5px 7px;text-align:left">類別</th>
+      <th style="padding:5px 7px;text-align:left">負責人</th>
+      <th style="padding:5px 7px;text-align:left">期限</th>
+      <th style="padding:5px 7px;text-align:left">狀態</th>
+    </tr></thead><tbody>`;
+
+  importParsed.forEach((t, i) => {
+    const bg = catColor[t.cat] || '#fff';
+    html += `<tr style="background:${i%2===0?'#fafbff':'#fff'};border-bottom:1px solid #eee">
+      <td style="padding:4px 7px;text-align:center"><input type="checkbox" checked id="imp-chk-${i}" style="width:14px;height:14px"></td>
+      <td style="padding:4px 7px;font-weight:600;max-width:200px">${t.name}</td>
+      <td style="padding:4px 7px"><span style="background:${bg};padding:1px 6px;border-radius:99px;font-size:.75rem">${t.cat}</span></td>
+      <td style="padding:4px 7px"><input type="text" value="${t.owner||''}" id="imp-owner-${i}" style="width:80px;padding:2px 5px;font-size:.78rem;border:1px solid #ddd;border-radius:4px"></td>
+      <td style="padding:4px 7px"><input type="date" value="${t.due||''}" id="imp-due-${i}" style="width:120px;padding:2px 5px;font-size:.78rem;border:1px solid #ddd;border-radius:4px"></td>
+      <td style="padding:4px 7px">
+        <select id="imp-status-${i}" style="padding:2px 5px;font-size:.78rem;border:1px solid #ddd;border-radius:4px">
+          <option ${t.status==='待辦'?'selected':''}>待辦</option>
+          <option ${t.status==='進行中'?'selected':''}>進行中</option>
+          <option ${t.status==='已完成'?'selected':''}>已完成</option>
+        </select>
+      </td>
+    </tr>`;
+  });
+  html += '</tbody></table>';
+  document.getElementById('import-preview').innerHTML = html;
+}
+
+async function confirmImport() {
+  const toInsert = importParsed
+    .filter((t,i) => { const chk = document.getElementById('imp-chk-'+i); return chk && chk.checked; })
+    .map((t,i) => ({
+      name: t.name,
+      cat: t.cat,
+      owner: (document.getElementById('imp-owner-'+i)?.value || t.owner || '').trim(),
+      due: document.getElementById('imp-due-'+i)?.value || t.due || null,
+      status: document.getElementById('imp-status-'+i)?.value || t.status,
+      note: t.note || ''
+    }));
+
+  if (!toInsert.length) { showToast('請至少勾選一條任務'); return; }
+
+  const btn = document.getElementById('import-confirm-btn');
+  btn.textContent = '⏳ 滙入中…'; btn.disabled = true;
+
+  try {
+    const { data, error } = await db.from('tasks').insert(toInsert).select();
+    if (error) throw error;
+    if (data) state.tasks.push(...data);
+    closeModal('import-modal');
+    renderTasks(); renderDashboard();
+    showToast('✅ 成功滙入 ' + toInsert.length + ' 條任務！');
+  } catch(e) {
+    btn.textContent = '✅ 確認全部滙入'; btn.disabled = false;
+    alert('❌ 滙入失敗：' + (e.message||e) + '\n\n請確認 Supabase 連線與 RLS 設定');
+  }
+}
+
 // ═══════════════════════════════════════════════════════
 // INIT
 // ═══════════════════════════════════════════════════════
@@ -1447,6 +1749,106 @@ function showToast(msg, duration=2200) {
   renderDashboard();
 })();
 </script>
+
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- MODAL: BATCH IMPORT TASKS -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div class="modal-bg" id="import-modal" onclick="if(event.target===this)closeModal('import-modal')">
+  <div class="modal" style="max-width:680px">
+    <h3>📥 批量滙入任務</h3>
+    <p style="font-size:.83rem;color:#555;margin-bottom:12px">
+      支援兩種格式：<br>
+      <strong>① 智能解析</strong>（貼入群組訊息，系統自動抽取任務）<br>
+      <strong>② CSV 格式</strong>：<code style="font-size:.78rem;background:#f0f4ff;padding:2px 6px;border-radius:4px">任務名稱,類別,負責人,期限(YYYY-MM-DD),狀態,備註</code>
+    </p>
+    <div style="display:flex;gap:8px;margin-bottom:8px">
+      <button class="btn btn-sm" id="import-tab-auto" style="background:var(--blue);color:#fff" onclick="switchImportTab('auto')">🤖 智能解析</button>
+      <button class="btn btn-sm" id="import-tab-csv"  style="background:#eee;color:#333"        onclick="switchImportTab('csv')">📄 CSV 格式</button>
+    </div>
+    <div id="import-auto-hint" style="font-size:.8rem;color:#888;margin-bottom:6px">貼入群組對話記錄，系統自動識別任務項目（支援中文動作句）</div>
+    <div id="import-csv-hint" style="font-size:.8rem;color:#888;margin-bottom:6px;display:none">
+      CSV 標題列須為：<code style="background:#f0f4ff;padding:1px 5px;border-radius:3px;font-size:.76rem">name,cat,owner,due,status,note</code>
+      （精確對應 Supabase tasks 欄位）<br>
+      <span style="color:#aaa">due 格式：YYYY-MM-DD；cat 可用：🔴 緊急 / 🟠 高優先 / 🟡 中優先 / 🟢 持續</span>
+    </div>
+    <div id="import-csv-upload" style="display:none;margin-bottom:8px">
+      <label style="display:inline-flex;align-items:center;gap:8px;cursor:pointer;background:#f0f4ff;border:1.5px dashed var(--blue);padding:8px 16px;border-radius:8px;font-size:.85rem;color:var(--blue);font-weight:600">
+        📁 載入 CSV 檔案
+        <input type="file" id="csv-file-input" accept=".csv,.txt" style="display:none" onchange="loadCsvFile(event)">
+      </label>
+      <span id="csv-file-name" style="font-size:.8rem;color:#888;margin-left:10px"></span>
+    </div>
+    <textarea id="import-textarea" style="width:100%;height:200px;font-size:.83rem;padding:10px;border:1px solid var(--border);border-radius:8px;resize:vertical;font-family:inherit" placeholder="在此貼入内容…"></textarea>
+    <div style="display:flex;gap:8px;margin-top:10px;align-items:center">
+      <button class="btn btn-primary" onclick="parseImport()">🔍 解析預覽</button>
+      <span style="font-size:.8rem;color:#888" id="import-count"></span>
+    </div>
+    <div id="import-preview" style="margin-top:12px;max-height:240px;overflow-y:auto"></div>
+    <div class="modal-actions" style="margin-top:12px">
+      <button class="btn" onclick="closeModal('import-modal')">取消</button>
+      <button class="btn btn-success" id="import-confirm-btn" style="display:none" onclick="confirmImport()">✅ 確認全部滙入</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- MODAL: CHANGELOG -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div class="modal-bg" id="changelog-modal" onclick="if(event.target===this)closeModal('changelog-modal')">
+  <div class="modal" style="max-width:600px">
+    <h3>📋 版本更新說明</h3>
+    <div style="max-height:480px;overflow-y:auto;padding-right:4px">
+
+      <div style="border-left:4px solid var(--blue);padding:10px 14px;margin-bottom:12px;background:#f0f5ff;border-radius:0 8px 8px 0">
+        <div style="font-weight:700;color:var(--navy);font-size:.95rem">v1.3 <span style="font-size:.78rem;color:#888;font-weight:400">2026-05-01</span></div>
+        <ul style="margin:6px 0 0 16px;font-size:.85rem;line-height:1.8;color:#333">
+          <li>✅ 任務新增「起始日期」欄位，自動計算與期限之間的天數</li>
+          <li>🗄 Supabase tasks table 新增 <code>start_date</code> 欄位（含補充 ALTER 語句）</li>
+          <li>📋 頂端導覽新增「更新說明」按鈕（即本頁）</li>
+        </ul>
+      </div>
+
+      <div style="border-left:4px solid #7030A0;padding:10px 14px;margin-bottom:12px;background:#f8f0ff;border-radius:0 8px 8px 0">
+        <div style="font-weight:700;color:#7030A0;font-size:.95rem">v1.2 <span style="font-size:.78rem;color:#888;font-weight:400">2026-05-01</span></div>
+        <ul style="margin:6px 0 0 16px;font-size:.85rem;line-height:1.8;color:#333">
+          <li>📥 新增批量滙入功能（智能解析 + CSV 格式）</li>
+          <li>📁 CSV 模式支援載入本地檔案（自動去除 BOM）</li>
+          <li>🔗 CSV 標題列精確對應 Supabase tasks 欄位（name/cat/owner/due/status/note）</li>
+          <li>🤖 智能解析支援中文動作句、成員姓名識別、日期抽取</li>
+          <li>✏️ 預覽表格可即時修改每條任務的負責人、期限、狀態再滙入</li>
+        </ul>
+      </div>
+
+      <div style="border-left:4px solid var(--green);padding:10px 14px;margin-bottom:12px;background:#f0fff4;border-radius:0 8px 8px 0">
+        <div style="font-weight:700;color:#1E8449;font-size:.95rem">v1.1 <span style="font-size:.78rem;color:#888;font-weight:400">2026-04-30</span></div>
+        <ul style="margin:6px 0 0 16px;font-size:.85rem;line-height:1.8;color:#333">
+          <li>📊 總覽頁：關鍵截止日 Timeline、任務進度條、緊急任務快速列表</li>
+          <li>✅ 任務管理：篩選/排序/搜尋、快速完成按鈕</li>
+          <li>📋 Pre-Dive Checklist：分區勾選，支援重置</li>
+          <li>📅 五週衝刺甘特圖（考試週/Presentation/工程/行政/訓練）</li>
+          <li>👥 成員管理：加拿大世界賽出行狀態追蹤</li>
+          <li>🔍 跨隊學習日誌（What/Why/How 結構）</li>
+          <li>💬 教練金句收藏</li>
+        </ul>
+      </div>
+
+      <div style="border-left:4px solid #aaa;padding:10px 14px;background:#f9f9f9;border-radius:0 8px 8px 0">
+        <div style="font-weight:700;color:#555;font-size:.95rem">v1.0 <span style="font-size:.78rem;color:#888;font-weight:400">2026-04-28</span></div>
+        <ul style="margin:6px 0 0 16px;font-size:.85rem;line-height:1.8;color:#555">
+          <li>🚀 初始版本發佈：MATE ROV 世界賽備戰管理系統</li>
+          <li>🗄 Supabase 後端整合（tasks/members/intel/checklist/notes/quotes）</li>
+          <li>📱 響應式設計，支援手機/平板/桌面</li>
+        </ul>
+      </div>
+
+    </div>
+    <div class="modal-actions" style="margin-top:14px">
+      <button class="btn btn-primary" onclick="closeModal('changelog-modal')">關閉</button>
+    </div>
+  </div>
+</div>
 
 <!-- ═══════════════════════════════════════════════════════ -->
 <!-- MODAL: DB SETUP SQL -->
@@ -1459,13 +1861,14 @@ function showToast(msg, duration=2200) {
     <button class="btn btn-primary" onclick="runDiag()" style="margin-bottom:12px;font-size:.82rem">🔍 即時診斷連線狀態</button>
     <textarea id="sql-content" readonly style="width:100%;height:340px;font-family:monospace;font-size:.78rem;padding:10px;border:1px solid #ccc;border-radius:6px;resize:vertical;background:#f7f8fa">-- ① tasks
 create table if not exists tasks (
-  id        bigserial primary key,
-  name      text not null,
-  cat       text,
-  owner     text,
-  due       date,
-  status    text default '待辦',
-  note      text default ''
+  id         bigserial primary key,
+  name       text not null,
+  cat        text,
+  owner      text,
+  start_date date,
+  due        date,
+  status     text default '待辦',
+  note       text default ''
 );
 
 -- ② members
@@ -1515,6 +1918,8 @@ insert into notes (id, content) values (1, '') on conflict (id) do nothing;
 -- ⚠️ 必須執行：關閉 RLS（Row Level Security）
 -- Supabase 預設啟用 RLS，會阻擋 anon key 寫入
 -- ══════════════════════════════════════════════
+-- ⚠️ 如已建過 tasks table，請執行以下補充欄位：
+-- alter table tasks add column if not exists start_date date;
 alter table tasks           disable row level security;
 alter table members         disable row level security;
 alter table intel           disable row level security;
