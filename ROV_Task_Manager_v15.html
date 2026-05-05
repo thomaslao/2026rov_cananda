@@ -903,19 +903,18 @@
     <button class="btn" onclick="exportChecklistPDF()" style="background:#C00000;color:#fff">🖨 匯出 PDF / 列印</button>
     <span id="check-progress-label" style="font-weight:700;color:var(--navy)"></span>
   </div>
-  <details class="card" style="margin-bottom:12px">
-    <summary>設備清單編輯工具</summary>
-    <h2 id="check-editor-title" style="margin-top:10px">＋ 新增 / 更新設備清單項目</h2>
+  <div class="card" style="margin-bottom:12px;padding:16px">
+    <h2 id="check-editor-title" style="margin-top:0">＋ 新增 / 更新設備清單項目</h2>
     <div style="display:grid;grid-template-columns:.62fr 1.35fr .42fr .72fr .72fr auto auto;gap:8px;align-items:end">
       <div class="form-row"><label>區段</label><select id="check-sec"></select></div>
       <div class="form-row"><label>項目（細項）</label><input type="text" id="check-text" placeholder="例：備用電池"></div>
       <div class="form-row"><label>數量</label><input type="number" id="check-qty" min="1" step="1" value="1" style="width:100%"></div>
-      <div class="form-row"><label>負責人</label><input type="text" id="check-owner" placeholder="例：工程組"></div>
+      <div class="form-row"><label>負責人</label><input type="text" id="check-owner-search" placeholder="搜尋負責人" oninput="renderOwnerSelect('check-owner', '選擇負責人')" style="margin-bottom:4px"><input type="text" id="check-owner" placeholder="例：工程組"></div>
       <div class="form-row"><label>時機</label><input type="text" id="check-time" placeholder="例：出發前 / 到場後"></div>
       <button class="btn btn-primary" id="check-save-btn" onclick="saveChecklistItem()">＋ 新增</button>
       <button class="btn" onclick="cancelChecklistEdit()">取消</button>
     </div>
-  </details>
+  </div>
   <div class="card" style="padding:8px 0">
     <div id="checklist-container"></div>
   </div>
@@ -2841,6 +2840,10 @@ function rebuildTaskOwnerSelects(currentOwner = '') {
   renderOwnerSelect('m-owner', '選擇負責人', currentOwner);
   renderOwnerSelect('de-owner', '選擇負責人', currentOwner);
   populateTaskOwnerFilter();
+  // 确保 IIFE 中的共享 datalist 也被更新
+  if (typeof refreshOwnerSettingsConsumers === 'function') {
+    refreshOwnerSettingsConsumers();
+  }
 }
 
 function renderOwnerDropdowns() {
@@ -2994,6 +2997,24 @@ function ensureTaskModeNav() {
 function renderModeSubnav() {
   const el = document.getElementById('mode-subnav');
   if (!el) return;
+
+  if (currentMode === 'settings') {
+    const active = (typeof getSettingsTab === 'function') ? getSettingsTab() : (localStorage.getItem('rov_settings_active_tab') || 'overview');
+    const tabs = [
+      { id:'overview', label:'總覽' },
+      { id:'db', label:'DB 設定' },
+      { id:'pack', label:'設定包' },
+      { id:'owners', label:'負責人' },
+      { id:'master', label:'主資料' },
+      { id:'health', label:'資料健康' },
+      { id:'system', label:'系統 / QA' }
+    ];
+    el.innerHTML = tabs.map(tab => `
+      <button class="mode-tab ${tab.id === active ? 'active' : ''}" onclick="setSettingsTab('${tab.id}')">${escapeHtml(tab.label)}</button>
+    `).join('');
+    return;
+  }
+
   const pages = MODE_CONFIG[currentMode]?.pages || [];
   el.innerHTML = pages.map(page => `
     <button class="mode-tab ${page.id === currentPage ? 'active' : ''}" onclick="showPage('${page.id}', this)">
@@ -10473,6 +10494,8 @@ async function resetChecklist() {
 function cancelChecklistEdit() {
   editingChecklistItemId = null;
   ['check-text','check-owner','check-time'].forEach(id => document.getElementById(id).value = '');
+  const ownerSearch = document.getElementById('check-owner-search');
+  if (ownerSearch) ownerSearch.value = '';
   const qtyEl = document.getElementById('check-qty');
   if (qtyEl) qtyEl.value = '1';
   document.getElementById('check-editor-title').textContent = '＋ 新增 / 更新設備清單項目';
@@ -10561,6 +10584,10 @@ function editChecklistItem(id) {
   if (qtyEl) qtyEl.value = String(normalizeChecklistQty(found.item.qty));
   document.getElementById('check-editor-title').textContent = '✏️ 更新設備清單項目';
   document.getElementById('check-save-btn').textContent = '儲存更新';
+  // 清空搜索框并刷新负责人下拉列表
+  const ownerSearch = document.getElementById('check-owner-search');
+  if (ownerSearch) ownerSearch.value = '';
+  renderOwnerSelect('check-owner', '選擇負責人', found.item.owner || '');
   document.getElementById('check-text').focus();
 }
 
@@ -15015,9 +15042,12 @@ using (bucket_id = 'task-attachments');</textarea>
     const owners = getAllOwnerCandidates();
     const list = ensureOwnerDatalist();
     list.innerHTML = owners.map(owner => `<option value="${escapeAttr(owner)}"></option>`).join('');
+    // 只更新还没有设置 list 属性的输入框，避免覆盖 renderOwnerSelect 创建的独立 datalist
     ownerInputIds.forEach(id => {
       const el = document.getElementById(id);
-      if (el && el.tagName === 'INPUT') el.setAttribute('list', OWNER_DATALIST_ID);
+      if (el && el.tagName === 'INPUT' && !el.getAttribute('list')) {
+        el.setAttribute('list', OWNER_DATALIST_ID);
+      }
     });
     const filter = document.getElementById('filter-owner');
     if (filter && filter.tagName === 'SELECT') {
@@ -18595,7 +18625,10 @@ using (bucket_id = 'task-attachments');</textarea>
     const next = SETTINGS_TABS.some(tab => tab.id === tabId) ? tabId : 'overview';
     localStorage.setItem(SETTINGS_TAB_KEY, next);
     applySettingsTabState();
+    renderModeSubnav();
   }
+
+  window.setSettingsTab = setSettingsTab;
 
   function applySettingsTabState() {
     const active = getSettingsTab();
@@ -18646,8 +18679,7 @@ using (bucket_id = 'task-attachments');</textarea>
       page.id = 'page-settings';
       page.className = 'page';
       page.innerHTML = `
-        <h1>設置</h1>
-        <div class="settings-subtabs" id="settings-subtab-bar"></div>
+        <div class="settings-subtabs" id="settings-subtab-bar" style="display:none;"></div>
         <div class="settings-tab-panel" data-settings-tab-panel="overview" id="settings-tab-overview"></div>
         <div class="settings-tab-panel" data-settings-tab-panel="db" id="settings-tab-db">
           <div class="card" id="settings-db-panel" style="margin-bottom:14px"></div>
