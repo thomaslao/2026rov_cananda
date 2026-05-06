@@ -2967,10 +2967,15 @@ function refreshAfterTaskChange(forceCurrent = true) {
 function showSkeleton(page) {
   const html = '<div class="skeleton-card"><div class="skeleton-line short"></div><div class="skeleton-line"></div><div class="skeleton-line mid"></div><div class="skeleton-line"></div></div>';
   if (page === 'dashboard') {
-    document.getElementById('stat-cards').innerHTML = html + html;
-    document.getElementById('deadline-timeline').innerHTML = html;
-    document.getElementById('progress-bars').innerHTML = html;
-    document.getElementById('urgent-table').innerHTML = '<tr><td colspan="4">' + html + '</td></tr>';
+    const statCards = document.getElementById('stat-cards');
+    const deadlineTimeline = document.getElementById('deadline-timeline');
+    const progressBars = document.getElementById('progress-bars');
+    const urgentTable = document.getElementById('urgent-table');
+    
+    if (statCards) statCards.innerHTML = html + html;
+    if (deadlineTimeline) deadlineTimeline.innerHTML = html;
+    if (progressBars) progressBars.innerHTML = html;
+    if (urgentTable) urgentTable.innerHTML = '<tr><td colspan="4">' + html + '</td></tr>';
   }
 }
 
