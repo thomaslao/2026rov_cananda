@@ -207,6 +207,10 @@
   table { width: 100%; border-collapse: collapse; font-size: .88rem; }
   th { background: var(--navy); color: #fff; padding: 9px 10px; text-align: left; }
   td { padding: 9px 10px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  .task-table { table-layout: fixed; }
+  .task-table th,
+  .task-table td { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .task-table td:nth-child(5) { white-space: normal; word-break: break-word; }
   tr:hover td { background: var(--table-hover); }
   .task-done td { opacity: .55; text-decoration: line-through; }
   .task-done td:first-child { text-decoration: none; }
@@ -317,6 +321,10 @@
   .member-role-chip { display:inline-flex; align-items:center; gap:4px; border:1px solid var(--border); background:var(--white); border-radius:99px; padding:4px 8px; margin:4px 4px 0 0; font-size:.8rem; font-weight:800; }
   .owner-settings-grid { display:grid; grid-template-columns: minmax(220px,.55fr) minmax(320px,1fr); gap:12px; align-items:start; }
   .owner-chip-list { display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
+  .member-availability-table { width:100%; border-collapse:collapse; font-size:.85rem; }
+  .member-availability-table th { background:var(--navy); color:#fff; padding:8px 6px; text-align:center; font-size:.78rem; }
+  .member-availability-table td { padding:8px 6px; border-bottom:1px solid var(--border); vertical-align:middle; }
+  .member-availability-table tr:hover td { filter:brightness(.97); }
   .owner-chip { display:inline-flex; align-items:center; gap:6px; border:1px solid var(--border); border-radius:99px; background:var(--input-bg); padding:5px 8px; font-size:.8rem; font-weight:800; }
   .owner-chip button { border:0; background:transparent; color:var(--red); cursor:pointer; font-weight:900; padding:0 2px; }
   .owner-compare-table { max-height:320px; overflow:auto; border:1px solid var(--border); border-radius:8px; }
@@ -909,19 +917,19 @@
     <button class="btn" onclick="clearTaskSelection()">取消選取</button>
   </div>
   <div class="card" style="padding:0;overflow:hidden">
-    <table>
+    <table class="task-table">
       <thead><tr>
-  <th style="width:28px"><span class="drag-handle" title="拖曳排序">↕</span></th>
-  <th style="width:30px"><input type="checkbox" id="select-all-tasks" onchange="toggleSelectAllTasks(this.checked)"></th>
-  <th style="width:30px">✓</th>
-  <th style="width:36px">#</th>
-  <th onclick="setTaskSort('name')" style="cursor:pointer;user-select:none">任務 <span id="sort-icon-name"></span></th>
-  <th onclick="setTaskSort('cat')" style="cursor:pointer;user-select:none">類別 <span id="sort-icon-cat"></span></th>
-  <th onclick="setTaskSort('owner')" style="cursor:pointer;user-select:none">負責人 <span id="sort-icon-owner"></span></th>
-  <th onclick="setTaskSort('start_date')" style="cursor:pointer;user-select:none">起始日 <span id="sort-icon-start_date"></span></th>
-  <th onclick="setTaskSort('due')" style="cursor:pointer;user-select:none">期限 <span id="sort-icon-due"></span></th>
-  <th onclick="setTaskSort('status')" style="cursor:pointer;user-select:none">狀態 <span id="sort-icon-status"></span></th>
-  <th style="width:60px">操作</th>
+  <th style="width:3%"><span class="drag-handle" title="拖曳排序">↕</span></th>
+  <th style="width:3%"><input type="checkbox" id="select-all-tasks" onchange="toggleSelectAllTasks(this.checked)"></th>
+  <th style="width:3%">✓</th>
+  <th style="width:3%">#</th>
+  <th onclick="setTaskSort('name')" style="cursor:pointer;user-select:none;width:30%">任務 <span id="sort-icon-name"></span></th>
+  <th onclick="setTaskSort('cat')" style="cursor:pointer;user-select:none;width:10%">類別 <span id="sort-icon-cat"></span></th>
+  <th onclick="setTaskSort('owner')" style="cursor:pointer;user-select:none;width:11%">負責人 <span id="sort-icon-owner"></span></th>
+  <th onclick="setTaskSort('start_date')" style="cursor:pointer;user-select:none;width:9%">起始日 <span id="sort-icon-start_date"></span></th>
+  <th onclick="setTaskSort('due')" style="cursor:pointer;user-select:none;width:11%">期限 <span id="sort-icon-due"></span></th>
+  <th onclick="setTaskSort('status')" style="cursor:pointer;user-select:none;width:9%">狀態 <span id="sort-icon-status"></span></th>
+  <th style="width:8%">操作</th>
 </tr></thead>
       <tbody id="task-tbody"></tbody>
     </table>
@@ -1025,6 +1033,10 @@
   <div class="member-grid" id="member-grid"></div>
   <div id="member-empty" style="display:none" class="card" style="text-align:center;color:#aaa;padding:30px">
     尚無成員資料，點擊「新增成員」開始建立
+  </div>
+  <div class="card" style="padding:16px;margin-top:14px;overflow:auto">
+    <h2 style="margin-top:0;margin-bottom:12px">📅 全員放學後出席總覽</h2>
+    <div id="member-availability-overview" style="min-width:700px"></div>
   </div>
   <div class="card" id="owner-settings-section" style="margin-bottom:14px;padding:16px">
     <h2 style="margin-top:0;margin-bottom:12px">負責人設定列表</h2>
@@ -1277,6 +1289,40 @@
         <input type="text" id="mm-task-input" placeholder="輸入任務後按新增…" onkeydown="if(event.key==='Enter'){addMemberTaskItem();event.preventDefault();}">
         <button onclick="addMemberTaskItem()">＋ 新增</button>
       </div>
+    </div>
+    <div class="form-row">
+      <label>📅 放學後「不能出席」時間（週一至週日）</label>
+      <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-top:4px;align-items:start">
+        <div>
+          <div style="font-size:.72rem;color:#888;font-weight:700;text-align:center;margin-bottom:3px">週一</div>
+          <textarea id="mm-avail-mon" placeholder="例：16:00-18:00" style="width:100%;font-size:.8rem;padding:6px;height:56px;resize:vertical;field-sizing:content;min-height:40px"></textarea>
+        </div>
+        <div>
+          <div style="font-size:.72rem;color:#888;font-weight:700;text-align:center;margin-bottom:3px">週二</div>
+          <textarea id="mm-avail-tue" placeholder="例：補習" style="width:100%;font-size:.8rem;padding:6px;height:56px;resize:vertical;field-sizing:content;min-height:40px"></textarea>
+        </div>
+        <div>
+          <div style="font-size:.72rem;color:#888;font-weight:700;text-align:center;margin-bottom:3px">週三</div>
+          <textarea id="mm-avail-wed" placeholder="可出席" style="width:100%;font-size:.8rem;padding:6px;height:56px;resize:vertical;field-sizing:content;min-height:40px"></textarea>
+        </div>
+        <div>
+          <div style="font-size:.72rem;color:#888;font-weight:700;text-align:center;margin-bottom:3px">週四</div>
+          <textarea id="mm-avail-thu" placeholder="例：15:30-17:00" style="width:100%;font-size:.8rem;padding:6px;height:56px;resize:vertical;field-sizing:content;min-height:40px"></textarea>
+        </div>
+        <div>
+          <div style="font-size:.72rem;color:#888;font-weight:700;text-align:center;margin-bottom:3px">週五</div>
+          <textarea id="mm-avail-fri" placeholder="可出席" style="width:100%;font-size:.8rem;padding:6px;height:56px;resize:vertical;field-sizing:content;min-height:40px"></textarea>
+        </div>
+        <div>
+          <div style="font-size:.72rem;color:#888;font-weight:700;text-align:center;margin-bottom:3px">週六</div>
+          <textarea id="mm-avail-sat" placeholder="可出席" style="width:100%;font-size:.8rem;padding:6px;height:56px;resize:vertical;field-sizing:content;min-height:40px"></textarea>
+        </div>
+        <div>
+          <div style="font-size:.72rem;color:#888;font-weight:700;text-align:center;margin-bottom:3px">週日</div>
+          <textarea id="mm-avail-sun" placeholder="可出席" style="width:100%;font-size:.8rem;padding:6px;height:56px;resize:vertical;field-sizing:content;min-height:40px"></textarea>
+        </div>
+      </div>
+      <div style="font-size:.72rem;color:#999;margin-top:4px">留空或填「可出席」表示當日可以放學後出席；填寫時間或原因表示「不能出席」</div>
     </div>
     <div class="form-row">
       <label>備註</label>
@@ -2499,7 +2545,12 @@ function parseMemberTasks(m) {
     try { tasks = JSON.parse(tasks); } catch(e) { tasks = tasks.split('\n').filter(Boolean); }
   }
   if (!Array.isArray(tasks)) tasks = [];
-  return { ...m, tasks };
+  let availability = m.availability;
+  if (typeof availability === 'string') {
+    try { availability = JSON.parse(availability); } catch(e) { availability = {}; }
+  }
+  if (!availability || typeof availability !== 'object') availability = {};
+  return { ...m, tasks, availability };
 }
 
 /**
@@ -11052,6 +11103,7 @@ function renderMembers() {
     empty.style.display = 'block';
     renderMemberRoleView([]);
     renderHandoffCards();
+    renderMemberAvailabilityOverview();
     return;
   }
   empty.style.display = 'none';
@@ -11098,10 +11150,71 @@ function renderMembers() {
         ${pendingLinked.map(t=>`<div style="font-size:.75rem;padding:2px 0;color:#333">⏳ ${t.name}</div>`).join('')}
         ${doneLinked.map(t=>`<div style="font-size:.75rem;padding:2px 0;color:#aaa;text-decoration:line-through">✅ ${t.name}</div>`).join('')}
       </div>` : ''}
+      ${renderMemberAvailabilityMini(m)}
       ${m.note ? `<div style="margin-top:6px;font-size:.75rem;color:var(--orange);background:#FFF3E0;padding:4px 8px;border-radius:4px">⚠️ ${m.note}</div>` : ''}
     </div>`;
   }).join('');
   renderHandoffCards();
+  renderMemberAvailabilityOverview();
+}
+
+function renderMemberAvailabilityMini(m) {
+  const avail = m.availability || {};
+  const days = [
+    { key:'mon', label:'一' }, { key:'tue', label:'二' }, { key:'wed', label:'三' },
+    { key:'thu', label:'四' }, { key:'fri', label:'五' }, { key:'sat', label:'六' }, { key:'sun', label:'日' }
+  ];
+  const busyDays = days.filter(d => {
+    const v = (avail[d.key] || '').trim();
+    return v && v !== '可出席';
+  });
+  if (!busyDays.length) return '';
+  return `
+  <div style="margin-top:8px;border-top:1px solid #eee;padding-top:8px">
+    <div style="font-size:.75rem;color:#888;margin-bottom:4px">📅 放學後不能出席：</div>
+    <div style="display:flex;flex-wrap:wrap;gap:4px">
+      ${days.map(d => {
+        const v = (avail[d.key] || '').trim();
+        const isBusy = v && v !== '可出席';
+        return `<span style="font-size:.72rem;padding:2px 6px;border-radius:99px;font-weight:700;${isBusy ? 'background:#FADBD8;color:#922B21' : 'background:#D5F5E3;color:#1E8449'}">${d.label}${isBusy ? ' ' + escapeHtml(v.length > 8 ? v.slice(0,8)+'…' : v) : ' ✓'}</span>`;
+      }).join('')}
+    </div>
+  </div>`;
+}
+
+function renderMemberAvailabilityOverview() {
+  const el = document.getElementById('member-availability-overview');
+  if (!el) return;
+  const days = [
+    { key:'mon', label:'週一' }, { key:'tue', label:'週二' }, { key:'wed', label:'週三' },
+    { key:'thu', label:'週四' }, { key:'fri', label:'週五' }, { key:'sat', label:'週六' }, { key:'sun', label:'週日' }
+  ];
+  if (!state.members.length) {
+    el.innerHTML = '<div style="text-align:center;color:#aaa;padding:20px">尚無成員資料</div>';
+    return;
+  }
+  el.innerHTML = `
+    <table class="member-availability-table">
+      <thead>
+        <tr>
+          <th style="width:120px">成員</th>
+          ${days.map(d => `<th style="width:110px">${d.label}</th>`).join('')}
+        </tr>
+      </thead>
+      <tbody>
+        ${state.members.map(m => {
+          const avail = m.availability || {};
+          return `<tr>
+            <td style="font-weight:700">${escapeHtml(m.name)}</td>
+            ${days.map(d => {
+              const v = (avail[d.key] || '').trim();
+              const isFree = !v || v === '可出席';
+              return `<td style="${isFree ? 'background:#E8F5E9;color:#2E7D32' : 'background:#FFEBEE;color:#C62828'};font-size:.78rem;text-align:center">${isFree ? '✓ 可出席' : escapeHtml(v)}</td>`;
+            }).join('')}
+          </tr>`;
+        }).join('')}
+      </tbody>
+    </table>`;
 }
 
 function getMemberRoleBucket(member) {
@@ -11142,6 +11255,7 @@ function openAddMember() {
   memberTaskItems = [];
   document.getElementById('member-modal-title').textContent = '新增成員';
   ['mm-name','mm-role','mm-note'].forEach(id=>document.getElementById(id).value='');
+  ['mm-avail-mon','mm-avail-tue','mm-avail-wed','mm-avail-thu','mm-avail-fri','mm-avail-sat','mm-avail-sun'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('mm-canada').value = '⏳ 待回報';
   document.getElementById('mm-task-input').value = '';
   renderMemberTaskList();
@@ -11158,6 +11272,14 @@ function editMember(id) {
   document.getElementById('mm-role').value = m.role||'';
   document.getElementById('mm-canada').value = m.canada||'⏳ 待回報';
   document.getElementById('mm-note').value = m.note||'';
+  const avail = m.availability || {};
+  document.getElementById('mm-avail-mon').value = avail.mon || '';
+  document.getElementById('mm-avail-tue').value = avail.tue || '';
+  document.getElementById('mm-avail-wed').value = avail.wed || '';
+  document.getElementById('mm-avail-thu').value = avail.thu || '';
+  document.getElementById('mm-avail-fri').value = avail.fri || '';
+  document.getElementById('mm-avail-sat').value = avail.sat || '';
+  document.getElementById('mm-avail-sun').value = avail.sun || '';
   document.getElementById('mm-task-input').value = '';
   renderMemberTaskList();
   document.getElementById('member-modal').classList.add('open');
@@ -11191,30 +11313,63 @@ function removeMemberTaskItem(idx) {
 async function saveMember() {
   const name = document.getElementById('mm-name').value.trim();
   if (!name) { alert('請輸入成員姓名'); return; }
+  const availability = {
+    mon: document.getElementById('mm-avail-mon').value.trim(),
+    tue: document.getElementById('mm-avail-tue').value.trim(),
+    wed: document.getElementById('mm-avail-wed').value.trim(),
+    thu: document.getElementById('mm-avail-thu').value.trim(),
+    fri: document.getElementById('mm-avail-fri').value.trim(),
+    sat: document.getElementById('mm-avail-sat').value.trim(),
+    sun: document.getElementById('mm-avail-sun').value.trim(),
+  };
   const data = {
     name,
     role: document.getElementById('mm-role').value.trim(),
     canada: document.getElementById('mm-canada').value,
     tasks: JSON.stringify(memberTaskItems),
     note: document.getElementById('mm-note').value.trim(),
+    availability: JSON.stringify(availability),
   };
   if (optionalSchema.membersSeason) data.season = currentSeason;
 
+  let saveError = null;
+  let saveRow = null;
   if (editingMemberId) {
-    const { error } = await db.from('members').update(data).eq('id', editingMemberId);
-    if (error) {
-      alert('❌ 更新失敗：' + error.message + '\n\n若訊息含 RLS / policy，請開啟「🗄 DB 設定」執行內嵌 SQL 的 RLS policy 段落');
-      return;
+    const result = await db.from('members').update(data).eq('id', editingMemberId);
+    saveError = result.error;
+    if (saveError) {
+      const isSchemaError = /column|schema|field/i.test(saveError.message);
+      if (isSchemaError) {
+        // 降級：僅更新本地 state，不阻塞用戶
+        const idx = state.members.findIndex(x=>x.id===editingMemberId);
+        if (idx>=0) state.members[idx] = parseMemberTasks({ ...state.members[idx], ...data });
+        showToast('⚠️ 已儲存至本地（Supabase 缺少 availability 欄位）');
+      } else {
+        alert('❌ 更新失敗：' + saveError.message + '\n\n若訊息含 RLS / policy，請開啟「🗄 DB 設定」執行內嵌 SQL 的 RLS policy 段落');
+        return;
+      }
+    } else {
+      const idx = state.members.findIndex(x=>x.id===editingMemberId);
+      if (idx>=0) state.members[idx] = parseMemberTasks({ ...state.members[idx], ...data });
     }
-    const idx = state.members.findIndex(x=>x.id===editingMemberId);
-    if (idx>=0) state.members[idx] = parseMemberTasks({ ...state.members[idx], ...data });
   } else {
-    const { data: row, error } = await db.from('members').insert([data]).select().single();
-    if (error) {
-      alert('❌ 新增失敗：' + error.message + '\n\n請確認：\n1. members table 已建立\n2. 若為 RLS：開啟「🗄 DB 設定」執行 SQL 內 RLS policy 段落\n\n請點「🗄 DB 設定」→「🔍 即時診斷連線狀態」查看詳情');
-      return;
+    const result = await db.from('members').insert([data]).select().single();
+    saveError = result.error;
+    saveRow = result.data;
+    if (saveError) {
+      const isSchemaError = /column|schema|field/i.test(saveError.message);
+      if (isSchemaError) {
+        // 降級：僅更新本地 state，分配臨時 id
+        const tempId = -(Date.now());
+        state.members.push(parseMemberTasks({ ...data, id: tempId }));
+        showToast('⚠️ 已儲存至本地（Supabase 缺少 availability 欄位）');
+      } else {
+        alert('❌ 新增失敗：' + saveError.message + '\n\n請確認：\n1. members table 已建立\n2. 若為 RLS：開啟「🗄 DB 設定」執行 SQL 內 RLS policy 段落\n\n請點「🗄 DB 設定」→「🔍 即時診斷連線狀態」查看詳情');
+        return;
+      }
+    } else if (saveRow) {
+      state.members.push(parseMemberTasks(saveRow));
     }
-    if (row) state.members.push(parseMemberTasks(row));
   }
   closeModal('member-modal');
   markDirty('members');
@@ -15328,13 +15483,14 @@ create table if not exists tasks (
 
 -- ② members
 create table if not exists members (
-  id      bigserial primary key,
-  name    text not null,
-  role    text,
-  canada  text,
-  tasks   text,
-  note    text default '',
-  season  text default '2025-2026'
+  id           bigserial primary key,
+  name         text not null,
+  role         text,
+  canada       text,
+  tasks        text,
+  note         text default '',
+  season       text default '2025-2026',
+  availability text default '{}'
 );
 
 -- ③ intel
@@ -15403,6 +15559,7 @@ alter table tasks add column if not exists sort_order integer default 0;
 alter table tasks add column if not exists deleted_at timestamptz;
 alter table tasks add column if not exists season text default '2025-2026';
 alter table members add column if not exists season text default '2025-2026';
+alter table members add column if not exists availability text default '{}';
 alter table intel add column if not exists season text default '2025-2026';
 
 -- ⑥ quotes（教練金句）
