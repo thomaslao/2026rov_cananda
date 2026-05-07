@@ -222,6 +222,16 @@
   .attachment-item a { color: var(--blue); font-weight: 600; text-decoration: none; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .drag-handle { cursor: grab; color: #999; font-weight: 800; user-select: none; }
   .sortable-ghost { opacity: .45; background: var(--lblue) !important; }
+  
+  /* 懶加載骨架屏動畫 */
+  @keyframes skeleton-shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+  }
+  
+  .lazy-loading { opacity: 0.6; }
+  .lazy-loaded { opacity: 1; }
+  .lazy-error { border: 2px solid var(--red); }
   .batch-bar { display:none; gap:8px; flex-wrap:wrap; align-items:center; padding:10px 14px; margin-bottom:10px; border:1px solid var(--border); border-radius:8px; background:var(--white); box-shadow:var(--shadow); }
   .batch-bar.show { display:flex; }
   /* Mission Run 備註／賽中事件：保留換行以便閱讀 */
@@ -887,10 +897,15 @@
   <div class="card" id="task-blocked-panel" style="padding:10px 14px;margin-bottom:10px"></div>
   <div class="batch-bar" id="task-batch-bar">
     <strong id="batch-count">已選 0 筆</strong>
-    <select id="batch-status" style="min-width:110px"><option value="">批量狀態</option><option>待辦</option><option>進行中</option><option>已完成</option></select>
-    <input type="text" id="batch-owner" placeholder="批量負責人" style="width:150px">
+    <select id="batch-status" style="min-width:110px"><option value="">批量狀態</option><option>待辦</option><option>進行中</option><option>已完成</option><option>已取消</option></select>
+    <input type="text" id="batch-owner" placeholder="批量負責人" style="width:150px" list="batch-owner-list">
+    <datalist id="batch-owner-list"></datalist>
+    <select id="batch-category" style="min-width:120px"><option value="">批量類別</option><option>🔴 緊急</option><option>🟠 高優先</option><option>🟡 中優先</option><option>🟢 低優先</option></select>
+    <input type="date" id="batch-due" placeholder="批量截止" style="width:140px">
     <button class="btn btn-primary" onclick="applyBatchUpdate()">套用</button>
     <button class="btn btn-danger" onclick="batchSoftDelete()">軟刪除</button>
+    <button class="btn btn-success" onclick="batchExportSelected()">匯出所選</button>
+    <button class="btn" onclick="batchSetDependency()">設前置任務</button>
     <button class="btn" onclick="clearTaskSelection()">取消選取</button>
   </div>
   <div class="card" style="padding:0;overflow:hidden">
@@ -9221,7 +9236,8 @@ function renderTasks() {
 
   const catColor = {'🔴 緊急':'#FFD6D6','🟠 高優先':'#FCE4D6','🟡 中優先':'#FFF3CD','🟢 持續':'#E2EFDA'};
 
-  document.getElementById('task-tbody').innerHTML = filtered.map(t=>{
+  // 渲染函數
+  const renderTaskRow = (t) => {
     const overdue = t.due && isOverdue(t.due) && t.status!=='已完成';
     const overdueDays = getOverdueDays(t.due);
     const overdueColor = overdueDays > 3 ? 'var(--red)' : 'var(--orange)';
@@ -9249,7 +9265,15 @@ function renderTasks() {
         <button class="btn btn-sm btn-primary" onclick="editTask(${t.id})" style="margin-right:4px" title="編輯">✏️</button>
         <button class="btn btn-sm btn-danger" onclick="deleteTask(${t.id})" title="刪除">🗑</button>
       </td>
-    </tr>`}).join('') || '<tr><td colspan="10" style="text-align:center;padding:20px;color:#aaa">無符合條件的任務</td></tr>';
+    </tr>`;
+  };
+
+  // 直接渲染所有任務
+  const tbody = document.getElementById('task-tbody');
+  if (tbody) {
+    tbody.innerHTML = filtered.map(renderTaskRow).join('') || '<tr><td colspan="10" style="text-align:center;padding:20px;color:#aaa">無符合條件的任務</td></tr>';
+  }
+  
   updateBatchBar();
   initTaskSortable();
 }
@@ -9531,6 +9555,366 @@ function updateTaskActiveCount() {
 }
 
 /**
+ * 虛擬滾動渲染（性能優化）
+ * @param {Array} items 要渲染的數據數組
+ * @param {string} containerId 容器ID
+ * @param {Function} renderFn 渲染函數，接收item和index，返回HTML字符串
+ * @param {number} itemHeight 每項高度（像素）
+ * @param {number} bufferSize 緩衝區大小（額外渲染的項目數）
+ */
+function renderVirtualList(items, containerId, renderFn, itemHeight = 45, bufferSize = 5) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  
+  // 直接渲染所有項目（不應用虛擬滾動到表格）
+  container.innerHTML = items.map((item, index) => renderFn(item, index)).join('');
+  
+  // 清除任何虛擬滾動樣式
+  container.style.height = '';
+  container.style.paddingTop = '';
+  container.style.paddingBottom = '';
+  container.style.display = '';
+  
+  return;
+}
+
+/**
+ * 圖片懶加載與緩存系統
+ * 用於優化任務附件、成員頭像等圖片資源
+ */
+const ImageCache = {
+  // 圖片緩存 Map
+  cache: new Map(),
+  
+  // 正在加載的圖片 Promise
+  loading: new Map(),
+  
+  // 緩存大小限制（最多100張）
+  MAX_CACHE_SIZE: 100,
+  
+  /**
+   * 加載圖片（帶緩存）
+   * @param {string} src 圖片URL
+   * @returns {Promise<HTMLImageElement>} 圖片元素
+   */
+  async loadImage(src) {
+    // 1. 檢查緩存
+    if (this.cache.has(src)) {
+      return this.cache.get(src);
+    }
+    
+    // 2. 檢查是否正在加載
+    if (this.loading.has(src)) {
+      return this.loading.get(src);
+    }
+    
+    // 3. 加載圖片
+    const loadPromise = new Promise((resolve, reject) => {
+      const img = new Image();
+      
+      img.onload = () => {
+        this.cache.set(src, img);
+        this.loading.delete(src);
+        
+        // 清理舊緩存
+        this.cleanupCache();
+        
+        resolve(img);
+      };
+      
+      img.onerror = () => {
+        this.loading.delete(src);
+        reject(new Error(`Failed to load image: ${src}`));
+      };
+      
+      img.src = src;
+    });
+    
+    this.loading.set(src, loadPromise);
+    return loadPromise;
+  },
+  
+  /**
+   * 預加載多張圖片
+   * @param {Array<string>} srcs 圖片URL數組
+   * @returns {Promise<Array>} 加載結果
+   */
+  async preloadImages(srcs) {
+    const promises = srcs.map(src => this.loadImage(src).catch(() => null));
+    return Promise.all(promises);
+  },
+  
+  /**
+   * 清理舊緩存（LRU策略）
+   */
+  cleanupCache() {
+    if (this.cache.size > this.MAX_CACHE_SIZE) {
+      // 刪除最早的20%
+      const deleteCount = Math.floor(this.cache.size * 0.2);
+      const keys = Array.from(this.cache.keys());
+      
+      for (let i = 0; i < deleteCount; i++) {
+        this.cache.delete(keys[i]);
+      }
+    }
+  },
+  
+  /**
+   * 清空緩存
+   */
+  clearCache() {
+    this.cache.clear();
+    this.loading.clear();
+  },
+  
+  /**
+   * 獲取緩存統計
+   */
+  getStats() {
+    return {
+      cached: this.cache.size,
+      loading: this.loading.size,
+      total: this.cache.size + this.loading.size
+    };
+  }
+};
+
+/**
+ * Intersection Observer 懶加載管理器
+ * 用於監聽元素是否進入可視區域
+ */
+const LazyLoadManager = {
+  // 觀察器實例
+  observer: null,
+  
+  // 待加載的元素
+  pendingElements: new Set(),
+  
+  /**
+   * 初始化懶加載觀察器
+   */
+  init() {
+    if ('IntersectionObserver' in window) {
+      this.observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            this.loadElement(entry.target);
+            this.observer.unobserve(entry.target);
+          }
+        });
+      }, {
+        rootMargin: '100px', // 提前100px加載
+        threshold: 0.01
+      });
+    }
+  },
+  
+  /**
+   * 監聽元素
+   * @param {HTMLElement} element 要監聽的元素
+   */
+  observe(element) {
+    if (!this.observer) this.init();
+    
+    if (this.observer && element) {
+      this.observer.observe(element);
+      this.pendingElements.add(element);
+    }
+  },
+  
+  /**
+   * 加載元素中的圖片
+   * @param {HTMLElement} element 包含圖片的元素
+   */
+  async loadElement(element) {
+    const img = element.querySelector('img[data-lazy-src]');
+    if (!img) return;
+    
+    const src = img.dataset.lazySrc;
+    if (!src) return;
+    
+    try {
+      // 顯示加載中狀態
+      element.classList.add('lazy-loading');
+      
+      // 使用緩存加載
+      const loadedImg = await ImageCache.loadImage(src);
+      
+      // 更新圖片
+      img.src = loadedImg.src;
+      img.removeAttribute('data-lazy-src');
+      
+      // 移除加載中狀態
+      element.classList.remove('lazy-loading');
+      element.classList.add('lazy-loaded');
+      
+      this.pendingElements.delete(element);
+    } catch (error) {
+      console.error('Lazy load failed:', error);
+      element.classList.add('lazy-error');
+    }
+  },
+  
+  /**
+   * 強制加載所有待加載元素
+   */
+  flushAll() {
+    this.pendingElements.forEach(element => {
+      if (this.observer) {
+        this.observer.unobserve(element);
+      }
+      this.loadElement(element);
+    });
+    this.pendingElements.clear();
+  }
+};
+
+/**
+ * 創建懶加載圖片容器
+ * @param {string} src 圖片URL
+ * @param {object} options 配置選項
+ * @returns {HTMLElement} 圖片容器
+ */
+function createLazyImage(src, options = {}) {
+  const {
+    width = '100%',
+    height = 'auto',
+    alt = '',
+    className = '',
+    placeholder: placeholderText = '加載中...',
+    objectFit = 'cover'
+  } = options;
+  
+  const container = document.createElement('div');
+  container.className = `lazy-image-container ${className}`;
+  container.style.cssText = `
+    position: relative;
+    width: ${width};
+    height: ${height};
+    overflow: hidden;
+    background: var(--grey);
+  `;
+  
+  // 佔位符
+  const placeholderEl = document.createElement('div');
+  placeholderEl.className = 'lazy-placeholder';
+  placeholderEl.textContent = placeholderText;
+  placeholderEl.style.cssText = `
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--muted);
+    font-size: 0.85rem;
+  `;
+  container.appendChild(placeholderEl);
+  
+  // 骨架屏動畫
+  const skeleton = document.createElement('div');
+  skeleton.className = 'lazy-skeleton';
+  skeleton.style.cssText = `
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(90deg, var(--grey) 25%, #e0e0e0 50%, var(--grey) 75%);
+    background-size: 200% 100%;
+    animation: skeleton-shimmer 1.5s infinite;
+  `;
+  container.appendChild(skeleton);
+  
+  // 實際圖片
+  const img = document.createElement('img');
+  img.dataset.lazySrc = src;
+  img.alt = alt;
+  img.style.cssText = `
+    width: 100%;
+    height: 100%;
+    object-fit: ${objectFit};
+    opacity: 0;
+    transition: opacity 0.3s;
+  `;
+  container.appendChild(img);
+  
+  // 監聽加載完成
+  img.onload = () => {
+    img.style.opacity = '1';
+    placeholderEl.style.display = 'none';
+    skeleton.style.display = 'none';
+  };
+  
+  // 註冊到懶加載管理器
+  LazyLoadManager.observe(container);
+  
+  return container;
+}
+
+/**
+ * 預加載關鍵圖片
+ * 用於頁面初始化時加載重要圖片
+ */
+function preloadCriticalImages() {
+  // 這裡可以預加載重要的圖片
+  // 例如：Logo、默認頭像等
+  const criticalImages = [
+    // 'logo.png',
+    // 'default-avatar.png'
+  ];
+  
+  if (criticalImages.length > 0) {
+    ImageCache.preloadImages(criticalImages).then(() => {
+      console.log('✅ 關鍵圖片預加載完成');
+    });
+  }
+}
+
+/**
+ * 圖片緩存統計與管理界面
+ */
+function showImageCacheStats() {
+  const stats = ImageCache.getStats();
+  
+  let html = `
+    <div style="max-width: 500px; margin: 0 auto;">
+      <h2 style="text-align: center; margin-bottom: 20px;">🖼️ 圖片緩存管理</h2>
+      
+      <div style="background: var(--lgreen); padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+        <strong>緩存統計</strong><br>
+        已緩存: ${stats.cached} 張<br>
+        加載中: ${stats.loading} 張<br>
+        總計: ${stats.total} 張
+      </div>
+      
+      <div style="text-align: center;">
+        <button onclick="ImageCache.clearCache(); closeModal(); showStatus('✅ 緩存已清除', 'success');" 
+                style="background: var(--red); color: white; padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; margin: 5px;">
+          🗑️ 清除緩存
+        </button>
+        <button onclick="LazyLoadManager.flushAll(); closeModal(); showStatus('✅ 已強制加載所有圖片', 'success');" 
+                style="background: var(--blue); color: white; padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; margin: 5px;">
+          ⚡ 強制加載
+        </button>
+        <button onclick="closeModal()" 
+                style="background: var(--grey); color: var(--text); padding: 10px 20px; border: 1px solid var(--border); border-radius: 6px; cursor: pointer; font-weight: bold; margin: 5px;">
+          關閉
+        </button>
+      </div>
+    </div>
+  `;
+  
+  if (typeof showModal === 'function') {
+    showModal('圖片緩存管理', html);
+  } else {
+    alert(`圖片緩存統計\n\n已緩存: ${stats.cached}\n加載中: ${stats.loading}\n總計: ${stats.total}`);
+  }
+}
+
+/**
  * 初始化任務表格拖曳排序。
  */
 function initTaskSortable() {
@@ -9543,6 +9927,27 @@ function initTaskSortable() {
     ghostClass: 'sortable-ghost',
     onEnd: saveTaskOrderFromDom
   });
+}
+
+/**
+ * 添加骨架屏CSS（如果尚未添加）
+ */
+function ensureSkeletonCSS() {
+  if (document.getElementById('skeleton-styles')) return;
+  
+  const style = document.createElement('style');
+  style.id = 'skeleton-styles';
+  style.textContent = `
+    @keyframes skeleton-shimmer {
+      0% { background-position: -200% 0; }
+      100% { background-position: 200% 0; }
+    }
+    
+    .lazy-loading { opacity: 0.6; }
+    .lazy-loaded { opacity: 1; }
+    .lazy-error { border: 2px solid var(--red); }
+  `;
+  document.head.appendChild(style);
 }
 
 /**
@@ -9606,6 +10011,20 @@ function updateBatchBar() {
     const visible = getFilteredTasks(true);
     selectAll.checked = visible.length > 0 && visible.every(t => selectedTaskIds.has(t.id));
   }
+  
+  // 更新負責人建議列表
+  updateBatchOwnerSuggestions();
+}
+
+/**
+ * 更新批量操作負責人建議
+ */
+function updateBatchOwnerSuggestions() {
+  const datalist = document.getElementById('batch-owner-list');
+  if (!datalist) return;
+  
+  const owners = [...new Set(state.tasks.map(t => t.owner).filter(Boolean))].sort();
+  datalist.innerHTML = owners.map(o => `<option value="${escapeAttr(o)}">`).join('');
 }
 
 /**
@@ -9649,6 +10068,178 @@ async function batchSoftDelete() {
   selectedTaskIds.clear();
   refreshAfterTaskChange();
   showToast('🗑 已批量軟刪除');
+}
+
+/**
+ * 批量匯出所選任務為CSV
+ */
+function batchExportSelected() {
+  if (!selectedTaskIds.size) {
+    showToast('請先選擇任務');
+    return;
+  }
+  
+  const tasks = state.tasks.filter(t => selectedTaskIds.has(t.id));
+  if (tasks.length === 0) return;
+  
+  // CSV Header
+  const headers = ['ID', '任務名稱', '類別', '負責人', '起始日', '截止日', '狀態', '備註'];
+  
+  // CSV Rows
+  const rows = tasks.map(t => [
+    t.id,
+    `"${(t.name || '').replace(/"/g, '""')}"`,
+    t.cat || '',
+    `"${(t.owner || '').replace(/"/g, '""')}"`,
+    t.start_date || '',
+    t.due || '',
+    t.status || '',
+    `"${(t.note || '').replace(/"/g, '""')}"`
+  ]);
+  
+  // 組裝CSV
+  const csvContent = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+  
+  // 下載
+  const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `tasks_selected_${new Date().toISOString().split('T')[0]}.csv`;
+  link.click();
+  URL.revokeObjectURL(url);
+  
+  showToast(`✅ 已匯出 ${tasks.length} 筆任務`);
+}
+
+/**
+ * 批量設置前置任務
+ */
+function batchSetDependency() {
+  if (!selectedTaskIds.size) {
+    showToast('請先選擇任務');
+    return;
+  }
+  
+  const taskId = prompt('請輸入前置任務的ID：');
+  if (!taskId) return;
+  
+  const depTask = state.tasks.find(t => t.id === Number(taskId));
+  if (!depTask) {
+    showToast(`❌ 找不到 ID 為 ${taskId} 的任務`);
+    return;
+  }
+  
+  if (!confirm(`確認將 ${selectedTaskIds.size} 筆任務的前置任務設為：${depTask.name}？`)) {
+    return;
+  }
+  
+  // 檢查循環依賴
+  for (const id of selectedTaskIds) {
+    if (Number(id) === Number(taskId)) {
+      showToast('❌ 任務不能依賴自己');
+      return;
+    }
+    if (hasDependencyCycle(id, Number(taskId))) {
+      showToast('❌ 會造成循環依賴');
+      return;
+    }
+  }
+  
+  // 批量更新
+  const ids = [...selectedTaskIds];
+  const beforeMap = new Map(ids.map(id => [id, {...state.tasks.find(x => x.id === id)}]));
+  
+  ids.forEach(id => {
+    const t = state.tasks.find(x => x.id === id);
+    if (t) {
+      t.depends_on = Number(taskId);
+    }
+  });
+  
+  // 保存到Supabase
+  Promise.all(ids.map(id => 
+    db.from('tasks').update({ depends_on: Number(taskId) }).eq('id', id)
+  )).then(() => {
+    // 寫入審計日誌
+    Promise.all(ids.map(id => {
+      const t = state.tasks.find(x => x.id === id);
+      return t ? writeAuditLog('batch_dependency', 'tasks', id, beforeMap.get(id), t) : Promise.resolve();
+    }));
+    
+    selectedTaskIds.clear();
+    refreshAfterTaskChange();
+    showToast(`✅ 已為 ${ids.length} 筆任務設置前置任務`);
+  }).catch(err => {
+    showToast('❌ 批量更新失敗: ' + err.message);
+  });
+}
+
+/**
+ * 增強批量更新（支持類別和截止日期）
+ */
+async function applyBatchUpdate() {
+  if (!selectedTaskIds.size) return;
+  
+  const status = document.getElementById('batch-status').value;
+  const owner = document.getElementById('batch-owner').value.trim();
+  const category = document.getElementById('batch-category').value;
+  const due = document.getElementById('batch-due').value;
+  
+  if (!status && !owner && !category && !due) {
+    showToast('請選擇至少一個欄位');
+    return;
+  }
+  
+  const ids = [...selectedTaskIds];
+  const patch = {};
+  if (status) patch.status = status;
+  if (owner) patch.owner = owner;
+  if (category) patch.cat = category;
+  if (due) patch.due = due;
+  
+  // 驗證
+  const validation = validateTasksBatch(ids.map(id => {
+    const t = state.tasks.find(x => x.id === id);
+    return t ? {...t, ...patch} : null;
+  }).filter(Boolean));
+  
+  if (validation.invalid.length > 0) {
+    const errorMsg = validation.errors.slice(0, 3).map(e => 
+      `第${e.row}行: ${e.message}`
+    ).join('\n');
+    
+    if (!confirm(`有 ${validation.invalid.length} 筆任務驗證失敗：\n${errorMsg}\n\n仍要繼續？`)) {
+      return;
+    }
+  }
+  
+  const beforeMap = new Map(ids.map(id => [id, {...state.tasks.find(x => x.id === id)}]));
+  
+  // 批量更新Supabase
+  await Promise.all(ids.map(id => db.from('tasks').update(patch).eq('id', id)));
+  
+  // 更新本地狀態
+  ids.forEach(id => {
+    const t = state.tasks.find(x => x.id === id);
+    if (t) Object.assign(t, patch);
+  });
+  
+  // 寫入審計日誌
+  await Promise.all(ids.map(id => {
+    const t = state.tasks.find(x => x.id === id);
+    return t ? writeAuditLog('batch_update', 'tasks', id, beforeMap.get(id), t) : Promise.resolve();
+  }));
+  
+  // 清空選擇和表單
+  selectedTaskIds.clear();
+  document.getElementById('batch-status').value = '';
+  document.getElementById('batch-owner').value = '';
+  document.getElementById('batch-category').value = '';
+  document.getElementById('batch-due').value = '';
+  
+  refreshAfterTaskChange();
+  showToast(`✅ 批量更新完成 (${ids.length} 筆)`);
 }
 
 function isOverdue(due) {
@@ -9772,17 +10363,229 @@ async function deleteTask(id) {
 }
 
 /**
- * 前端任務欄位驗證。
+ * 前端任務欄位驗證（增強版）。
  * @param {object} task 任務資料。
  * @returns {{ok:boolean,message:string}} 驗證結果。
  */
 function validateTaskForm(task) {
+  // 1. 任務名稱驗證
   if (!task.name) return { ok:false, message:'請輸入任務名稱。' };
+  if (task.name.length < 3) return { ok:false, message:'任務名稱至少需要 3 個字符。' };
+  if (task.name.length > 100) return { ok:false, message:'任務名稱不能超過 100 個字符。' };
+  
+  // 2. 負責人驗證
   if (!task.owner) return { ok:false, message:'請輸入負責人。' };
+  if (task.owner.length < 2) return { ok:false, message:'負責人名稱至少需要 2 個字符。' };
+  
+  // 3. 日期驗證
   if (task.start_date && task.due && new Date(task.due) < new Date(task.start_date)) {
     return { ok:false, message:'截止日不可早於開始日。' };
   }
+  
+  // 4. 截止日期不能早於今天（除非是已完成任務）
+  if (task.due && task.status !== '已完成' && new Date(task.due) < new Date().setHours(0, 0, 0, 0)) {
+    const today = new Date().toLocaleDateString('zh-TW');
+    if (!confirm(`截止日期 (${task.due}) 早於今天 (${today})，確定要儲存嗎？`)) {
+      return { ok:false, message:'已取消儲存。' };
+    }
+  }
+  
+  // 5. 狀態值驗證
+  const validStatuses = ['待辦', '進行中', '已完成', '已取消', '已延期'];
+  if (task.status && !validStatuses.includes(task.status)) {
+    return { ok:false, message:`無效的狀態值：${task.status}` };
+  }
+  
+  // 6. 分類值驗證
+  const validCategories = ['🔴 緊急', '🟠 高優先', '🟡 中優先', '🟢 低優先'];
+  if (task.cat && !validCategories.includes(task.cat)) {
+    return { ok:false, message:`無效的分類值：${task.cat}` };
+  }
+  
+  // 7. 前置任務循環檢查
+  if (task.depends_on) {
+    if (task.id && task.depends_on === task.id) {
+      return { ok:false, message:'任務不能依賴自己。' };
+    }
+    
+    // 檢查前置任務是否存在
+    const dependsTask = state.tasks.find(t => t.id === task.depends_on);
+    if (!dependsTask) {
+      return { ok:false, message:`前置任務 (ID: ${task.depends_on}) 不存在。` };
+    }
+  }
+  
+  // 8. 備註長度限制
+  if (task.note && task.note.length > 1000) {
+    return { ok:false, message:'備註不能超過 1000 個字符。' };
+  }
+  
   return { ok:true, message:'' };
+}
+
+/**
+ * 批量驗證任務數據（用於導入）
+ * @param {Array} tasks 任務數組
+ * @returns {{valid: Array, invalid: Array, errors: Array}} 驗證結果
+ */
+function validateTasksBatch(tasks) {
+  const valid = [];
+  const invalid = [];
+  const errors = [];
+  
+  tasks.forEach((task, index) => {
+    const result = validateTaskForm(task);
+    if (result.ok) {
+      valid.push(task);
+    } else {
+      invalid.push(task);
+      errors.push({ row: index + 1, task: task.name, message: result.message });
+    }
+  });
+  
+  return { valid, invalid, errors };
+}
+
+/**
+ * 清理無效數據（定期維護）
+ * @returns {object} 清理結果統計
+ */
+function cleanupInvalidData() {
+  let cleaned = {
+    tasks: 0,
+    members: 0,
+    checklist: 0,
+    total: 0
+  };
+  
+  // 1. 清理無效任務
+  const originalTaskCount = state.tasks.length;
+  state.tasks = state.tasks.filter(t => {
+    // 保留必要字段
+    return t.name && t.name.length >= 3 && t.owner;
+  });
+  cleaned.tasks = originalTaskCount - state.tasks.length;
+  
+  // 2. 清理無效成員
+  const originalMemberCount = (state.members || []).length;
+  state.members = (state.members || []).filter(m => m.name && m.name.length >= 2);
+  cleaned.members = originalMemberCount - state.members.length;
+  
+  // 3. 清理無效設備清单项
+  const originalChecklistCount = (state.checklistItems || []).length;
+  state.checklistItems = (state.checklistItems || []).filter(item => item.name);
+  cleaned.checklist = originalChecklistCount - state.checklistItems.length;
+  
+  cleaned.total = cleaned.tasks + cleaned.members + cleaned.checklist;
+  
+  // 保存到本地
+  if (cleaned.total > 0) {
+    saveToLocal();
+    console.log('數據清理完成:', cleaned);
+  }
+  
+  return cleaned;
+}
+
+/**
+ * 數據健康檢查
+ * @returns {object} 健康報告
+ */
+function runDataHealthCheck() {
+  const report = {
+    totalTasks: state.tasks.length,
+    taskIssues: [],
+    memberIssues: [],
+    dateIssues: [],
+    status: 'healthy'
+  };
+  
+  // 1. 檢查任務
+  state.tasks.forEach(task => {
+    if (!task.name || task.name.length < 3) {
+      report.taskIssues.push({ id: task.id, issue: '任務名稱無效', name: task.name });
+    }
+    if (!task.owner) {
+      report.taskIssues.push({ id: task.id, issue: '缺少負責人', name: task.name });
+    }
+    if (task.due && new Date(task.due) < new Date() && task.status !== '已完成') {
+      report.dateIssues.push({ id: task.id, issue: '已過期', name: task.name, due: task.due });
+    }
+  });
+  
+  // 2. 檢查成員
+  (state.members || []).forEach(member => {
+    if (!member.name || member.name.length < 2) {
+      report.memberIssues.push({ issue: '成員名稱無效', name: member.name });
+    }
+  });
+  
+  // 3. 判斷健康狀態
+  const totalIssues = report.taskIssues.length + report.memberIssues.length + report.dateIssues.length;
+  if (totalIssues > 0) {
+    report.status = totalIssues > 10 ? 'critical' : 'warning';
+  }
+  
+  return report;
+}
+
+/**
+ * 顯示數據健康報告
+ */
+function showDataHealthReport() {
+  const report = runDataHealthCheck();
+  
+  let html = `
+    <div style="max-width: 700px; margin: 0 auto;">
+      <h2 style="text-align: center; margin-bottom: 20px;"> 數據健康檢查報告</h2>
+      
+      <div style="background: var(--lgreen); padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+        <strong>總任務數:</strong> ${report.totalTasks}<br>
+        <strong>健康狀態:</strong> 
+        <span style="color: ${report.status === 'healthy' ? 'var(--green)' : report.status === 'warning' ? 'var(--orange)' : 'var(--red)'}; font-weight: bold;">
+          ${report.status === 'healthy' ? '✅ 健康' : report.status === 'warning' ? '⚠️ 警告' : '❌ 嚴重'}
+        </span>
+      </div>
+      
+      ${report.taskIssues.length > 0 ? `
+        <h3>🔴 任務問題 (${report.taskIssues.length})</h3>
+        <ul style="max-height: 200px; overflow-y: auto; background: var(--grey); padding: 10px; border-radius: 6px;">
+          ${report.taskIssues.map(issue => `<li style="margin: 5px 0;">${issue.name || '未命名'} - ${issue.issue}</li>`).join('')}
+        </ul>
+      ` : '<p style="color: var(--green);">✅ 無任務問題</p>'}
+      
+      ${report.dateIssues.length > 0 ? `
+        <h3 style="margin-top: 15px;">📅 過期任務 (${report.dateIssues.length})</h3>
+        <ul style="max-height: 200px; overflow-y: auto; background: var(--grey); padding: 10px; border-radius: 6px;">
+          ${report.dateIssues.map(issue => `<li style="margin: 5px 0;">${issue.name} - 截止: ${issue.due}</li>`).join('')}
+        </ul>
+      ` : ''}
+      
+      ${report.memberIssues.length > 0 ? `
+        <h3 style="margin-top: 15px;">👥 成員問題 (${report.memberIssues.length})</h3>
+        <ul style="max-height: 200px; overflow-y: auto; background: var(--grey); padding: 10px; border-radius: 6px;">
+          ${report.memberIssues.map(issue => `<li style="margin: 5px 0;">${issue.name || '未命名'} - ${issue.issue}</li>`).join('')}
+        </ul>
+      ` : '<p style="color: var(--green);">✅ 無成員問題</p>'}
+      
+      <div style="margin-top: 20px; text-align: center;">
+        <button onclick="cleanupInvalidData(); closeModal(); showStatus('✅ 數據清理完成', 'success');" 
+                style="background: var(--green); color: white; padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; margin: 5px;">
+          🧹 清理無效數據
+        </button>
+        <button onclick="closeModal()" 
+                style="background: var(--blue); color: white; padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; margin: 5px;">
+          關閉
+        </button>
+      </div>
+    </div>
+  `;
+  
+  if (typeof showModal === 'function') {
+    showModal('數據健康檢查', html);
+  } else {
+    alert(JSON.stringify(report, null, 2));
+  }
 }
 
 /**
@@ -12511,13 +13314,218 @@ function renderChangelogLatestSummary() {
 }
 
 function initFrontendErrorTracking() {
+  // 1. JavaScript错误监控
   window.addEventListener('error', event => {
     logFrontendError('error', event.message, `${event.filename || ''}:${event.lineno || ''}:${event.colno || ''}`);
+    
+    // 显示用户友好的错误提示
+    if (typeof showStatus === 'function') {
+      showStatus('❌ 發生錯誤，已記錄', 'error');
+    }
   });
+  
+  // 2. Promise拒绝监控
   window.addEventListener('unhandledrejection', event => {
     const reason = event.reason;
     logFrontendError('unhandledrejection', reason?.message || reason, reason?.stack || '');
+    
+    // 防止浏览器默认错误提示
+    event.preventDefault();
+    
+    if (typeof showStatus === 'function') {
+      showStatus('❌ 异步操作失敗', 'error');
+    }
   });
+  
+  // 3. 性能监控（Web Vitals）
+  if ('PerformanceObserver' in window) {
+    // 监控首次绘制时间
+    try {
+      const paintObserver = new PerformanceObserver((list) => {
+        for (const entry of list.getEntries()) {
+          console.log(` 性能: ${entry.name} = ${entry.startTime}ms`);
+        }
+      });
+      paintObserver.observe({ type: 'paint', buffered: true });
+    } catch(e) {}
+    
+    // 监控长任务
+    try {
+      const longTaskObserver = new PerformanceObserver((list) => {
+        for (const entry of list.getEntries()) {
+          console.warn(`⏱️ 長任務: ${entry.duration}ms`, entry);
+        }
+      });
+      longTaskObserver.observe({ type: 'longtask', buffered: true });
+    } catch(e) {}
+  }
+  
+  // 4. 用户操作日志
+  window.addEventListener('click', (event) => {
+    const target = event.target;
+    const tag = target.tagName.toLowerCase();
+    
+    // 只记录按钮和重要元素
+    if (tag === 'button' || target.closest('button') || target.classList.contains('tab-btn')) {
+      const element = target.closest('button') || target;
+      const text = element.textContent?.trim().substring(0, 50) || element.id || 'unknown';
+      
+      logUserAction('click', {
+        element: tag,
+        text: text,
+        id: element.id || '',
+        className: element.className || '',
+        timestamp: new Date().toISOString()
+      });
+    }
+  });
+  
+  // 5. 页面可见性变化（用户离开/返回）
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+      console.log('👋 用戶離開頁面');
+      logUserAction('visibility', { state: 'hidden', timestamp: new Date().toISOString() });
+    } else {
+      console.log('👋 用戶返回頁面');
+      logUserAction('visibility', { state: 'visible', timestamp: new Date().toISOString() });
+      
+      // 返回时刷新数据
+      if (typeof refreshAllData === 'function') {
+        setTimeout(refreshAllData, 1000); // 延迟1秒，避免频繁请求
+      }
+    }
+  });
+  
+  console.log('✅ 前端監控已啟用');
+}
+
+/**
+ * 记录用户操作
+ * @param {string} action 操作类型
+ * @param {object} details 详细信息
+ */
+function logUserAction(action, details = {}) {
+  const log = JSON.parse(localStorage.getItem('rov_user_actions') || '[]');
+  
+  log.unshift({
+    action,
+    ...details,
+    userAgent: navigator.userAgent.substring(0, 100),
+    url: location.href
+  });
+  
+  // 只保留最近100条
+  if (log.length > 100) log.length = 100;
+  
+  localStorage.setItem('rov_user_actions', JSON.stringify(log));
+}
+
+/**
+ * 查看用户操作日志
+ */
+function showUserActionLog() {
+  const log = JSON.parse(localStorage.getItem('rov_user_actions') || '[]');
+  
+  if (log.length === 0) {
+    alert('暫無操作記錄');
+    return;
+  }
+  
+  let html = `
+    <div style="max-width: 700px; margin: 0 auto;">
+      <h2 style="text-align: center; margin-bottom: 20px;">📜 用戶操作日誌</h2>
+      <div style="max-height: 400px; overflow-y: auto; background: var(--grey); padding: 10px; border-radius: 8px;">
+        <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem;">
+          <thead style="background: var(--lblue); position: sticky; top: 0;">
+            <tr>
+              <th style="padding: 8px; text-align: left;">時間</th>
+              <th style="padding: 8px; text-align: left;">操作</th>
+              <th style="padding: 8px; text-align: left;">詳細</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${log.slice(0, 50).map(entry => `
+              <tr style="border-bottom: 1px solid var(--border);">
+                <td style="padding: 6px;">${new Date(entry.timestamp).toLocaleString('zh-TW')}</td>
+                <td style="padding: 6px; font-weight: bold;">${entry.action}</td>
+                <td style="padding: 6px; color: var(--muted);">${entry.text || entry.state || '-'}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+      <div style="margin-top: 15px; text-align: center;">
+        <button onclick="localStorage.removeItem('rov_user_actions'); closeModal(); showStatus('✅ 日誌已清除', 'success');" 
+                style="background: var(--red); color: white; padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; margin: 5px;">
+          🗑️ 清除日誌
+        </button>
+        <button onclick="closeModal()" 
+                style="background: var(--blue); color: white; padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; margin: 5px;">
+          關閉
+        </button>
+      </div>
+    </div>
+  `;
+  
+  if (typeof showModal === 'function') {
+    showModal('用戶操作日誌', html);
+  } else {
+    console.log('用戶操作日誌:', log);
+  }
+}
+
+/**
+ * 查看前端错误日志
+ */
+function showFrontendErrorLog() {
+  const errors = JSON.parse(localStorage.getItem('rov_frontend_errors') || '[]');
+  
+  if (errors.length === 0) {
+    alert('暫無錯誤記錄');
+    return;
+  }
+  
+  let html = `
+    <div style="max-width: 700px; margin: 0 auto;">
+      <h2 style="text-align: center; margin-bottom: 20px;">❌ 前端錯誤日誌</h2>
+      <div style="max-height: 400px; overflow-y: auto; background: var(--grey); padding: 10px; border-radius: 8px;">
+        <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem;">
+          <thead style="background: var(--lblue); position: sticky; top: 0;">
+            <tr>
+              <th style="padding: 8px; text-align: left;">時間</th>
+              <th style="padding: 8px; text-align: left;">類型</th>
+              <th style="padding: 8px; text-align: left;">錯誤</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${errors.slice(0, 50).map(entry => `
+              <tr style="border-bottom: 1px solid var(--border);">
+                <td style="padding: 6px;">${new Date(entry.timestamp).toLocaleString('zh-TW')}</td>
+                <td style="padding: 6px; font-weight: bold;">${entry.type}</td>
+                <td style="padding: 6px; color: var(--red); font-family: monospace; font-size: 0.8rem;">${escapeHtml(entry.message || '').substring(0, 100)}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+      <div style="margin-top: 15px; text-align: center;">
+        <button onclick="localStorage.removeItem('rov_frontend_errors'); closeModal(); showStatus('✅ 錯誤日誌已清除', 'success');" 
+                style="background: var(--red); color: white; padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; margin: 5px;">
+          🗑️ 清除日誌
+        </button>
+        <button onclick="closeModal()" 
+                style="background: var(--blue); color: white; padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; margin: 5px;">
+          關閉
+        </button>
+      </div>
+    </div>
+  `;
+  
+  if (typeof showModal === 'function') {
+    showModal('前端錯誤日誌', html);
+  } else {
+    console.log('前端錯誤日誌:', errors);
+  }
 }
 
 
@@ -18764,6 +19772,7 @@ using (bucket_id = 'task-attachments');</textarea>
           <span class="badge ${stats.mid ? 'mid' : 'done'}">warning ${stats.mid}</span>
           ${safeFixCount ? `<button class="btn btn-sm btn-success" onclick="fixAllSafeDataHealthIssues()">一鍵處理 ${safeFixCount}</button>` : ''}
           <button class="btn btn-sm" onclick="copyDataHealthReport?.()">複製報告</button>
+          <button class="btn btn-sm btn-primary" onclick="showDataHealthReport()">🔍 完整健康報告</button>
         </div>
       </div>
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px;margin-bottom:10px">
@@ -18825,6 +19834,9 @@ using (bucket_id = 'task-attachments');</textarea>
         <button class="btn btn-sm" onclick="copyV16OptimizationReport?.()">複製總結</button>
         <button class="btn btn-sm" onclick="copyV16ReleaseNotes?.()">複製發佈檢查</button>
         <button class="btn btn-sm btn-success" onclick="exportOpt4KnowledgePack?.()">匯出知識庫包</button>
+        <button class="btn btn-sm" onclick="showFrontendErrorLog()">❌ 錯誤日誌</button>
+        <button class="btn btn-sm" onclick="showUserActionLog()">📜 操作日誌</button>
+        <button class="btn btn-sm" onclick="showImageCacheStats()">🖼️ 圖片緩存</button>
       </div>
       <div style="font-size:.78rem;color:var(--muted);font-weight:800;margin-top:8px">v16 總控台完成度：${opt.pct}%｜Release：${release.done}/${release.total}</div>`;
   }
@@ -19605,7 +20617,241 @@ using (bucket_id = 'task-attachments');</textarea>
 
   document.addEventListener('DOMContentLoaded', () => {
     try { renderUnifiedTaskManagementWorkbench(); } catch (e) { console.warn('task management workbench init failed', e); }
+    
+    // 全局键盘快捷键支持
+    setupKeyboardShortcuts();
+    
+    // 初始化懒加载系统
+    LazyLoadManager.init();
+    ensureSkeletonCSS();
+    
+    // 预加载关键图片
+    preloadCriticalImages();
   });
+
+  // 快捷键配置
+  function setupKeyboardShortcuts() {
+    document.addEventListener('keydown', (e) => {
+      // 忽略在输入框中的快捷键（除非是Ctrl组合键）
+      const isInput = e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable;
+      
+      // Ctrl + N - 新建任务
+      if (e.ctrlKey && e.key === 'n') {
+        e.preventDefault();
+        if (typeof openAddTask === 'function') {
+          openAddTask();
+          showStatus('✨ 快捷键: 新建任务', 'success');
+        }
+      }
+      
+      // Ctrl + S - 保存
+      if (e.ctrlKey && e.key === 's') {
+        e.preventDefault();
+        if (typeof saveAllData === 'function') {
+          saveAllData();
+          showStatus('💾 快捷键: 保存数据', 'success');
+        }
+      }
+      
+      // Ctrl + F - 搜索（聚焦搜索框）
+      if (e.ctrlKey && e.key === 'f') {
+        e.preventDefault();
+        const searchInput = document.querySelector('#task-search, #search-task, input[placeholder*="搜索"]');
+        if (searchInput) {
+          searchInput.focus();
+          searchInput.select();
+          showStatus('🔍 快捷键: 搜索', 'success');
+        }
+      }
+      
+      // Ctrl + Z - 撤销（如果实现了）
+      if (e.ctrlKey && e.key === 'z' && !isInput) {
+        e.preventDefault();
+        if (typeof undoLastAction === 'function') {
+          undoLastAction();
+          showStatus('↩️ 快捷键: 撤销', 'success');
+        }
+      }
+      
+      // Esc - 关闭弹窗/取消操作
+      if (e.key === 'Escape') {
+        const modal = document.querySelector('.modal-overlay:not([style*="display: none"]):not([style*="display:none"]), .modal:not([style*="display: none"])');
+        if (modal && typeof closeModal === 'function') {
+          closeModal();
+          showStatus('❌ 快捷键: 关闭', 'info');
+        }
+      }
+      
+      // Ctrl + D - 删除选中任务（需要确认）
+      if (e.ctrlKey && e.key === 'd' && !isInput) {
+        e.preventDefault();
+        const selectedTasks = document.querySelectorAll('.task-row.selected');
+        if (selectedTasks.length > 0 && typeof batchDeleteTasks === 'function') {
+          if (confirm(`确定要删除 ${selectedTasks.length} 个任务吗？`)) {
+            const taskIds = Array.from(selectedTasks).map(el => el.dataset.taskId);
+            batchDeleteTasks(taskIds);
+            showStatus(`🗑️ 快捷键: 已删除 ${selectedTasks.length} 个任务`, 'warning');
+          }
+        }
+      }
+      
+      // Ctrl + E - 编辑选中任务
+      if (e.ctrlKey && e.key === 'e' && !isInput) {
+        e.preventDefault();
+        const selectedTasks = document.querySelectorAll('.task-row.selected');
+        if (selectedTasks.length === 1 && typeof editTask === 'function') {
+          const taskId = selectedTasks[0].dataset.taskId;
+          editTask(taskId);
+          showStatus('️ 快捷键: 编辑任务', 'success');
+        }
+      }
+      
+      // Tab - 切换页面（Ctrl + Tab）
+      if (e.ctrlKey && e.key === 'Tab') {
+        e.preventDefault();
+        const tabs = document.querySelectorAll('.tab-btn');
+        const currentTab = document.querySelector('.tab-btn.active');
+        let currentIndex = Array.from(tabs).indexOf(currentTab);
+        let nextIndex = e.shiftKey ? currentIndex - 1 : currentIndex + 1;
+        
+        if (nextIndex >= tabs.length) nextIndex = 0;
+        if (nextIndex < 0) nextIndex = tabs.length - 1;
+        
+        const nextTab = tabs[nextIndex];
+        if (nextTab && nextTab.onclick) {
+          nextTab.click();
+          showStatus(`📑 快捷键: 切换到 ${nextTab.textContent.trim()}`, 'info');
+        }
+      }
+      
+      // F5 - 刷新数据（不是页面刷新）
+      if (e.key === 'F5') {
+        e.preventDefault();
+        if (typeof refreshAllData === 'function') {
+          refreshAllData();
+          showStatus('🔄 快捷键: 刷新数据', 'success');
+        }
+      }
+      
+      // Ctrl + Shift + H - 显示/隐藏帮助
+      if (e.ctrlKey && e.shiftKey && e.key === 'H') {
+        e.preventDefault();
+        showKeyboardHelp();
+      }
+    });
+  }
+  
+  // 显示快捷键帮助
+  function showKeyboardHelp() {
+    const helpContent = `
+      <div style="max-width: 600px; margin: 0 auto;">
+        <h2 style="text-align: center; margin-bottom: 20px;">⌨️ 快捷键帮助</h2>
+        <table style="width: 100%; border-collapse: collapse;">
+          <tr style="background: var(--lblue);">
+            <th style="padding: 10px; text-align: left;">快捷键</th>
+            <th style="padding: 10px; text-align: left;">功能</th>
+          </tr>
+          <tr style="border-bottom: 1px solid var(--border);">
+            <td style="padding: 8px;"><kbd>Ctrl+N</kbd></td>
+            <td style="padding: 8px;">新建任务</td>
+          </tr>
+          <tr style="border-bottom: 1px solid var(--border);">
+            <td style="padding: 8px;"><kbd>Ctrl+S</kbd></td>
+            <td style="padding: 8px;">保存数据</td>
+          </tr>
+          <tr style="border-bottom: 1px solid var(--border);">
+            <td style="padding: 8px;"><kbd>Ctrl+F</kbd></td>
+            <td style="padding: 8px;">搜索任务</td>
+          </tr>
+          <tr style="border-bottom: 1px solid var(--border);">
+            <td style="padding: 8px;"><kbd>Ctrl+D</kbd></td>
+            <td style="padding: 8px;">删除选中任务</td>
+          </tr>
+          <tr style="border-bottom: 1px solid var(--border);">
+            <td style="padding: 8px;"><kbd>Ctrl+E</kbd></td>
+            <td style="padding: 8px;">编辑选中任务</td>
+          </tr>
+          <tr style="border-bottom: 1px solid var(--border);">
+            <td style="padding: 8px;"><kbd>Ctrl+Tab</kbd></td>
+            <td style="padding: 8px;">切换页面</td>
+          </tr>
+          <tr style="border-bottom: 1px solid var(--border);">
+            <td style="padding: 8px;"><kbd>Esc</kbd></td>
+            <td style="padding: 8px;">关闭弹窗</td>
+          </tr>
+          <tr style="border-bottom: 1px solid var(--border);">
+            <td style="padding: 8px;"><kbd>F5</kbd></td>
+            <td style="padding: 8px;">刷新数据</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px;"><kbd>Ctrl+Shift+H</kbd></td>
+            <td style="padding: 8px;">显示此帮助</td>
+          </tr>
+        </table>
+        <p style="text-align: center; margin-top: 20px; color: var(--muted); font-size: 0.9rem;">
+          按 <kbd>Ctrl+Shift+H</kbd> 可以随时打开此帮助
+        </p>
+      </div>
+    `;
+    
+    // 使用现有的模态框系统
+    if (typeof showModal === 'function') {
+      showModal('快捷键帮助', helpContent);
+    } else {
+      // 降级方案：alert
+      alert('快捷键帮助\n\n' + 
+        'Ctrl+N - 新建任务\n' +
+        'Ctrl+S - 保存数据\n' +
+        'Ctrl+F - 搜索任务\n' +
+        'Ctrl+D - 删除选中任务\n' +
+        'Ctrl+E - 编辑选中任务\n' +
+        'Ctrl+Tab - 切换页面\n' +
+        'Esc - 关闭弹窗\n' +
+        'F5 - 刷新数据\n' +
+        'Ctrl+Shift+H - 显示帮助');
+    }
+  }
+  
+  // 状态提示函数（如果不存在则创建）
+  if (typeof showStatus !== 'function') {
+    window.showStatus = function(message, type = 'info') {
+      // 尝试使用现有的通知系统
+      if (typeof showToast === 'function') {
+        showToast(message, type);
+        return;
+      }
+      
+      // 降级方案：简单的临时提示
+      let statusEl = document.getElementById('keyboard-status-toast');
+      if (!statusEl) {
+        statusEl = document.createElement('div');
+        statusEl.id = 'keyboard-status-toast';
+        statusEl.style.cssText = `
+          position: fixed;
+          top: 80px;
+          right: 20px;
+          background: ${type === 'success' ? '#70AD47' : type === 'warning' ? '#FFD966' : type === 'error' ? '#C00000' : '#2F5496'};
+          color: white;
+          padding: 12px 20px;
+          border-radius: 8px;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+          z-index: 10000;
+          font-weight: 600;
+          font-size: 0.9rem;
+          opacity: 0;
+          transition: opacity 0.3s;
+        `;
+        document.body.appendChild(statusEl);
+      }
+      
+      statusEl.textContent = message;
+      statusEl.style.opacity = '1';
+      
+      setTimeout(() => {
+        statusEl.style.opacity = '0';
+      }, 2000);
+    };
+  }
 })();
 </script>
 </html>
