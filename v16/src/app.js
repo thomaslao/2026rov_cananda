@@ -550,20 +550,24 @@ function applyTaskSearchFromDom() {
   return true;
 }
 
-function loadSupabaseIntoApp({ silent = false } = {}) {
+function loadSupabaseIntoApp({ silent = false, preserveLocal = false } = {}) {
   lastDbStatus = { loadedAt: new Date().toISOString(), error: 'Loading...' };
   if (!silent) renderAppShell();
   return loadSupabaseReadOnly()
     .then((payload) => {
       const importDelta = buildSupabaseReadOnlyImportDelta(appState.data, payload.data);
       payload.importDelta = importDelta;
-      applySupabaseReadOnlyData(appState, payload);
+      if (!preserveLocal) {
+        applySupabaseReadOnlyData(appState, payload);
+      }
       lastDbStatus = payload;
       lastSyncPreview = null;
       lastPostWritePreview = null;
       const changed = importDelta.rows.filter(row => row.delta !== 0).length;
-      saveAppState(appState);
-      showToast(`${t('imported')} | ${changed} changed groups`);
+      if (!preserveLocal) {
+        saveAppState(appState);
+        showToast(`${t('imported')} | ${changed} changed groups`);
+      }
       renderAppShell();
       return payload;
     })
@@ -579,7 +583,7 @@ function scheduleInitialSupabaseLoad() {
   if (initialSupabaseLoadStarted) return;
   initialSupabaseLoadStarted = true;
   const defer = typeof window?.setTimeout === 'function' ? window.setTimeout.bind(window) : setTimeout;
-  defer(() => loadSupabaseIntoApp({ silent: true }), 250);
+  defer(() => loadSupabaseIntoApp({ silent: true, preserveLocal: Boolean(appState.savedAt) }), 250);
 }
 
 function updateIntelFiltersFromControl(target) {

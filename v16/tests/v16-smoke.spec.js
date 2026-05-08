@@ -62,15 +62,18 @@ const seedData = {
 
 async function preparePage(page) {
   await page.addInitScript((data) => {
-    localStorage.clear();
-    localStorage.setItem('rov_v16_locale', 'zh');
-    localStorage.setItem('rov_v16_app_state', JSON.stringify({
-      data,
-      currentPage: 'dashboard',
-      currentMode: 'review',
-      currentSeason: '2025-2026',
-      savedAt: new Date().toISOString(),
-    }));
+    if (!sessionStorage.getItem('rov_v16_e2e_seeded')) {
+      localStorage.clear();
+      localStorage.setItem('rov_v16_locale', 'zh');
+      localStorage.setItem('rov_v16_app_state', JSON.stringify({
+        data,
+        currentPage: 'dashboard',
+        currentMode: 'review',
+        currentSeason: '2025-2026',
+        savedAt: new Date().toISOString(),
+      }));
+      sessionStorage.setItem('rov_v16_e2e_seeded', '1');
+    }
 
     const tableRows = {
       tasks: data.tasks,
@@ -132,7 +135,7 @@ test('tasks flow supports add modal, search, sort, status, edit and delete', asy
   await openTaskModal.evaluate(button => button.click());
   await expect(page.locator('[data-task-modal]')).toBeVisible();
   const taskName = `User task ${Date.now()}`;
-  const editedName = `${taskName} edited`;
+  const editedName = `Edited user task ${Date.now()}`;
   await page.locator('[data-task-modal] [name="name"]').fill(taskName);
   await page.locator('[data-task-modal] [name="owner"]').fill('Navigator');
   await page.locator('[data-task-modal] [name="priority"]').selectOption('Medium');
@@ -163,6 +166,10 @@ test('tasks flow supports add modal, search, sort, status, edit and delete', asy
   await page.locator('[data-task-modal] [data-task-form]').evaluate(form => form.requestSubmit());
   await expect(page.locator('[data-task-modal-bg]')).not.toHaveClass(/open/);
   await expect(page.locator('#page-tasks')).toContainText(editedName);
+  await page.reload();
+  await expect(page.locator('#page-tasks')).toBeVisible();
+  await expect(page.locator('#page-tasks')).toContainText(editedName);
+  await expect(page.locator('#page-tasks')).not.toContainText(taskName);
 
   await page.locator('tbody tr', { hasText: editedName }).locator('[data-task-delete]').evaluate(button => button.click());
   await expect(page.locator('#page-tasks')).not.toContainText(editedName);
