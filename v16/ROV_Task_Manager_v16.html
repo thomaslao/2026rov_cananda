@@ -314,14 +314,24 @@
   .task-summary-label { font-size:.73rem; color:var(--muted); font-weight:900; line-height:1.2; overflow-wrap:anywhere; }
   .task-summary-value { font-size:1.15rem; font-weight:900; line-height:1.1; margin-top:7px; }
   .task-sort-th { padding:0; }
-  .task-sort-button { width:100%; min-height:38px; padding:8px 12px; border:0; background:transparent; color:inherit; cursor:pointer; display:flex; align-items:center; justify-content:flex-start; gap:6px; font:inherit; font-weight:900; text-align:left; }
+  .task-sort-button { width:100%; min-height:38px; padding:8px 12px; border:0; background:transparent; color:inherit; cursor:pointer; display:flex; align-items:center; justify-content:flex-start; gap:6px; font:inherit; font-weight:900; text-align:left; white-space:nowrap; word-break:keep-all; }
   .task-sort-button:hover, .task-sort-button:focus-visible { background:rgba(255,255,255,.12); outline:none; }
   .task-sort-button span { min-width:12px; font-weight:900; }
   .task-table-wrap { overflow:auto; border:1px solid var(--border); border-radius:8px; }
-  .task-table-wrap table { min-width:760px; }
-  .task-status-cell { display:grid; grid-template-columns:72px 126px; gap:8px; align-items:center; justify-content:start; }
-  .task-status-badge { width:72px; min-height:32px; display:inline-flex; align-items:center; justify-content:center; border:1px solid var(--border); cursor:pointer; line-height:1; white-space:nowrap; padding:4px 8px; }
-  .task-status-select { width:126px; min-width:126px; height:32px; margin:0; }
+  .task-table-wrap table { min-width:1180px; table-layout:auto; }
+  .task-col-name, .task-name-cell { width:360px; max-width:360px; }
+  .task-name-cell { overflow-wrap:anywhere; }
+  .task-col-owner, .task-owner-cell { min-width:112px; white-space:nowrap; word-break:keep-all; }
+  .task-col-due, .task-due-cell { min-width:128px; white-space:nowrap; word-break:keep-all; }
+  .task-col-priority, .task-priority-cell { min-width:43px; white-space:nowrap; word-break:keep-all; text-align:center; }
+  .task-col-category, .task-category-cell { min-width:148px; white-space:nowrap; }
+  .task-col-status, .task-status-table-cell { min-width:96px; white-space:nowrap; }
+  .task-actions-cell { min-width:132px; white-space:nowrap; }
+  .task-status-cell { display:block; min-width:84px; }
+  .task-status-select { width:84px; min-width:84px; height:32px; margin:0; }
+  .task-category-select { width:135px; min-width:135px; height:32px; margin:0; }
+  .task-action-row { display:flex; gap:6px; flex-wrap:nowrap; justify-content:flex-end; align-items:center; min-width:116px; }
+  .task-action-row .btn-sm { width:55px; min-height:32px; padding:4px 8px; white-space:nowrap; }
   .task-filter-bar { position:relative; z-index:1; display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:8px; align-items:end; margin-bottom:8px; }
   .task-filter-bar label { min-width:0; }
   .task-filter-bar select { width:100%; min-width:0; }
@@ -333,6 +343,20 @@
   .task-search-submit { min-height:42px; padding:8px 14px; border-radius:8px; font-size:.88rem; font-weight:900; white-space:nowrap; }
   .task-toolbar-clear { background:#FFF3CD; color:#7A4B00; border:1px solid rgba(245,158,11,.45); box-shadow:inset 0 0 0 1px rgba(255,255,255,.55); }
   .task-toolbar-clear:hover { background:#FDE68A; opacity:1; }
+  .task-category-manager { border:1px solid var(--border); border-left:5px solid var(--blue); border-radius:8px; background:var(--input-bg); padding:10px; margin-bottom:10px; }
+  .task-category-manager-head { display:flex; justify-content:space-between; gap:10px; align-items:start; margin-bottom:8px; }
+  .task-category-manager-head h3 { margin:0 0 4px; color:var(--navy); font-size:.96rem; }
+  .task-category-manager-head div div { font-size:.8rem; color:var(--muted); font-weight:800; }
+  .task-category-add-row { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:8px; align-items:center; margin-bottom:10px; }
+  .task-category-add-row input { min-height:34px; }
+  .task-category-groups { display:grid; gap:10px; }
+  .task-category-group { display:grid; gap:6px; }
+  .task-category-group-title { font-size:.82rem; font-weight:900; color:var(--navy); }
+  .task-category-table { display:grid; border:1px solid var(--border); border-radius:8px; overflow:hidden; background:var(--white); }
+  .task-category-row { display:grid; grid-template-columns:54px minmax(120px,1fr) minmax(150px,1.2fr) minmax(110px,.9fr) auto; gap:8px; align-items:center; padding:7px 8px; border-top:1px solid var(--border); font-size:.78rem; font-weight:800; }
+  .task-category-row:first-child { border-top:0; }
+  .task-category-row-head { background:#EEF3FB; color:var(--navy); font-size:.73rem; font-weight:900; }
+  .task-category-row span { min-width:0; overflow-wrap:anywhere; }
   .prep-entry-row { display:grid; grid-template-columns:minmax(0,1fr) auto auto; gap:8px; align-items:end; }
   .prep-gear-entry-row { display:grid; grid-template-columns:minmax(0,2fr) minmax(0,1fr) 90px auto auto; gap:8px; align-items:end; }
 
@@ -574,6 +598,11 @@
     .dashboard-safety-header { grid-template-columns:1fr; }
     .dashboard-safety-actions { justify-items:stretch; }
     .dashboard-action-group { justify-content:flex-start; }
+    .task-category-add-row { grid-template-columns:1fr; }
+    .task-category-row { grid-template-columns:42px minmax(0,1fr); }
+    .task-category-row span:nth-child(3),
+    .task-category-row span:nth-child(4) { grid-column:2; color:var(--muted); }
+    .task-category-row span:nth-child(5) { grid-column:2; }
     table { font-size:.78rem; }
   }
 
@@ -592,6 +621,31 @@ window.addEventListener('error', (event) => {
   app.innerHTML = '<div style="padding:24px;font-family:Arial,sans-serif;color:#8a1f11;background:#fff3f0;border:1px solid #f0b8aa;margin:16px;border-radius:8px"><strong>ROV Task Manager v16 failed to load / 載入失敗</strong><div style="margin-top:8px;white-space:pre-wrap">' + String(event.message || event.error || 'Unknown error') + '</div></div>';
 });
 const __src_data_defaults_js = (() => {
+
+const DEFAULT_TASK_CATEGORIES = [
+  'E1 Electronics',
+  'E2 Mechanical',
+  'E3 Software',
+  'E4 Buoyancy & Float',
+  'E5 Sensor & Payload',
+  'E6 Power System',
+  'E7 Testing Log',
+  'C1 Task Mission',
+  'C1 Technical Report',
+  'C1 Presentation',
+  'C1 Score Analysis',
+  'L1 Documentation',
+  'L1 Finance',
+  'L1 Travel',
+  'L1 Safety',
+  'P1 Public Relation',
+  'P1 Marketing Display',
+  'P1 Sponsorship',
+  'P1 Media Coverage',
+  'T1 Training Plan',
+  'T1 Meeting Notes',
+  'T1 Mentor Guidance',
+];
 
 const DEFAULT_STATE = {
   tasks: [
@@ -648,12 +702,12 @@ const DEFAULT_STATE = {
   masterData: {
     roles: ['Lead', 'Coach', 'Pilot', 'Mechanical', 'Electrical', 'Software', 'Presentation', 'Pit Crew'],
     groups: ['Operations', 'Drive Team', 'Engineering', 'Presentation', 'Travel', 'Competition Day'],
-    taskTypes: ['Urgent', 'High', 'Medium', 'Low', 'Mission Run', 'Presentation', 'Travel Docs', 'Gear', 'Pre-Dive'],
+    taskTypes: DEFAULT_TASK_CATEGORIES,
     gearCats: ['Required', 'Spare', 'Consumable', 'Tools', 'Docs', 'Electrical', 'Mechanical', 'Safety', 'Competition Day'],
   },
 };
 
-return { DEFAULT_STATE };
+return { DEFAULT_TASK_CATEGORIES, DEFAULT_STATE };
 })();
 
 const __src_utils_date_js = (() => {
@@ -908,6 +962,18 @@ const STRINGS = {
     rollback: 'Rollback',
     v15Import: 'v15 Import',
     settingsPack: 'Settings Pack',
+    taskCategoryManager: 'Task Category Management',
+    taskCategoryManagerHint: 'These categories feed the task add/edit category dropdown.',
+    addTaskCategoryPlaceholder: 'Add custom task category',
+    zhCategory: 'Chinese category',
+    enCategory: 'English category',
+    folder: 'Folder',
+    taskCategoryGroupEngineeringDesign: 'Engineering Design',
+    taskCategoryGroupCompetitionManagement: 'Competition Management',
+    taskCategoryGroupLogisticsAdministration: 'Logistics & Administration',
+    taskCategoryGroupPublicAffairs: 'Public Affairs',
+    taskCategoryGroupTeamDevelopment: 'Team Development',
+    taskCategoryGroupCustom: 'Custom',
     taskSummary: 'Plan, assign, and close ROV work items.',
     task: 'Task',
     owner: 'Owner',
@@ -998,6 +1064,28 @@ const STRINGS = {
     valueUnassigned: 'Unassigned',
     valueGeneral: 'General',
     valueRequired: 'Required',
+    valueE1Electronics: 'E1 Electronics',
+    valueE2Mechanical: 'E2 Mechanical',
+    valueE3Software: 'E3 Software',
+    valueE4BuoyancyFloat: 'E4 Buoyancy & Float',
+    valueE5SensorPayload: 'E5 Sensor & Payload',
+    valueE6PowerSystem: 'E6 Power System',
+    valueE7TestingLog: 'E7 Testing Log',
+    valueC1TaskMission: 'C1 Task Mission',
+    valueC1TechnicalReport: 'C1 Technical Report',
+    valueC1Presentation: 'C1 Presentation',
+    valueC1ScoreAnalysis: 'C1 Score Analysis',
+    valueL1Documentation: 'L1 Documentation',
+    valueL1Finance: 'L1 Finance',
+    valueL1Travel: 'L1 Travel',
+    valueL1Safety: 'L1 Safety',
+    valueP1PublicRelation: 'P1 Public Relation',
+    valueP1MarketingDisplay: 'P1 Marketing Display',
+    valueP1Sponsorship: 'P1 Sponsorship',
+    valueP1MediaCoverage: 'P1 Media Coverage',
+    valueT1TrainingPlan: 'T1 Training Plan',
+    valueT1MeetingNotes: 'T1 Meeting Notes',
+    valueT1MentorGuidance: 'T1 Mentor Guidance',
     note: 'Note',
     runHistory: 'Run History',
     duplicateRun: 'Duplicate',
@@ -1240,6 +1328,18 @@ const STRINGS = {
     rollback: '\u56de\u5fa9',
     v15Import: 'v15 \u532f\u5165',
     settingsPack: '\u8a2d\u5b9a\u5305',
+    taskCategoryManager: '\u4efb\u52d9\u985e\u5225\u7ba1\u7406',
+    taskCategoryManagerHint: '\u9019\u4e9b\u985e\u5225\u6703\u76f4\u63a5\u5957\u7528\u5230\u4efb\u52d9\u65b0\u589e\u8207\u7de8\u8f2f\u7684\u985e\u5225\u4e0b\u62c9\u9078\u55ae\u3002',
+    addTaskCategoryPlaceholder: '\u65b0\u589e\u81ea\u8a02\u4efb\u52d9\u985e\u5225',
+    zhCategory: '\u4e2d\u6587\u985e\u5225',
+    enCategory: '\u82f1\u6587\u985e\u5225',
+    folder: '\u5c0d\u61c9\u8cc7\u6599\u593e',
+    taskCategoryGroupEngineeringDesign: '\u5de5\u7a0b\u8a2d\u8a08 Engineering Design',
+    taskCategoryGroupCompetitionManagement: '\u7af6\u8cfd\u7ba1\u7406 Competition Management',
+    taskCategoryGroupLogisticsAdministration: '\u5f8c\u52e4\u884c\u653f Logistics & Administration',
+    taskCategoryGroupPublicAffairs: '\u5c0d\u5916\u4e8b\u52d9 Public Affairs',
+    taskCategoryGroupTeamDevelopment: '\u5718\u968a\u767c\u5c55 Team Development',
+    taskCategoryGroupCustom: '\u81ea\u8a02 Custom',
     taskSummary: '\u898f\u5283\u3001\u5206\u914d\u8207\u5b8c\u6210 ROV \u4efb\u52d9\u3002',
     task: '\u4efb\u52d9',
     owner: '\u8ca0\u8cac\u4eba',
@@ -1330,6 +1430,28 @@ const STRINGS = {
     valueUnassigned: '\u672a\u6307\u6d3e',
     valueGeneral: '\u4e00\u822c',
     valueRequired: '\u5fc5\u9700',
+    valueE1Electronics: 'E1 \u96fb\u5b50\u5de5\u7a0b',
+    valueE2Mechanical: 'E2 \u6a5f\u68b0\u5de5\u7a0b',
+    valueE3Software: 'E3 \u8edf\u9ad4\u958b\u767c',
+    valueE4BuoyancyFloat: 'E4 \u6d6e\u529b\u7cfb\u7d71',
+    valueE5SensorPayload: 'E5 \u611f\u6e2c\u5668\u8207\u8f09\u8377',
+    valueE6PowerSystem: 'E6 \u96fb\u6e90\u7cfb\u7d71',
+    valueE7TestingLog: 'E7 \u6e2c\u8a66\u8a18\u9304',
+    valueC1TaskMission: 'C1 \u4efb\u52d9\u898f\u5283',
+    valueC1TechnicalReport: 'C1 \u6280\u8853\u5831\u544a',
+    valueC1Presentation: 'C1 \u53e3\u982d\u5831\u544a',
+    valueC1ScoreAnalysis: 'C1 \u6210\u7e3e\u5206\u6790',
+    valueL1Documentation: 'L1 \u6587\u4ef6\u7ba1\u7406',
+    valueL1Finance: 'L1 \u8ca1\u52d9',
+    valueL1Travel: 'L1 \u51fa\u884c\u5b89\u6392',
+    valueL1Safety: 'L1 \u5b89\u5168\u898f\u7a0b',
+    valueP1PublicRelation: 'P1 \u516c\u95dc\u806f\u7d61',
+    valueP1MarketingDisplay: 'P1 \u5e02\u5834\u5c55\u793a',
+    valueP1Sponsorship: 'P1 \u8d0a\u52a9\u5408\u4f5c',
+    valueP1MediaCoverage: 'P1 \u5a92\u9ad4\u5831\u5c0e',
+    valueT1TrainingPlan: 'T1 \u8a13\u7df4\u8a08\u5283',
+    valueT1MeetingNotes: 'T1 \u6703\u8b70\u8a18\u9304',
+    valueT1MentorGuidance: 'T1 \u6307\u5c0e\u56de\u994b',
     note: '\u5099\u8a3b',
     runHistory: 'Run \u7d00\u9304',
     duplicateRun: '\u8907\u88fd',
@@ -1445,6 +1567,28 @@ const VALUE_LABEL_KEYS = {
   Unassigned: 'valueUnassigned',
   General: 'valueGeneral',
   Required: 'valueRequired',
+  'E1 Electronics': 'valueE1Electronics',
+  'E2 Mechanical': 'valueE2Mechanical',
+  'E3 Software': 'valueE3Software',
+  'E4 Buoyancy & Float': 'valueE4BuoyancyFloat',
+  'E5 Sensor & Payload': 'valueE5SensorPayload',
+  'E6 Power System': 'valueE6PowerSystem',
+  'E7 Testing Log': 'valueE7TestingLog',
+  'C1 Task Mission': 'valueC1TaskMission',
+  'C1 Technical Report': 'valueC1TechnicalReport',
+  'C1 Presentation': 'valueC1Presentation',
+  'C1 Score Analysis': 'valueC1ScoreAnalysis',
+  'L1 Documentation': 'valueL1Documentation',
+  'L1 Finance': 'valueL1Finance',
+  'L1 Travel': 'valueL1Travel',
+  'L1 Safety': 'valueL1Safety',
+  'P1 Public Relation': 'valueP1PublicRelation',
+  'P1 Marketing Display': 'valueP1MarketingDisplay',
+  'P1 Sponsorship': 'valueP1Sponsorship',
+  'P1 Media Coverage': 'valueP1MediaCoverage',
+  'T1 Training Plan': 'valueT1TrainingPlan',
+  'T1 Meeting Notes': 'valueT1MeetingNotes',
+  'T1 Mentor Guidance': 'valueT1MentorGuidance',
   pending: 'pending',
   done: 'done',
   failed: 'failed',
@@ -2686,12 +2830,6 @@ function updateTaskStatus(state, id, status) {
   return true;
 }
 
-function getNextTaskStatus(status = 'Open') {
-  const statuses = ['Open', 'In Progress', 'Done'];
-  const index = statuses.indexOf(status);
-  return statuses[(index + 1) % statuses.length] || statuses[0];
-}
-
 function deleteTask(state, id) {
   const before = state.data.tasks.length;
   state.data.tasks = state.data.tasks.filter(task => task.id !== Number(id));
@@ -2781,6 +2919,7 @@ function sortTasks(tasks = [], sort = 'due-asc') {
   };
   const comparePriority = (a, b) => (priorityRank[a.task.priority] ?? 9) - (priorityRank[b.task.priority] ?? 9);
   const compareStatus = (a, b) => (statusRank[a.task.status] ?? 9) - (statusRank[b.task.status] ?? 9);
+  const compareCategory = (a, b) => String(a.task.category || '').localeCompare(String(b.task.category || ''), 'en');
   const sorted = withIndex.sort((a, b) => {
     let result = (a.task.status === 'Done' ? 1 : 0) - (b.task.status === 'Done' ? 1 : 0);
     if (result) return result;
@@ -2789,6 +2928,8 @@ function sortTasks(tasks = [], sort = 'due-asc') {
     else if (sort === 'due-desc') result = compareDue(b, a);
     else if (sort === 'priority') result = comparePriority(a, b) || compareDue(a, b);
     else if (sort === 'priority-desc') result = comparePriority(b, a) || compareDue(a, b);
+    else if (sort === 'category') result = compareCategory(a, b) || compareDue(a, b);
+    else if (sort === 'category-desc') result = compareCategory(b, a) || compareDue(a, b);
     else if (sort === 'status') result = compareStatus(a, b) || compareDue(a, b);
     else if (sort === 'status-desc') result = compareStatus(b, a) || compareDue(a, b);
     else if (sort === 'owner') result = compareText(a, b, 'owner') || compareDue(a, b);
@@ -2914,6 +3055,7 @@ function renderTaskTable(tasks = [], members = [], options = {}) {
     owner: ['owner', 'owner-desc'],
     due: ['due-asc', 'due-desc'],
     priority: ['priority', 'priority-desc'],
+    category: ['category', 'category-desc'],
     status: ['status', 'status-desc'],
   };
   const sortHeader = (column, label) => {
@@ -2922,38 +3064,45 @@ function renderTaskTable(tasks = [], members = [], options = {}) {
     const activeDesc = filters.sort === desc;
     const nextSort = activeAsc ? desc : asc;
     const mark = activeAsc ? '↑' : activeDesc ? '↓' : '';
-    return `<th class="task-sort-th"><button class="task-sort-button" type="button" data-task-header-sort="${escapeHtml(nextSort)}" aria-label="${escapeHtml(`${label} ${t('sort')}`)}">${escapeHtml(label)}<span>${escapeHtml(mark)}</span></button></th>`;
+    return `<th class="task-sort-th task-col-${escapeHtml(column)}"><button class="task-sort-button" type="button" data-task-header-sort="${escapeHtml(nextSort)}" aria-label="${escapeHtml(`${label} ${t('sort')}`)}">${escapeHtml(label)}<span>${escapeHtml(mark)}</span></button></th>`;
   };
   return `
     <div class="task-table-wrap">
       <table>
-        <thead><tr>${sortHeader('name', t('task'))}${sortHeader('owner', t('owner'))}${sortHeader('due', t('due'))}${sortHeader('priority', t('priority'))}${sortHeader('status', t('status'))}<th></th></tr></thead>
+        <thead><tr>${sortHeader('name', t('task'))}${sortHeader('owner', t('owner'))}${sortHeader('due', t('due'))}${sortHeader('priority', t('priority'))}${sortHeader('category', t('category'))}${sortHeader('status', t('status'))}<th></th></tr></thead>
         <tbody>
           ${tasks.map((task) => {
             const due = getTaskDueInfo(task);
             const late = isOverdue(task.due) && task.status !== 'Done';
             const healthBadges = getTaskHealthBadges(task, memberNames);
+            const taskCategories = options.categories || ['General'];
+            const selectedCategory = taskCategories.includes(task.category) ? task.category : taskCategories[0] || 'General';
+            const categoryOptions = taskCategories.length ? taskCategories : [selectedCategory];
             return `
               <tr>
-                <td>
+                <td class="task-name-cell">
                   <strong>${escapeHtml(task.name)}</strong>
-                  <div style="font-size:.76rem;color:var(--muted)">${escapeHtml(labelFor(task.category || 'General'))}${task.blocked ? ` | ${escapeHtml(t('blocked'))}` : ''}</div>
+                  ${task.blocked ? `<div style="font-size:.76rem;color:var(--muted)">${escapeHtml(t('blocked'))}</div>` : ''}
                   ${healthBadges.length ? `<div data-task-health-badges style="display:flex;gap:4px;flex-wrap:wrap;margin-top:4px">${healthBadges.map(label => `<span class="badge mid">${escapeHtml(label)}</span>`).join('')}</div>` : ''}
                   ${renderTaskEvidence(task.evidence)}
                 </td>
-                <td>${escapeHtml(task.owner || labelFor('Unassigned'))}</td>
-                <td style="color:${late ? 'var(--red)' : 'var(--text)'}">${escapeHtml(task.due || '-')} ${due.days !== null ? `(${due.days}d)` : ''}</td>
-                <td><span class="badge ${task.priority === 'High' ? 'urgent' : task.priority === 'Low' ? 'done' : 'mid'}">${escapeHtml(labelFor(task.priority || 'Medium'))}</span></td>
-                <td>
+                <td class="task-owner-cell">${escapeHtml(task.owner || labelFor('Unassigned'))}</td>
+                <td class="task-due-cell" style="color:${late ? 'var(--red)' : 'var(--text)'}">${escapeHtml(task.due || '-')} ${due.days !== null ? `(${due.days}d)` : ''}</td>
+                <td class="task-priority-cell"><span class="badge ${task.priority === 'High' ? 'urgent' : task.priority === 'Low' ? 'done' : 'mid'}">${escapeHtml(labelFor(task.priority || 'Medium'))}</span></td>
+                <td class="task-category-cell">
+                  <select class="task-category-select" data-task-category="${task.id}" aria-label="${escapeHtml(t('category'))}">
+                    ${categoryOptions.map(category => `<option value="${escapeHtml(category)}" ${selectedCategory === category ? 'selected' : ''}>${escapeHtml(labelFor(category))}</option>`).join('')}
+                  </select>
+                </td>
+                <td class="task-status-table-cell">
                   <div class="task-status-cell">
-                    <button class="badge task-status-badge ${task.status === 'Done' ? 'done' : task.status === 'In Progress' ? 'mid' : ''}" type="button" data-task-next-status="${task.id}" title="${escapeHtml(t('nextStatus'))}">${escapeHtml(labelFor(task.status || 'Open'))}</button>
                     <select class="task-status-select" data-task-status="${task.id}" aria-label="${escapeHtml(t('status'))}">
                       ${['Open', 'In Progress', 'Done'].map(status => `<option value="${status}" ${task.status === status ? 'selected' : ''}>${escapeHtml(labelFor(status))}</option>`).join('')}
                     </select>
                   </div>
                 </td>
-                <td>
-                  <div style="display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end">
+                <td class="task-actions-cell">
+                  <div class="task-action-row">
                     <button class="btn btn-sm" type="button" data-task-edit="${task.id}">${escapeHtml(t('edit'))}</button>
                     <button class="btn btn-sm btn-danger" type="button" data-task-delete="${task.id}">${escapeHtml(t('delete'))}</button>
                   </div>
@@ -2967,7 +3116,8 @@ function renderTaskTable(tasks = [], members = [], options = {}) {
 
 function renderTaskForm(editingTask = null, context = {}) {
   const master = context.master || {};
-  const selectedCategory = editingTask?.category || master.taskTypes?.[0] || 'General';
+  const taskCategories = master.taskTypes?.length ? master.taskTypes : ['General'];
+  const selectedCategory = taskCategories.includes(editingTask?.category) ? editingTask.category : taskCategories[0];
   const existingEvidence = normalizeEvidence(editingTask?.evidence);
   const ownerSuggestions = context.ownerSuggestions || [];
   return `
@@ -2976,7 +3126,7 @@ function renderTaskForm(editingTask = null, context = {}) {
       <label>${escapeHtml(t('owner'))}<input name="owner" list="task-owner-list" value="${escapeHtml(editingTask?.owner || '')}" placeholder="${escapeHtml(t('owner'))}"></label>
       <label>${escapeHtml(t('due'))}<input name="due" type="date" value="${escapeHtml(editingTask?.due || todayDateString())}"></label>
       <label>${escapeHtml(t('priority'))}<select name="priority">${['High', 'Medium', 'Low'].map(priority => `<option value="${priority}" ${editingTask?.priority === priority || (!editingTask && priority === 'Medium') ? 'selected' : ''}>${escapeHtml(labelFor(priority))}</option>`).join('')}</select></label>
-      <label>${escapeHtml(t('category'))}<select name="category">${(master.taskTypes || ['General']).map(type => `<option value="${escapeHtml(type)}" ${selectedCategory === type ? 'selected' : ''}>${escapeHtml(labelFor(type))}</option>`).join('')}</select></label>
+      <label>${escapeHtml(t('category'))}<select name="category">${taskCategories.map(type => `<option value="${escapeHtml(type)}" ${selectedCategory === type ? 'selected' : ''}>${escapeHtml(labelFor(type))}</option>`).join('')}</select></label>
       <label>${escapeHtml(t('status'))}<select name="status">${['Open', 'In Progress', 'Done'].map(status => `<option value="${status}" ${editingTask?.status === status ? 'selected' : ''}>${escapeHtml(labelFor(status))}</option>`).join('')}</select></label>
       <label style="display:flex;gap:7px;align-items:center;font-weight:900"><input name="blocked" type="checkbox" ${editingTask?.blocked ? 'checked' : ''}> ${escapeHtml(t('blocked'))}</label>
       <label style="grid-column:1/-1">${escapeHtml(t('note'))}<textarea name="notes" rows="2" placeholder="${escapeHtml(t('note'))}">${escapeHtml(editingTask?.notes || '')}</textarea></label>
@@ -2999,7 +3149,7 @@ function renderTasksPage(state, options = {}) {
   const filters = normalizeTaskFilters(options.filters);
   const owners = unique(tasks.map(task => task.owner));
   const ownerSuggestions = unique([...(state.data.members || []).map(member => member.name), ...tasks.map(task => task.owner)]);
-  const categories = unique([...(master.taskTypes || []), ...tasks.map(task => task.category)]);
+  const categories = master.taskTypes?.length ? master.taskTypes : ['General'];
   const healthSummary = getTaskHealthSummary(tasks, state.data.members || []);
   const visibleTasks = getVisibleTasks(tasks, state.data.members || [], filters);
   const activeFilterChips = getActiveFilterChips(filters);
@@ -3083,7 +3233,7 @@ function renderTasksPage(state, options = {}) {
         <div data-task-active-filters style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:10px;min-height:24px">
           ${activeFilterChips.length ? `<strong style="font-size:.76rem;color:var(--muted)">${escapeHtml(t('activeFilters'))}</strong>${activeFilterChips.map(chip => `<button class="badge mid" type="button" data-task-remove-filter="${escapeHtml(chip.key)}" title="${escapeHtml(t('removeFilter'))}" style="cursor:pointer">${escapeHtml(chip.label)}: ${escapeHtml(chip.value)} x</button>`).join('')}` : `<span style="font-size:.76rem;color:var(--muted);font-weight:800">${escapeHtml(t('noActiveFilters'))}</span>`}
         </div>
-        ${renderTaskTable(visibleTasks, state.data.members || [], { totalCount: tasks.length, filters })}
+        ${renderTaskTable(visibleTasks, state.data.members || [], { totalCount: tasks.length, filters, categories })}
       </div>
       <div class="modal-bg ${options.taskModalOpen || editingTask ? 'open' : ''}" data-task-modal-bg>
         <div class="modal wide" role="dialog" aria-modal="true" aria-labelledby="task-modal-title" data-task-modal>
@@ -3095,7 +3245,7 @@ function renderTasksPage(state, options = {}) {
     </section>`;
 }
 
-return { createTaskFromForm, addTask, updateTask, updateTaskStatus, getNextTaskStatus, deleteTask, getTaskStats, getVisibleTasks, buildTasksCsv, exportTasksCsv, renderTaskTable, renderTasksPage };
+return { createTaskFromForm, addTask, updateTask, updateTaskStatus, deleteTask, getTaskStats, getVisibleTasks, buildTasksCsv, exportTasksCsv, renderTaskTable, renderTasksPage };
 })();
 
 const __src_features_health_js = (() => {
@@ -4800,9 +4950,10 @@ return { normalizePrepFilters, toggleChecklistItem, addChecklistItem, updateChec
 
 const __src_features_settings_js = (() => {
 const { escapeHtml, safeJsonParse } = __src_utils_index_js;
-const { t } = __src_utils_i18n_js;
+const { labelFor, t } = __src_utils_i18n_js;
 const { buildV15AuditHighlights, buildV15DbCoverage, summarizeV15DbCoverage } = __src_data_diagnostics_js;
 const { DB_TABLES } = __src_data_supabase_js;
+const { DEFAULT_TASK_CATEGORIES } = __src_data_defaults_js;
 const { getDataHealthIssues } = __src_features_health_js;
 const MASTER_DATA_STORAGE_PREFIX = 'rov_v16_master_data_';
 const SETTINGS_PACK_TYPE = 'rov_v16_settings_pack';
@@ -4810,8 +4961,33 @@ const SETTINGS_PACK_TYPE = 'rov_v16_settings_pack';
 const MASTER_DATA_TYPES = {
   roles: 'Roles',
   groups: 'Groups',
-  taskTypes: 'Task Types',
+  taskTypes: 'Task Categories',
   gearCats: 'Gear Categories',
+};
+
+const TASK_CATEGORY_DETAILS = {
+  'E1 Electronics': { group: 'Engineering Design', zh: '電子工程', en: 'Electronics', folder: '02Electronic' },
+  'E2 Mechanical': { group: 'Engineering Design', zh: '機械工程', en: 'Mechanical', folder: '03Mechanic' },
+  'E3 Software': { group: 'Engineering Design', zh: '軟體開發', en: 'Software', folder: '04Software' },
+  'E4 Buoyancy & Float': { group: 'Engineering Design', zh: '浮力系統', en: 'Buoyancy & Float', folder: '05Float' },
+  'E5 Sensor & Payload': { group: 'Engineering Design', zh: '感測器與載荷', en: 'Sensor & Payload', folder: '新增' },
+  'E6 Power System': { group: 'Engineering Design', zh: '電源系統', en: 'Power System', folder: '新增' },
+  'E7 Testing Log': { group: 'Engineering Design', zh: '測試記錄', en: 'Testing Log', folder: '新增' },
+  'C1 Task Mission': { group: 'Competition Management', zh: '競賽管理', en: 'Task Mission', folder: '新增' },
+  'C1 Technical Report': { group: 'Competition Management', zh: '競賽管理', en: 'Technical Report', folder: '新增' },
+  'C1 Presentation': { group: 'Competition Management', zh: '競賽管理', en: 'Presentation', folder: '08Pilot / 新增' },
+  'C1 Score Analysis': { group: 'Competition Management', zh: '競賽管理', en: 'Score Analysis', folder: '10_2026HK_Score' },
+  'L1 Documentation': { group: 'Logistics & Administration', zh: '後勤行政', en: 'Documentation', folder: '01Document' },
+  'L1 Finance': { group: 'Logistics & Administration', zh: '後勤行政', en: 'Finance', folder: '06Finance' },
+  'L1 Travel': { group: 'Logistics & Administration', zh: '後勤行政', en: 'Travel', folder: 'Travelling' },
+  'L1 Safety': { group: 'Logistics & Administration', zh: '後勤行政', en: 'Safety', folder: '新增' },
+  'P1 Public Relation': { group: 'Public Affairs', zh: '對外事務', en: 'Public Relation', folder: '07Public Relation' },
+  'P1 Marketing Display': { group: 'Public Affairs', zh: '對外事務', en: 'Marketing Display', folder: '09 Marketing Display' },
+  'P1 Sponsorship': { group: 'Public Affairs', zh: '對外事務', en: 'Sponsorship', folder: '新增' },
+  'P1 Media Coverage': { group: 'Public Affairs', zh: '對外事務', en: 'Media Coverage', folder: '新增' },
+  'T1 Training Plan': { group: 'Team Development', zh: '團隊發展', en: 'Training Plan', folder: '新增' },
+  'T1 Meeting Notes': { group: 'Team Development', zh: '團隊發展', en: 'Meeting Notes', folder: '新增' },
+  'T1 Mentor Guidance': { group: 'Team Development', zh: '團隊發展', en: 'Mentor Guidance', folder: '新增' },
 };
 
 const V15_DB_TABLE_LABELS = {
@@ -4849,11 +5025,35 @@ function uniqueSorted(values) {
     .sort((a, b) => a.localeCompare(b, 'en'));
 }
 
+function uniqueTaskCategories(values) {
+  const cleaned = [...new Set(values.map(cleanMasterValue).filter(Boolean))];
+  const defaults = DEFAULT_TASK_CATEGORIES.filter(category => cleaned.includes(category));
+  const custom = cleaned
+    .filter(category => !DEFAULT_TASK_CATEGORIES.includes(category))
+    .sort((a, b) => a.localeCompare(b, 'en'));
+  return [...defaults, ...custom];
+}
+
 function getMasterData(state) {
   const data = state?.data?.masterData || {};
   return Object.fromEntries(
-    Object.keys(MASTER_DATA_TYPES).map(type => [type, uniqueSorted(data[type] || [])]),
+    Object.keys(MASTER_DATA_TYPES).map(type => [
+      type,
+      type === 'taskTypes' ? uniqueTaskCategories(data[type] || []) : uniqueSorted(data[type] || []),
+    ]),
   );
+}
+
+function ensureDefaultTaskCategories(state) {
+  const current = getMasterData(state);
+  const nextTaskTypes = uniqueSorted([...(current.taskTypes || []), ...DEFAULT_TASK_CATEGORIES]);
+  if (nextTaskTypes.length === (current.taskTypes || []).length) return false;
+  state.data.masterData = {
+    ...current,
+    taskTypes: nextTaskTypes,
+  };
+  state.dirtyFlags.masterData = true;
+  return true;
 }
 
 function getMasterDataStorageKey(season = 'default') {
@@ -5824,9 +6024,10 @@ function renderSettingsHub(container, options = {}) {
       <details id="settings-master-section" class="card" open>
         <summary>Master Data</summary>
         <div style="display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap;margin:10px 0 9px">
-          <div style="font-size:.82rem;color:var(--muted);font-weight:800">Shared options for roles, groups, task types, and gear categories.</div>
+          <div style="font-size:.82rem;color:var(--muted);font-weight:800">Shared options for roles, groups, task categories, and gear categories.</div>
           <span class="badge done">${stats.masterTotal}</span>
         </div>
+        ${renderTaskCategoryManager(stats.masterData.taskTypes || [])}
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:9px">
           ${Object.entries(MASTER_DATA_TYPES).map(([type, label]) => renderMasterDataList(type, label, stats.masterData[type] || [])).join('')}
         </div>
@@ -5962,6 +6163,62 @@ function renderMasterDataList(type, label, values) {
             <button class="btn btn-sm btn-danger" type="button" style="padding:1px 5px" data-master-delete="${escapeHtml(type)}" data-master-value="${escapeHtml(value)}">x</button>
           </span>
         `).join('') || '<span style="font-size:.78rem;color:var(--muted)">Empty</span>'}
+      </div>
+    </div>`;
+}
+
+function renderTaskCategoryManager(values = []) {
+  const grouped = values.reduce((groups, value) => {
+    const detail = TASK_CATEGORY_DETAILS[value] || {
+      group: 'Custom',
+      zh: labelFor(value),
+      en: value,
+      folder: '-',
+    };
+    groups[detail.group] ||= [];
+    groups[detail.group].push({ value, ...detail });
+    return groups;
+  }, {});
+  const groupOrder = ['Engineering Design', 'Competition Management', 'Logistics & Administration', 'Public Affairs', 'Team Development', 'Custom'];
+  return `
+    <div class="task-category-manager" data-task-category-manager>
+      <div class="task-category-manager-head">
+        <div>
+          <h3>${escapeHtml(t('taskCategoryManager'))}</h3>
+          <div>${escapeHtml(t('taskCategoryManagerHint'))}</div>
+        </div>
+        <span class="badge done">${values.length}</span>
+      </div>
+      <div class="task-category-add-row">
+        <input id="master-taskTypes-focused-input" type="text" placeholder="${escapeHtml(t('addTaskCategoryPlaceholder'))}" data-master-input="taskTypes">
+        <button class="btn btn-sm btn-primary" type="button" data-master-add="taskTypes">${escapeHtml(t('addItem'))}</button>
+      </div>
+      <div class="task-category-groups">
+        ${groupOrder.filter(group => grouped[group]?.length).map(group => `
+          <section class="task-category-group">
+            <div class="task-category-group-title">${escapeHtml(t(`taskCategoryGroup${group.replace(/[^A-Za-z]/g, '')}`) || group)}</div>
+            <div class="task-category-table">
+              <div class="task-category-row task-category-row-head">
+                <span>#</span>
+                <span>${escapeHtml(t('zhCategory'))}</span>
+                <span>${escapeHtml(t('enCategory'))}</span>
+                <span>${escapeHtml(t('folder'))}</span>
+                <span></span>
+              </div>
+              ${grouped[group].map(item => `
+                <div class="task-category-row">
+                  <span>${escapeHtml(item.value.split(' ')[0] || '-')}</span>
+                  <span>${escapeHtml(item.zh || labelFor(item.value))}</span>
+                  <span>${escapeHtml(item.en || item.value)}</span>
+                  <span>${escapeHtml(item.folder || '-')}</span>
+                  <span>
+                    <button class="btn btn-sm btn-danger" type="button" data-master-delete="taskTypes" data-master-value="${escapeHtml(item.value)}">${escapeHtml(t('delete'))}</button>
+                  </span>
+                </div>
+              `).join('')}
+            </div>
+          </section>
+        `).join('')}
       </div>
     </div>`;
 }
@@ -6294,7 +6551,7 @@ function renderDiagnosticsAudit(rows = []) {
     </details>`;
 }
 
-return { cleanMasterValue, uniqueSorted, getMasterData, getMasterDataStorageKey, loadMasterData, saveMasterData, addMasterDataValue, deleteMasterDataValue, buildSettingsPack, importSettingsPackPayload, exportSettingsPack, buildHandoffReport, exportHandoffReport, getSettingsCenterStats, scrollSettingsSection, renderSettingsHub, renderMasterDataList, MASTER_DATA_STORAGE_PREFIX, SETTINGS_PACK_TYPE, MASTER_DATA_TYPES, V15_DB_TABLE_LABELS };
+return { cleanMasterValue, uniqueSorted, getMasterData, ensureDefaultTaskCategories, getMasterDataStorageKey, loadMasterData, saveMasterData, addMasterDataValue, deleteMasterDataValue, buildSettingsPack, importSettingsPackPayload, exportSettingsPack, buildHandoffReport, exportHandoffReport, getSettingsCenterStats, scrollSettingsSection, renderSettingsHub, renderMasterDataList, MASTER_DATA_STORAGE_PREFIX, SETTINGS_PACK_TYPE, MASTER_DATA_TYPES, V15_DB_TABLE_LABELS };
 })();
 
 const __src_app_js = (() => {
@@ -6309,8 +6566,8 @@ const { addKnowledgeItem, createKnowledgeItemFromForm, deleteKnowledgeItem, getN
 const { renderNavigation, showPage } = __src_features_navigation_js;
 const { addMember, createMemberFromForm, deleteMember, normalizeMemberFilters, renderMembersPage, updateMember } = __src_features_members_js;
 const { addChecklistItem, addGearItem, deleteChecklistItem, deleteGearItem, getGearPayloadFromDom, normalizePrepFilters, renderPrepCenter, toggleChecklistItem, toggleGearItem, updateChecklistItem, updateGearItem } = __src_features_prep_js;
-const { addMasterDataValue, deleteMasterDataValue, exportHandoffReport, exportSettingsPack, importSettingsPackPayload, loadMasterData, renderSettingsHub, saveMasterData, scrollSettingsSection } = __src_features_settings_js;
-const { addTask, createTaskFromForm, deleteTask, exportTasksCsv, getNextTaskStatus, getVisibleTasks, renderTasksPage, updateTask, updateTaskStatus } = __src_features_tasks_js;
+const { addMasterDataValue, deleteMasterDataValue, ensureDefaultTaskCategories, exportHandoffReport, exportSettingsPack, importSettingsPackPayload, loadMasterData, renderSettingsHub, saveMasterData, scrollSettingsSection } = __src_features_settings_js;
+const { addTask, createTaskFromForm, deleteTask, exportTasksCsv, getVisibleTasks, renderTasksPage, updateTask, updateTaskStatus } = __src_features_tasks_js;
 const { addPresentationRun, clearFloatPackets, createPresentationRunFromForm, renderFloatPage, renderGanttPage, renderPresentationPage, saveFloatPacketAnalysis } = __src_features_legacy_js;
 const { escapeHtml } = __src_utils_index_js;
 const { getLocale, labelFor, LOCALE_STORAGE_KEY, setLocale, t } = __src_utils_i18n_js;
@@ -6322,6 +6579,7 @@ const ACTION_LOG_LIMIT = 8;
 const UNDO_BAR_AUTO_CLEAR_MS = 5000;
 const appState = loadAppState();
 loadMasterData(appState);
+if (ensureDefaultTaskCategories(appState)) saveMasterData(appState);
 let lastMigrationSummary = null;
 let lastDbStatus = null;
 let lastSyncPreview = null;
@@ -7669,6 +7927,7 @@ function runAndRenderSmokeTest() {
   renderAppShell();
   addCheck('task form', '[data-task-form]');
   addCheck('task status control', '[data-task-status]');
+  addCheck('task category control', '[data-task-category]');
   addCheck('task edit control', '[data-task-edit]');
   addCheck('task search', '[data-task-search]');
   addCheck('task owner filter', '[data-task-owner-filter]');
@@ -8123,7 +8382,16 @@ appRoot?.addEventListener('click', (event) => {
     if (!confirmDelete(deleteMasterTarget.dataset.masterValue || t('item'))) return;
     const message = actionMessage(t('deleted'), deleteMasterTarget.dataset.masterValue || t('item'));
     captureUndo(message);
-    if (deleteMasterDataValue(appState, deleteMasterTarget.dataset.masterDelete, deleteMasterTarget.dataset.masterValue)) {
+    const type = deleteMasterTarget.dataset.masterDelete;
+    const value = deleteMasterTarget.dataset.masterValue;
+    if (deleteMasterDataValue(appState, type, value)) {
+      if (type === 'taskTypes') {
+        const fallbackCategory = appState.data.masterData?.taskTypes?.[0] || 'General';
+        appState.data.tasks.forEach((task) => {
+          if (task.category === value) task.category = fallbackCategory;
+        });
+        appState.dirtyFlags.tasks = true;
+      }
       persistAndRender(message, { keepUndo: true });
     }
     return;
@@ -8136,15 +8404,6 @@ appRoot?.addEventListener('click', (event) => {
     captureUndo(actionMessage(t('deleted'), label));
     if (Number(editingTaskId) === Number(deleteTaskTarget.dataset.taskDelete)) editingTaskId = null;
     if (deleteTask(appState, deleteTaskTarget.dataset.taskDelete)) persistAndRender(actionMessage(t('deleted'), label), { keepUndo: true });
-    return;
-  }
-  const nextTaskStatusTarget = event.target.closest('[data-task-next-status]');
-  if (nextTaskStatusTarget) {
-    const task = appState.data.tasks.find(row => Number(row.id) === Number(nextTaskStatusTarget.dataset.taskNextStatus));
-    const nextStatus = getNextTaskStatus(task?.status);
-    const label = task ? `${task.name || t('task')} -> ${nextStatus}` : '';
-    if (task) captureUndo(actionMessage(t('statusUpdated'), label));
-    if (task && updateTaskStatus(appState, task.id, nextStatus)) persistAndRender(actionMessage(t('statusUpdated'), label), { keepUndo: true });
     return;
   }
   const editTaskTarget = event.target.closest('[data-task-edit]');
@@ -8593,6 +8852,14 @@ appRoot?.addEventListener('change', (event) => {
     const message = actionMessage(t('statusUpdated'), task ? `${task.name || t('task')} -> ${status.value}` : '');
     captureUndo(message);
     if (updateTaskStatus(appState, status.dataset.taskStatus, status.value)) persistAndRender(message, { keepUndo: true });
+    return;
+  }
+  const taskCategory = event.target.closest('[data-task-category]');
+  if (taskCategory) {
+    const task = appState.data.tasks.find(row => Number(row.id) === Number(taskCategory.dataset.taskCategory));
+    const message = actionMessage(t('saved'), task ? `${task.name || t('task')} -> ${labelFor(taskCategory.value)}` : labelFor(taskCategory.value));
+    captureUndo(message);
+    if (updateTask(appState, taskCategory.dataset.taskCategory, { category: taskCategory.value })) persistAndRender(message, { keepUndo: true });
     return;
   }
   const check = event.target.closest('[data-checklist]');

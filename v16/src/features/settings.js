@@ -1,7 +1,8 @@
 import { escapeHtml, safeJsonParse } from '../utils/index.js';
-import { t } from '../utils/i18n.js';
+import { labelFor, t } from '../utils/i18n.js';
 import { buildV15AuditHighlights, buildV15DbCoverage, summarizeV15DbCoverage } from '../data/diagnostics.js';
 import { DB_TABLES } from '../data/supabase.js';
+import { DEFAULT_TASK_CATEGORIES } from '../data/defaults.js';
 import { getDataHealthIssues } from './health.js';
 
 export const MASTER_DATA_STORAGE_PREFIX = 'rov_v16_master_data_';
@@ -10,8 +11,33 @@ export const SETTINGS_PACK_TYPE = 'rov_v16_settings_pack';
 export const MASTER_DATA_TYPES = {
   roles: 'Roles',
   groups: 'Groups',
-  taskTypes: 'Task Types',
+  taskTypes: 'Task Categories',
   gearCats: 'Gear Categories',
+};
+
+const TASK_CATEGORY_DETAILS = {
+  'E1 Electronics': { group: 'Engineering Design', zh: '電子工程', en: 'Electronics', folder: '02Electronic' },
+  'E2 Mechanical': { group: 'Engineering Design', zh: '機械工程', en: 'Mechanical', folder: '03Mechanic' },
+  'E3 Software': { group: 'Engineering Design', zh: '軟體開發', en: 'Software', folder: '04Software' },
+  'E4 Buoyancy & Float': { group: 'Engineering Design', zh: '浮力系統', en: 'Buoyancy & Float', folder: '05Float' },
+  'E5 Sensor & Payload': { group: 'Engineering Design', zh: '感測器與載荷', en: 'Sensor & Payload', folder: '新增' },
+  'E6 Power System': { group: 'Engineering Design', zh: '電源系統', en: 'Power System', folder: '新增' },
+  'E7 Testing Log': { group: 'Engineering Design', zh: '測試記錄', en: 'Testing Log', folder: '新增' },
+  'C1 Task Mission': { group: 'Competition Management', zh: '競賽管理', en: 'Task Mission', folder: '新增' },
+  'C1 Technical Report': { group: 'Competition Management', zh: '競賽管理', en: 'Technical Report', folder: '新增' },
+  'C1 Presentation': { group: 'Competition Management', zh: '競賽管理', en: 'Presentation', folder: '08Pilot / 新增' },
+  'C1 Score Analysis': { group: 'Competition Management', zh: '競賽管理', en: 'Score Analysis', folder: '10_2026HK_Score' },
+  'L1 Documentation': { group: 'Logistics & Administration', zh: '後勤行政', en: 'Documentation', folder: '01Document' },
+  'L1 Finance': { group: 'Logistics & Administration', zh: '後勤行政', en: 'Finance', folder: '06Finance' },
+  'L1 Travel': { group: 'Logistics & Administration', zh: '後勤行政', en: 'Travel', folder: 'Travelling' },
+  'L1 Safety': { group: 'Logistics & Administration', zh: '後勤行政', en: 'Safety', folder: '新增' },
+  'P1 Public Relation': { group: 'Public Affairs', zh: '對外事務', en: 'Public Relation', folder: '07Public Relation' },
+  'P1 Marketing Display': { group: 'Public Affairs', zh: '對外事務', en: 'Marketing Display', folder: '09 Marketing Display' },
+  'P1 Sponsorship': { group: 'Public Affairs', zh: '對外事務', en: 'Sponsorship', folder: '新增' },
+  'P1 Media Coverage': { group: 'Public Affairs', zh: '對外事務', en: 'Media Coverage', folder: '新增' },
+  'T1 Training Plan': { group: 'Team Development', zh: '團隊發展', en: 'Training Plan', folder: '新增' },
+  'T1 Meeting Notes': { group: 'Team Development', zh: '團隊發展', en: 'Meeting Notes', folder: '新增' },
+  'T1 Mentor Guidance': { group: 'Team Development', zh: '團隊發展', en: 'Mentor Guidance', folder: '新增' },
 };
 
 export const V15_DB_TABLE_LABELS = {
@@ -49,11 +75,35 @@ export function uniqueSorted(values) {
     .sort((a, b) => a.localeCompare(b, 'en'));
 }
 
+function uniqueTaskCategories(values) {
+  const cleaned = [...new Set(values.map(cleanMasterValue).filter(Boolean))];
+  const defaults = DEFAULT_TASK_CATEGORIES.filter(category => cleaned.includes(category));
+  const custom = cleaned
+    .filter(category => !DEFAULT_TASK_CATEGORIES.includes(category))
+    .sort((a, b) => a.localeCompare(b, 'en'));
+  return [...defaults, ...custom];
+}
+
 export function getMasterData(state) {
   const data = state?.data?.masterData || {};
   return Object.fromEntries(
-    Object.keys(MASTER_DATA_TYPES).map(type => [type, uniqueSorted(data[type] || [])]),
+    Object.keys(MASTER_DATA_TYPES).map(type => [
+      type,
+      type === 'taskTypes' ? uniqueTaskCategories(data[type] || []) : uniqueSorted(data[type] || []),
+    ]),
   );
+}
+
+export function ensureDefaultTaskCategories(state) {
+  const current = getMasterData(state);
+  const nextTaskTypes = uniqueSorted([...(current.taskTypes || []), ...DEFAULT_TASK_CATEGORIES]);
+  if (nextTaskTypes.length === (current.taskTypes || []).length) return false;
+  state.data.masterData = {
+    ...current,
+    taskTypes: nextTaskTypes,
+  };
+  state.dirtyFlags.masterData = true;
+  return true;
 }
 
 export function getMasterDataStorageKey(season = 'default') {
@@ -1024,9 +1074,10 @@ export function renderSettingsHub(container, options = {}) {
       <details id="settings-master-section" class="card" open>
         <summary>Master Data</summary>
         <div style="display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap;margin:10px 0 9px">
-          <div style="font-size:.82rem;color:var(--muted);font-weight:800">Shared options for roles, groups, task types, and gear categories.</div>
+          <div style="font-size:.82rem;color:var(--muted);font-weight:800">Shared options for roles, groups, task categories, and gear categories.</div>
           <span class="badge done">${stats.masterTotal}</span>
         </div>
+        ${renderTaskCategoryManager(stats.masterData.taskTypes || [])}
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:9px">
           ${Object.entries(MASTER_DATA_TYPES).map(([type, label]) => renderMasterDataList(type, label, stats.masterData[type] || [])).join('')}
         </div>
@@ -1162,6 +1213,62 @@ export function renderMasterDataList(type, label, values) {
             <button class="btn btn-sm btn-danger" type="button" style="padding:1px 5px" data-master-delete="${escapeHtml(type)}" data-master-value="${escapeHtml(value)}">x</button>
           </span>
         `).join('') || '<span style="font-size:.78rem;color:var(--muted)">Empty</span>'}
+      </div>
+    </div>`;
+}
+
+function renderTaskCategoryManager(values = []) {
+  const grouped = values.reduce((groups, value) => {
+    const detail = TASK_CATEGORY_DETAILS[value] || {
+      group: 'Custom',
+      zh: labelFor(value),
+      en: value,
+      folder: '-',
+    };
+    groups[detail.group] ||= [];
+    groups[detail.group].push({ value, ...detail });
+    return groups;
+  }, {});
+  const groupOrder = ['Engineering Design', 'Competition Management', 'Logistics & Administration', 'Public Affairs', 'Team Development', 'Custom'];
+  return `
+    <div class="task-category-manager" data-task-category-manager>
+      <div class="task-category-manager-head">
+        <div>
+          <h3>${escapeHtml(t('taskCategoryManager'))}</h3>
+          <div>${escapeHtml(t('taskCategoryManagerHint'))}</div>
+        </div>
+        <span class="badge done">${values.length}</span>
+      </div>
+      <div class="task-category-add-row">
+        <input id="master-taskTypes-focused-input" type="text" placeholder="${escapeHtml(t('addTaskCategoryPlaceholder'))}" data-master-input="taskTypes">
+        <button class="btn btn-sm btn-primary" type="button" data-master-add="taskTypes">${escapeHtml(t('addItem'))}</button>
+      </div>
+      <div class="task-category-groups">
+        ${groupOrder.filter(group => grouped[group]?.length).map(group => `
+          <section class="task-category-group">
+            <div class="task-category-group-title">${escapeHtml(t(`taskCategoryGroup${group.replace(/[^A-Za-z]/g, '')}`) || group)}</div>
+            <div class="task-category-table">
+              <div class="task-category-row task-category-row-head">
+                <span>#</span>
+                <span>${escapeHtml(t('zhCategory'))}</span>
+                <span>${escapeHtml(t('enCategory'))}</span>
+                <span>${escapeHtml(t('folder'))}</span>
+                <span></span>
+              </div>
+              ${grouped[group].map(item => `
+                <div class="task-category-row">
+                  <span>${escapeHtml(item.value.split(' ')[0] || '-')}</span>
+                  <span>${escapeHtml(item.zh || labelFor(item.value))}</span>
+                  <span>${escapeHtml(item.en || item.value)}</span>
+                  <span>${escapeHtml(item.folder || '-')}</span>
+                  <span>
+                    <button class="btn btn-sm btn-danger" type="button" data-master-delete="taskTypes" data-master-value="${escapeHtml(item.value)}">${escapeHtml(t('delete'))}</button>
+                  </span>
+                </div>
+              `).join('')}
+            </div>
+          </section>
+        `).join('')}
       </div>
     </div>`;
 }

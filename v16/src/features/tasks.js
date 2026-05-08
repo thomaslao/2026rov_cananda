@@ -80,12 +80,6 @@ export function updateTaskStatus(state, id, status) {
   return true;
 }
 
-export function getNextTaskStatus(status = 'Open') {
-  const statuses = ['Open', 'In Progress', 'Done'];
-  const index = statuses.indexOf(status);
-  return statuses[(index + 1) % statuses.length] || statuses[0];
-}
-
 export function deleteTask(state, id) {
   const before = state.data.tasks.length;
   state.data.tasks = state.data.tasks.filter(task => task.id !== Number(id));
@@ -175,6 +169,7 @@ function sortTasks(tasks = [], sort = 'due-asc') {
   };
   const comparePriority = (a, b) => (priorityRank[a.task.priority] ?? 9) - (priorityRank[b.task.priority] ?? 9);
   const compareStatus = (a, b) => (statusRank[a.task.status] ?? 9) - (statusRank[b.task.status] ?? 9);
+  const compareCategory = (a, b) => String(a.task.category || '').localeCompare(String(b.task.category || ''), 'en');
   const sorted = withIndex.sort((a, b) => {
     let result = (a.task.status === 'Done' ? 1 : 0) - (b.task.status === 'Done' ? 1 : 0);
     if (result) return result;
@@ -183,6 +178,8 @@ function sortTasks(tasks = [], sort = 'due-asc') {
     else if (sort === 'due-desc') result = compareDue(b, a);
     else if (sort === 'priority') result = comparePriority(a, b) || compareDue(a, b);
     else if (sort === 'priority-desc') result = comparePriority(b, a) || compareDue(a, b);
+    else if (sort === 'category') result = compareCategory(a, b) || compareDue(a, b);
+    else if (sort === 'category-desc') result = compareCategory(b, a) || compareDue(a, b);
     else if (sort === 'status') result = compareStatus(a, b) || compareDue(a, b);
     else if (sort === 'status-desc') result = compareStatus(b, a) || compareDue(a, b);
     else if (sort === 'owner') result = compareText(a, b, 'owner') || compareDue(a, b);
@@ -308,6 +305,7 @@ export function renderTaskTable(tasks = [], members = [], options = {}) {
     owner: ['owner', 'owner-desc'],
     due: ['due-asc', 'due-desc'],
     priority: ['priority', 'priority-desc'],
+    category: ['category', 'category-desc'],
     status: ['status', 'status-desc'],
   };
   const sortHeader = (column, label) => {
@@ -316,38 +314,45 @@ export function renderTaskTable(tasks = [], members = [], options = {}) {
     const activeDesc = filters.sort === desc;
     const nextSort = activeAsc ? desc : asc;
     const mark = activeAsc ? '↑' : activeDesc ? '↓' : '';
-    return `<th class="task-sort-th"><button class="task-sort-button" type="button" data-task-header-sort="${escapeHtml(nextSort)}" aria-label="${escapeHtml(`${label} ${t('sort')}`)}">${escapeHtml(label)}<span>${escapeHtml(mark)}</span></button></th>`;
+    return `<th class="task-sort-th task-col-${escapeHtml(column)}"><button class="task-sort-button" type="button" data-task-header-sort="${escapeHtml(nextSort)}" aria-label="${escapeHtml(`${label} ${t('sort')}`)}">${escapeHtml(label)}<span>${escapeHtml(mark)}</span></button></th>`;
   };
   return `
     <div class="task-table-wrap">
       <table>
-        <thead><tr>${sortHeader('name', t('task'))}${sortHeader('owner', t('owner'))}${sortHeader('due', t('due'))}${sortHeader('priority', t('priority'))}${sortHeader('status', t('status'))}<th></th></tr></thead>
+        <thead><tr>${sortHeader('name', t('task'))}${sortHeader('owner', t('owner'))}${sortHeader('due', t('due'))}${sortHeader('priority', t('priority'))}${sortHeader('category', t('category'))}${sortHeader('status', t('status'))}<th></th></tr></thead>
         <tbody>
           ${tasks.map((task) => {
             const due = getTaskDueInfo(task);
             const late = isOverdue(task.due) && task.status !== 'Done';
             const healthBadges = getTaskHealthBadges(task, memberNames);
+            const taskCategories = options.categories || ['General'];
+            const selectedCategory = taskCategories.includes(task.category) ? task.category : taskCategories[0] || 'General';
+            const categoryOptions = taskCategories.length ? taskCategories : [selectedCategory];
             return `
               <tr>
-                <td>
+                <td class="task-name-cell">
                   <strong>${escapeHtml(task.name)}</strong>
-                  <div style="font-size:.76rem;color:var(--muted)">${escapeHtml(labelFor(task.category || 'General'))}${task.blocked ? ` | ${escapeHtml(t('blocked'))}` : ''}</div>
+                  ${task.blocked ? `<div style="font-size:.76rem;color:var(--muted)">${escapeHtml(t('blocked'))}</div>` : ''}
                   ${healthBadges.length ? `<div data-task-health-badges style="display:flex;gap:4px;flex-wrap:wrap;margin-top:4px">${healthBadges.map(label => `<span class="badge mid">${escapeHtml(label)}</span>`).join('')}</div>` : ''}
                   ${renderTaskEvidence(task.evidence)}
                 </td>
-                <td>${escapeHtml(task.owner || labelFor('Unassigned'))}</td>
-                <td style="color:${late ? 'var(--red)' : 'var(--text)'}">${escapeHtml(task.due || '-')} ${due.days !== null ? `(${due.days}d)` : ''}</td>
-                <td><span class="badge ${task.priority === 'High' ? 'urgent' : task.priority === 'Low' ? 'done' : 'mid'}">${escapeHtml(labelFor(task.priority || 'Medium'))}</span></td>
-                <td>
+                <td class="task-owner-cell">${escapeHtml(task.owner || labelFor('Unassigned'))}</td>
+                <td class="task-due-cell" style="color:${late ? 'var(--red)' : 'var(--text)'}">${escapeHtml(task.due || '-')} ${due.days !== null ? `(${due.days}d)` : ''}</td>
+                <td class="task-priority-cell"><span class="badge ${task.priority === 'High' ? 'urgent' : task.priority === 'Low' ? 'done' : 'mid'}">${escapeHtml(labelFor(task.priority || 'Medium'))}</span></td>
+                <td class="task-category-cell">
+                  <select class="task-category-select" data-task-category="${task.id}" aria-label="${escapeHtml(t('category'))}">
+                    ${categoryOptions.map(category => `<option value="${escapeHtml(category)}" ${selectedCategory === category ? 'selected' : ''}>${escapeHtml(labelFor(category))}</option>`).join('')}
+                  </select>
+                </td>
+                <td class="task-status-table-cell">
                   <div class="task-status-cell">
-                    <button class="badge task-status-badge ${task.status === 'Done' ? 'done' : task.status === 'In Progress' ? 'mid' : ''}" type="button" data-task-next-status="${task.id}" title="${escapeHtml(t('nextStatus'))}">${escapeHtml(labelFor(task.status || 'Open'))}</button>
                     <select class="task-status-select" data-task-status="${task.id}" aria-label="${escapeHtml(t('status'))}">
                       ${['Open', 'In Progress', 'Done'].map(status => `<option value="${status}" ${task.status === status ? 'selected' : ''}>${escapeHtml(labelFor(status))}</option>`).join('')}
                     </select>
                   </div>
                 </td>
-                <td>
-                  <div style="display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end">
+                <td class="task-actions-cell">
+                  <div class="task-action-row">
                     <button class="btn btn-sm" type="button" data-task-edit="${task.id}">${escapeHtml(t('edit'))}</button>
                     <button class="btn btn-sm btn-danger" type="button" data-task-delete="${task.id}">${escapeHtml(t('delete'))}</button>
                   </div>
@@ -361,7 +366,8 @@ export function renderTaskTable(tasks = [], members = [], options = {}) {
 
 function renderTaskForm(editingTask = null, context = {}) {
   const master = context.master || {};
-  const selectedCategory = editingTask?.category || master.taskTypes?.[0] || 'General';
+  const taskCategories = master.taskTypes?.length ? master.taskTypes : ['General'];
+  const selectedCategory = taskCategories.includes(editingTask?.category) ? editingTask.category : taskCategories[0];
   const existingEvidence = normalizeEvidence(editingTask?.evidence);
   const ownerSuggestions = context.ownerSuggestions || [];
   return `
@@ -370,7 +376,7 @@ function renderTaskForm(editingTask = null, context = {}) {
       <label>${escapeHtml(t('owner'))}<input name="owner" list="task-owner-list" value="${escapeHtml(editingTask?.owner || '')}" placeholder="${escapeHtml(t('owner'))}"></label>
       <label>${escapeHtml(t('due'))}<input name="due" type="date" value="${escapeHtml(editingTask?.due || todayDateString())}"></label>
       <label>${escapeHtml(t('priority'))}<select name="priority">${['High', 'Medium', 'Low'].map(priority => `<option value="${priority}" ${editingTask?.priority === priority || (!editingTask && priority === 'Medium') ? 'selected' : ''}>${escapeHtml(labelFor(priority))}</option>`).join('')}</select></label>
-      <label>${escapeHtml(t('category'))}<select name="category">${(master.taskTypes || ['General']).map(type => `<option value="${escapeHtml(type)}" ${selectedCategory === type ? 'selected' : ''}>${escapeHtml(labelFor(type))}</option>`).join('')}</select></label>
+      <label>${escapeHtml(t('category'))}<select name="category">${taskCategories.map(type => `<option value="${escapeHtml(type)}" ${selectedCategory === type ? 'selected' : ''}>${escapeHtml(labelFor(type))}</option>`).join('')}</select></label>
       <label>${escapeHtml(t('status'))}<select name="status">${['Open', 'In Progress', 'Done'].map(status => `<option value="${status}" ${editingTask?.status === status ? 'selected' : ''}>${escapeHtml(labelFor(status))}</option>`).join('')}</select></label>
       <label style="display:flex;gap:7px;align-items:center;font-weight:900"><input name="blocked" type="checkbox" ${editingTask?.blocked ? 'checked' : ''}> ${escapeHtml(t('blocked'))}</label>
       <label style="grid-column:1/-1">${escapeHtml(t('note'))}<textarea name="notes" rows="2" placeholder="${escapeHtml(t('note'))}">${escapeHtml(editingTask?.notes || '')}</textarea></label>
@@ -393,7 +399,7 @@ export function renderTasksPage(state, options = {}) {
   const filters = normalizeTaskFilters(options.filters);
   const owners = unique(tasks.map(task => task.owner));
   const ownerSuggestions = unique([...(state.data.members || []).map(member => member.name), ...tasks.map(task => task.owner)]);
-  const categories = unique([...(master.taskTypes || []), ...tasks.map(task => task.category)]);
+  const categories = master.taskTypes?.length ? master.taskTypes : ['General'];
   const healthSummary = getTaskHealthSummary(tasks, state.data.members || []);
   const visibleTasks = getVisibleTasks(tasks, state.data.members || [], filters);
   const activeFilterChips = getActiveFilterChips(filters);
@@ -477,7 +483,7 @@ export function renderTasksPage(state, options = {}) {
         <div data-task-active-filters style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:10px;min-height:24px">
           ${activeFilterChips.length ? `<strong style="font-size:.76rem;color:var(--muted)">${escapeHtml(t('activeFilters'))}</strong>${activeFilterChips.map(chip => `<button class="badge mid" type="button" data-task-remove-filter="${escapeHtml(chip.key)}" title="${escapeHtml(t('removeFilter'))}" style="cursor:pointer">${escapeHtml(chip.label)}: ${escapeHtml(chip.value)} x</button>`).join('')}` : `<span style="font-size:.76rem;color:var(--muted);font-weight:800">${escapeHtml(t('noActiveFilters'))}</span>`}
         </div>
-        ${renderTaskTable(visibleTasks, state.data.members || [], { totalCount: tasks.length, filters })}
+        ${renderTaskTable(visibleTasks, state.data.members || [], { totalCount: tasks.length, filters, categories })}
       </div>
       <div class="modal-bg ${options.taskModalOpen || editingTask ? 'open' : ''}" data-task-modal-bg>
         <div class="modal wide" role="dialog" aria-modal="true" aria-labelledby="task-modal-title" data-task-modal>

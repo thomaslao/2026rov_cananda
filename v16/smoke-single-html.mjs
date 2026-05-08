@@ -84,7 +84,7 @@ if (!existsSync(htmlPath)) {
     check('single html renders dashboard', app.innerHTML.includes('page-dashboard'), '');
     check('single html includes language toggle', script.includes('data-locale-toggle') && script.includes('data-next-locale') && script.includes('繁中 / EN') && script.includes('function labelFor') && script.includes('valueInProgress'), '');
     check('single html includes data safety', script.includes('data-settings-data-safety') && script.includes('data-settings-action-log'), '');
-    check('single html includes task shortcut support', script.includes('data-task-next-status') && script.includes('getNextTaskStatus') && script.includes('data-task-open-modal') && script.includes('data-task-modal') && script.includes("a.task.status === 'Done' ? 1 : 0"), '');
+    check('single html includes task status select support', script.includes('data-task-status') && !script.includes('data-task-next-status') && script.includes('data-task-open-modal') && script.includes('data-task-modal') && script.includes("a.task.status === 'Done' ? 1 : 0"), '');
     check('single html includes submitted task search', script.includes('data-task-search-submit') && script.includes('applyTaskSearchFromDom') && script.includes("event.target.closest('[data-task-search]')"), '');
     check('single html includes task header sorting', script.includes('data-task-header-sort') && script.includes('task-sort-button') && script.includes("sort === 'name-desc'") && script.includes("sort === 'priority-desc'"), '');
     check('single html includes dashboard stat shortcuts', script.includes('data-dashboard-stat') && script.includes('applyDashboardStatTarget') && script.includes("status: 'active'") && script.includes("health === 'overdue'"), '');

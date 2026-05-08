@@ -1,3 +1,28 @@
+export const DEFAULT_TASK_CATEGORIES = [
+  'E1 Electronics',
+  'E2 Mechanical',
+  'E3 Software',
+  'E4 Buoyancy & Float',
+  'E5 Sensor & Payload',
+  'E6 Power System',
+  'E7 Testing Log',
+  'C1 Task Mission',
+  'C1 Technical Report',
+  'C1 Presentation',
+  'C1 Score Analysis',
+  'L1 Documentation',
+  'L1 Finance',
+  'L1 Travel',
+  'L1 Safety',
+  'P1 Public Relation',
+  'P1 Marketing Display',
+  'P1 Sponsorship',
+  'P1 Media Coverage',
+  'T1 Training Plan',
+  'T1 Meeting Notes',
+  'T1 Mentor Guidance',
+];
+
 export const DEFAULT_STATE = {
   tasks: [
     {
@@ -53,7 +78,7 @@ export const DEFAULT_STATE = {
   masterData: {
     roles: ['Lead', 'Coach', 'Pilot', 'Mechanical', 'Electrical', 'Software', 'Presentation', 'Pit Crew'],
     groups: ['Operations', 'Drive Team', 'Engineering', 'Presentation', 'Travel', 'Competition Day'],
-    taskTypes: ['Urgent', 'High', 'Medium', 'Low', 'Mission Run', 'Presentation', 'Travel Docs', 'Gear', 'Pre-Dive'],
+    taskTypes: DEFAULT_TASK_CATEGORIES,
     gearCats: ['Required', 'Spare', 'Consumable', 'Tools', 'Docs', 'Electrical', 'Mechanical', 'Safety', 'Competition Day'],
   },
 };

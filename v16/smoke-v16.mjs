@@ -389,7 +389,6 @@ check('diagnostics viewer highlights imported audit', settings.includes("const i
   'task-owner-list',
   'ownerSuggestions',
   'data-task-status',
-  'data-task-next-status',
   'data-task-edit',
   'data-task-cancel-edit',
   'data-task-search',
@@ -458,7 +457,6 @@ check('diagnostics viewer highlights imported audit', settings.includes("const i
   "a.task.status === 'Done' ? 1 : 0",
   'data-task-delete',
   'updateTask',
-  'getNextTaskStatus',
 ].forEach(fragment => check(`tasks ${fragment}`, (tasks + app).includes(fragment)));
 
 [

@@ -49,6 +49,7 @@ import {
 import {
   addMasterDataValue,
   deleteMasterDataValue,
+  ensureDefaultTaskCategories,
   exportHandoffReport,
   exportSettingsPack,
   importSettingsPackPayload,
@@ -57,7 +58,7 @@ import {
   saveMasterData,
   scrollSettingsSection,
 } from './features/settings.js';
-import { addTask, createTaskFromForm, deleteTask, exportTasksCsv, getNextTaskStatus, getVisibleTasks, renderTasksPage, updateTask, updateTaskStatus } from './features/tasks.js';
+import { addTask, createTaskFromForm, deleteTask, exportTasksCsv, getVisibleTasks, renderTasksPage, updateTask, updateTaskStatus } from './features/tasks.js';
 import {
   addPresentationRun,
   clearFloatPackets,
@@ -78,6 +79,7 @@ const ACTION_LOG_LIMIT = 8;
 const UNDO_BAR_AUTO_CLEAR_MS = 5000;
 const appState = loadAppState();
 loadMasterData(appState);
+if (ensureDefaultTaskCategories(appState)) saveMasterData(appState);
 let lastMigrationSummary = null;
 let lastDbStatus = null;
 let lastSyncPreview = null;
@@ -1425,6 +1427,7 @@ function runAndRenderSmokeTest() {
   renderAppShell();
   addCheck('task form', '[data-task-form]');
   addCheck('task status control', '[data-task-status]');
+  addCheck('task category control', '[data-task-category]');
   addCheck('task edit control', '[data-task-edit]');
   addCheck('task search', '[data-task-search]');
   addCheck('task owner filter', '[data-task-owner-filter]');
@@ -1879,7 +1882,16 @@ appRoot?.addEventListener('click', (event) => {
     if (!confirmDelete(deleteMasterTarget.dataset.masterValue || t('item'))) return;
     const message = actionMessage(t('deleted'), deleteMasterTarget.dataset.masterValue || t('item'));
     captureUndo(message);
-    if (deleteMasterDataValue(appState, deleteMasterTarget.dataset.masterDelete, deleteMasterTarget.dataset.masterValue)) {
+    const type = deleteMasterTarget.dataset.masterDelete;
+    const value = deleteMasterTarget.dataset.masterValue;
+    if (deleteMasterDataValue(appState, type, value)) {
+      if (type === 'taskTypes') {
+        const fallbackCategory = appState.data.masterData?.taskTypes?.[0] || 'General';
+        appState.data.tasks.forEach((task) => {
+          if (task.category === value) task.category = fallbackCategory;
+        });
+        appState.dirtyFlags.tasks = true;
+      }
       persistAndRender(message, { keepUndo: true });
     }
     return;
@@ -1892,15 +1904,6 @@ appRoot?.addEventListener('click', (event) => {
     captureUndo(actionMessage(t('deleted'), label));
     if (Number(editingTaskId) === Number(deleteTaskTarget.dataset.taskDelete)) editingTaskId = null;
     if (deleteTask(appState, deleteTaskTarget.dataset.taskDelete)) persistAndRender(actionMessage(t('deleted'), label), { keepUndo: true });
-    return;
-  }
-  const nextTaskStatusTarget = event.target.closest('[data-task-next-status]');
-  if (nextTaskStatusTarget) {
-    const task = appState.data.tasks.find(row => Number(row.id) === Number(nextTaskStatusTarget.dataset.taskNextStatus));
-    const nextStatus = getNextTaskStatus(task?.status);
-    const label = task ? `${task.name || t('task')} -> ${nextStatus}` : '';
-    if (task) captureUndo(actionMessage(t('statusUpdated'), label));
-    if (task && updateTaskStatus(appState, task.id, nextStatus)) persistAndRender(actionMessage(t('statusUpdated'), label), { keepUndo: true });
     return;
   }
   const editTaskTarget = event.target.closest('[data-task-edit]');
@@ -2349,6 +2352,14 @@ appRoot?.addEventListener('change', (event) => {
     const message = actionMessage(t('statusUpdated'), task ? `${task.name || t('task')} -> ${status.value}` : '');
     captureUndo(message);
     if (updateTaskStatus(appState, status.dataset.taskStatus, status.value)) persistAndRender(message, { keepUndo: true });
+    return;
+  }
+  const taskCategory = event.target.closest('[data-task-category]');
+  if (taskCategory) {
+    const task = appState.data.tasks.find(row => Number(row.id) === Number(taskCategory.dataset.taskCategory));
+    const message = actionMessage(t('saved'), task ? `${task.name || t('task')} -> ${labelFor(taskCategory.value)}` : labelFor(taskCategory.value));
+    captureUndo(message);
+    if (updateTask(appState, taskCategory.dataset.taskCategory, { category: taskCategory.value })) persistAndRender(message, { keepUndo: true });
     return;
   }
   const check = event.target.closest('[data-checklist]');
