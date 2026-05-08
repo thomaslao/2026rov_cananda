@@ -524,6 +524,56 @@ function persistAndRender(message = t('saved'), options = {}) {
   if (!options.skipAutoSync) scheduleAutoSupabaseSync();
 }
 
+async function confirmSupabaseTasksSync(message = t('saved')) {
+  try {
+    const before = lastDbStatus?.data ? lastDbStatus : await loadSupabaseReadOnly();
+    const client = await ensureSupabaseClient();
+    const preview = buildSupabaseSyncPreview(appState, before);
+    const result = await executeAutoSupabaseWriteSync(client, appState, before, { schemaStatus: lastSchemaStatus, tables: ['tasks'] });
+    lastWriteResult = result;
+    const summary = summarizeWriteResult(result);
+    saveWriteAuditEntry(buildWriteAuditEntry({ preview, writeResult: result, postWritePreview: null, tables: ['tasks'] }));
+    if (!summary.ok) {
+      setPendingLocalSync(true);
+      showToast(`${message} | Supabase sync failed: ${summary.errors[0]?.error || 'Unknown error'}`, 'error');
+      recordAction('Task Supabase sync failed', 'error');
+      renderAppShell();
+      return false;
+    }
+    lastDbStatus = await loadSupabaseReadOnly();
+    lastPostWritePreview = buildSupabaseSyncPreview(appState, lastDbStatus);
+    const taskTable = lastPostWritePreview.tables.find(table => table.label === 'tasks');
+    if (taskTable?.create || taskTable?.update) {
+      setPendingLocalSync(true);
+      showToast(`${message} | Local saved, but Supabase did not confirm the task update.`, 'error');
+      recordAction('Task Supabase confirmation failed', 'error');
+      renderAppShell();
+      return false;
+    }
+    markLocalDataSynced();
+    showToast(`${message} | Synced to Supabase`);
+    recordAction(`${message} | Synced to Supabase`);
+    renderAppShell();
+    return true;
+  } catch (error) {
+    setPendingLocalSync(true);
+    showToast(`${message} | Supabase sync failed: ${error.message || error}`, 'error');
+    recordAction('Task Supabase sync failed', 'error');
+    renderAppShell();
+    return false;
+  }
+}
+
+function persistTaskAndConfirmSupabase(message = t('saved')) {
+  setPendingLocalSync(true);
+  saveAppState(appState);
+  saveMasterData(appState);
+  showToast(`${message} | Syncing to Supabase...`);
+  recordAction(message);
+  renderAppShell();
+  confirmSupabaseTasksSync(message);
+}
+
 function scheduleAutoSupabaseSync(delayMs = 1200) {
   autoSyncQueued = true;
   if (autoSyncTimer) clearTimeout(autoSyncTimer);
@@ -614,14 +664,15 @@ function applyTaskSearchFromDom() {
   return true;
 }
 
-function loadSupabaseIntoApp({ silent = false, preserveLocal = false } = {}) {
+function loadSupabaseIntoApp({ silent = false, preserveLocal = false, forceImport = false } = {}) {
   lastDbStatus = { loadedAt: new Date().toISOString(), error: 'Loading...' };
   if (!silent) renderAppShell();
   return loadSupabaseReadOnly()
     .then((payload) => {
       const importDelta = buildSupabaseReadOnlyImportDelta(appState.data, payload.data);
       payload.importDelta = importDelta;
-      if (!preserveLocal) {
+      const shouldPreserveLocal = !forceImport && (preserveLocal || Boolean(appState.savedAt) || localDataNeedsSyncProtection());
+      if (!shouldPreserveLocal) {
         applySupabaseReadOnlyData(appState, payload);
         markLocalDataSynced();
       }
@@ -629,7 +680,7 @@ function loadSupabaseIntoApp({ silent = false, preserveLocal = false } = {}) {
       lastSyncPreview = null;
       lastPostWritePreview = null;
       const changed = importDelta.rows.filter(row => row.delta !== 0).length;
-      if (!preserveLocal) {
+      if (!shouldPreserveLocal) {
         saveAppState(appState);
         showToast(`${t('imported')} | ${changed} changed groups`);
       } else if (!silent) {
@@ -1676,7 +1727,7 @@ appRoot?.addEventListener('click', (event) => {
     return;
   }
   if (event.target.closest('[data-action="load-supabase-readonly"]')) {
-    loadSupabaseIntoApp();
+    loadSupabaseIntoApp({ forceImport: true });
     return;
   }
   if (event.target.closest('[data-action="build-sync-preview"]')) {
@@ -2190,7 +2241,7 @@ appRoot?.addEventListener('submit', (event) => {
     addTask(appState, task);
     taskModalOpen = false;
   }
-  persistAndRender(message, { keepUndo: true });
+  persistTaskAndConfirmSupabase(message);
 });
 
 appRoot?.addEventListener('submit', (event) => {
