@@ -3,17 +3,22 @@ export const SYNC_TABLE_MAP = [
   { key: 'members', label: 'members' },
   { key: 'checklist', label: 'checklist_items' },
   { key: 'prediveChecklist', label: 'predive_checklist_items' },
+  { key: 'intel', label: 'intel' },
+  { key: 'strategy', label: 'strategy_items' },
   { key: 'missionRuns', label: 'mission_runs' },
 ];
 
 export const WRITE_CONFIRM_TEXT = 'SYNC V16';
-export const WRITE_TABLE_WHITELIST = ['tasks', 'members', 'checklist_items', 'predive_checklist_items'];
+export const WRITE_TABLE_WHITELIST = ['tasks', 'members', 'checklist_items', 'predive_checklist_items', 'intel', 'strategy_items', 'mission_runs'];
 export const WRITE_AUDIT_LOG_KEY = 'rov_v16_write_audit_log';
 export const WRITE_SCHEMA = {
   tasks: ['id', 'name', 'owner', 'due', 'priority', 'status', 'cat'],
   members: ['id', 'name', 'role'],
   checklist_items: ['item_id', 'label', 'done', 'order_index'],
   predive_checklist_items: ['item_id', 'label', 'done', 'order_index'],
+  intel: ['id', 'title', 'content', 'status'],
+  strategy_items: ['id', 'title', 'content', 'status', 'order_index'],
+  mission_runs: ['id', 'score', 'total_score', 'elapsed_seconds', 'seconds', 'note', 'notes', 'run_date'],
 };
 
 function getId(row) {
@@ -112,6 +117,27 @@ function toDbRows(table, rows = []) {
       label: item.label || item.name || `Item ${index + 1}`,
       done: Boolean(item.done),
       order_index: index,
+    }));
+  }
+  if (table === 'intel' || table === 'strategy_items') {
+    return rows.map((item, index) => ({
+      id: Number(item.id || index + 1),
+      title: item.title || item.name || `Item ${index + 1}`,
+      content: item.content || item.note || item.notes || '',
+      status: item.status || 'Draft',
+      order_index: index,
+    }));
+  }
+  if (table === 'mission_runs') {
+    return rows.map((run, index) => ({
+      id: Number(run.id || index + 1),
+      score: Number(run.score || run.total_score || 0),
+      total_score: Number(run.grossScore || run.totalScore || run.score || 0),
+      elapsed_seconds: Number(run.elapsedSeconds || run.seconds || 0),
+      seconds: Number(run.elapsedSeconds || run.seconds || 0),
+      note: run.note || run.notes || '',
+      notes: run.note || run.notes || '',
+      run_date: String(run.ts || run.runDate || run.created_at || '').slice(0, 10) || null,
     }));
   }
   return [];

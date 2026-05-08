@@ -328,8 +328,12 @@ export function renderTaskTable(tasks = [], members = [], options = {}) {
             const taskCategories = options.categories || ['General'];
             const selectedCategory = taskCategories.includes(task.category) ? task.category : taskCategories[0] || 'General';
             const categoryOptions = taskCategories.length ? taskCategories : [selectedCategory];
+            const rowClasses = [
+              late ? 'task-overdue' : '',
+              task.status === 'Done' ? 'task-done' : '',
+            ].filter(Boolean).join(' ');
             return `
-              <tr>
+              <tr${rowClasses ? ` class="${rowClasses}"` : ''}>
                 <td class="task-name-cell">
                   <strong>${escapeHtml(task.name)}</strong>
                   ${task.blocked ? `<div style="font-size:.76rem;color:var(--muted)">${escapeHtml(t('blocked'))}</div>` : ''}

@@ -1,7 +1,7 @@
 import { APP_STATE_STORAGE_KEY, loadAppState, saveAppState } from './data/state.js';
 import { importV15BackupPayload } from './data/migration.js';
 import { buildDiagnosticsPayload, downloadDiagnosticsPayload, parseDiagnosticsPayload } from './data/diagnostics.js';
-import { applySupabaseReadOnlyData, buildSupabaseReadOnlyImportDelta, ensureSupabaseClient, loadSupabaseReadOnly, probeSupabaseSchema } from './data/supabase.js';
+import { applySupabaseReadOnlyData, buildSupabaseReadOnlyImportDelta, DB_TABLES, ensureSupabaseClient, loadSupabaseReadOnly, probeSupabaseSchema } from './data/supabase.js';
 import {
   buildSupabaseSyncPreview,
   buildWriteAuditEntry,
@@ -77,6 +77,7 @@ const PENDING_LOCAL_SYNC_KEY = 'rov_v16_pending_local_sync';
 const SYNCED_DATA_SIGNATURE_KEY = 'rov_v16_synced_data_signature';
 const ACTION_LOG_LIMIT = 8;
 const UNDO_BAR_AUTO_CLEAR_MS = 5000;
+const SUPABASE_REFRESH_INTERVAL_MS = 5000;
 const appState = loadAppState();
 loadMasterData(appState);
 if (ensureDefaultTaskCategories(appState)) saveMasterData(appState);
@@ -91,6 +92,9 @@ let lastDiagnosticsSummary = null;
 let autoSyncTimer = null;
 let autoSyncInFlight = false;
 let autoSyncQueued = false;
+let autoRefreshTimer = null;
+let autoRefreshInFlight = false;
+let supabaseRealtimeChannel = null;
 let initialSupabaseLoadStarted = false;
 let editingTaskId = null;
 let editingMemberId = null;
@@ -461,6 +465,8 @@ function restoreUndo() {
   showToast(t('undone'));
   recordAction(t('undone'));
   renderAppShell();
+  setPendingLocalSync(true);
+  scheduleAutoSupabaseSync(0);
   return true;
 }
 
@@ -487,18 +493,50 @@ function syncSignatureForData(data = {}) {
     id: Number(member.id || 0),
     name: String(member.name || ''),
     role: String(member.role || ''),
+    group: String(member.group || ''),
   });
   const normalizeChecklist = item => ({
     id: Number(item.id || item.item_id || 0),
     label: String(item.label || item.name || ''),
     done: Boolean(item.done),
   });
-  const byId = (a, b) => Number(a.id || 0) - Number(b.id || 0) || String(a.name || a.label || '').localeCompare(String(b.name || b.label || ''));
+  const normalizeIntel = item => ({
+    id: Number(item.id || 0),
+    title: String(item.title || item.name || ''),
+    content: String(item.content || item.note || item.notes || ''),
+    status: String(item.status || ''),
+  });
+  const normalizeMissionRun = run => ({
+    id: Number(run.id || 0),
+    score: Number(run.score || run.total_score || 0),
+    elapsedSeconds: Number(run.elapsedSeconds || run.elapsed_seconds || run.seconds || 0),
+    note: String(run.note || run.notes || ''),
+    ts: String(run.ts || run.runDate || run.run_date || run.created_at || ''),
+  });
+  const normalizeQuote = quote => ({
+    id: Number(quote.id || 0),
+    text: String(quote.text || quote.content || quote.quote || ''),
+  });
+  const normalizeAttachment = attachment => ({
+    id: Number(attachment.id || 0),
+    taskId: Number(attachment.taskId || attachment.task_id || 0),
+    label: String(attachment.label || attachment.file_name || ''),
+    url: String(attachment.url || attachment.public_url || ''),
+  });
+  const byId = (a, b) => Number(a.id || 0) - Number(b.id || 0)
+    || String(a.name || a.label || a.title || '').localeCompare(String(b.name || b.label || b.title || ''));
   return JSON.stringify({
     tasks: (data.tasks || []).map(normalizeTask).sort(byId),
     members: (data.members || []).map(normalizeMember).sort(byId),
     checklist: (data.checklist || []).map(normalizeChecklist).sort(byId),
     prediveChecklist: (data.prediveChecklist || []).map(normalizeChecklist).sort(byId),
+    intel: (data.intel || []).map(normalizeIntel).sort(byId),
+    strategy: (data.strategy || []).map(normalizeIntel).sort(byId),
+    missionRuns: (data.missionRuns || []).map(normalizeMissionRun).sort(byId),
+    practiceRuns: (data.practiceRuns || []).map(normalizeMissionRun).sort(byId),
+    quotes: (data.quotes || []).map(normalizeQuote).sort(byId),
+    attachments: (data.attachments || []).map(normalizeAttachment).sort(byId),
+    notes: String(data.notes || ''),
   });
 }
 
@@ -564,7 +602,7 @@ function persistAndRender(message = t('saved'), options = {}) {
   showToast(message);
   recordAction(message);
   renderAppShell();
-  if (!options.skipAutoSync) scheduleAutoSupabaseSync();
+  if (!options.skipAutoSync) scheduleAutoSupabaseSync(0);
 }
 
 async function confirmSupabaseTasksSync(message = t('saved')) {
@@ -619,7 +657,7 @@ function persistTaskAndConfirmSupabase(message = t('saved')) {
   confirmSupabaseTasksSync(message);
 }
 
-function scheduleAutoSupabaseSync(delayMs = 1200) {
+function scheduleAutoSupabaseSync(delayMs = 0) {
   autoSyncQueued = true;
   if (autoSyncTimer) clearTimeout(autoSyncTimer);
   autoSyncTimer = setTimeout(runAutoSupabaseSync, delayMs);
@@ -716,7 +754,7 @@ function loadSupabaseIntoApp({ silent = false, preserveLocal = false, forceImpor
     .then((payload) => {
       const importDelta = buildSupabaseReadOnlyImportDelta(appState.data, payload.data);
       payload.importDelta = importDelta;
-      const shouldPreserveLocal = !forceImport && (preserveLocal || Boolean(appState.savedAt) || localDataNeedsSyncProtection());
+      const shouldPreserveLocal = !forceImport && (preserveLocal || hasPendingLocalSync());
       if (!shouldPreserveLocal) {
         applySupabaseReadOnlyData(appState, payload);
         markLocalDataSynced();
@@ -746,7 +784,56 @@ function scheduleInitialSupabaseLoad() {
   if (initialSupabaseLoadStarted) return;
   initialSupabaseLoadStarted = true;
   const defer = typeof window?.setTimeout === 'function' ? window.setTimeout.bind(window) : setTimeout;
-  defer(() => loadSupabaseIntoApp({ silent: true, preserveLocal: localDataNeedsSyncProtection() }), 250);
+  defer(() => loadSupabaseIntoApp({ silent: true, preserveLocal: hasPendingLocalSync() }), 250);
+}
+
+async function refreshSupabaseFromRemote({ force = false } = {}) {
+  if (autoRefreshInFlight || autoSyncInFlight) return null;
+  if (!force && hasPendingLocalSync()) return null;
+  autoRefreshInFlight = true;
+  try {
+    const payload = await loadSupabaseReadOnly();
+    lastDbStatus = payload;
+    const remoteSignature = syncSignatureForData(payload.data);
+    if (remoteSignature !== getLocalSyncSignature()) {
+      applySupabaseReadOnlyData(appState, payload);
+      markLocalDataSynced();
+      saveAppState(appState);
+      renderAppShell();
+    }
+    return payload;
+  } catch (error) {
+    lastDbStatus = { loadedAt: new Date().toISOString(), error: error.message || String(error), tables: lastDbStatus?.tables || {} };
+    return null;
+  } finally {
+    autoRefreshInFlight = false;
+  }
+}
+
+function startSupabaseRealtimeRefresh() {
+  if (autoRefreshTimer) return;
+  if (typeof window?.addEventListener !== 'function' || typeof document?.addEventListener !== 'function') return;
+  const setRefreshInterval = typeof window.setInterval === 'function' ? window.setInterval.bind(window) : setInterval;
+  autoRefreshTimer = setRefreshInterval(() => refreshSupabaseFromRemote(), SUPABASE_REFRESH_INTERVAL_MS);
+  window.addEventListener('focus', () => refreshSupabaseFromRemote({ force: !hasPendingLocalSync() }));
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) refreshSupabaseFromRemote({ force: !hasPendingLocalSync() });
+  });
+  ensureSupabaseClient()
+    .then((client) => {
+      if (!client || typeof client.channel !== 'function' || supabaseRealtimeChannel) return;
+      const channel = client.channel('rov-v16-db-sync');
+      DB_TABLES.forEach((table) => {
+        channel.on('postgres_changes', { event: '*', schema: 'public', table }, () => {
+          refreshSupabaseFromRemote({ force: !hasPendingLocalSync() });
+        });
+      });
+      supabaseRealtimeChannel = channel;
+      channel.subscribe((status) => {
+        if (status === 'SUBSCRIBED') refreshSupabaseFromRemote({ force: !hasPendingLocalSync() });
+      });
+    })
+    .catch(() => {});
 }
 
 function updateIntelFiltersFromControl(target) {
@@ -1554,6 +1641,7 @@ window.ROV_V16 = {
 
 renderAppShell();
 scheduleInitialSupabaseLoad();
+startSupabaseRealtimeRefresh();
 
 appRoot?.addEventListener('click', (event) => {
   if (event.target.closest('[data-action="undo-last-change"]')) {
