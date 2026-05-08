@@ -146,9 +146,6 @@ function renderPrepSectionHeading(label, visibleCount, totalCount) {
 
 export function renderChecklist(listName, items = [], options = {}) {
   const totalCount = (options.allItems || items).length;
-  const editingItem = options.editingChecklist?.listName === listName
-    ? (options.allItems || items).find(item => Number(item.id) === Number(options.editingChecklist.id))
-    : null;
   return `
     <div style="display:grid;gap:6px">
       ${items.map(item => `
@@ -162,20 +159,26 @@ export function renderChecklist(listName, items = [], options = {}) {
           <button class="btn btn-sm btn-danger" type="button" data-checklist-delete="${listName}" data-check-id="${item.id}">${escapeHtml(t('delete'))}</button>
         </div>
       `).join('') || `<div style="color:var(--muted);font-weight:900">${escapeHtml(totalCount ? t('noMatchingItems') : t('noItemsYet'))}</div>`}
-      <div style="display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:end">
-        <label>${escapeHtml(t('newChecklistItem'))}<input data-checklist-input="${listName}" value="${escapeHtml(editingItem?.label || '')}" placeholder="${escapeHtml(t('newChecklistItem'))}"></label>
-        ${editingItem
-          ? `<button class="btn btn-primary" type="button" data-checklist-update="${listName}">${escapeHtml(t('updateChecklistItem'))}</button>`
-          : `<button class="btn btn-primary" type="button" data-checklist-add="${listName}">${escapeHtml(t('addItem'))}</button>`}
-        ${editingItem ? `<button class="btn" type="button" data-checklist-cancel-edit>${escapeHtml(t('cancelEdit'))}</button>` : ''}
+      <div class="prep-entry-row">
+        <label>${escapeHtml(t('newChecklistItem'))}<input data-checklist-input="${listName}" value="" placeholder="${escapeHtml(t('newChecklistItem'))}"></label>
+        <button class="btn btn-primary" type="button" data-checklist-add="${listName}">${escapeHtml(t('addItem'))}</button>
       </div>
-      ${editingItem ? `<div style="font-size:.78rem;color:var(--muted);font-weight:800">${escapeHtml(t('editingChecklistItem'))}: ${escapeHtml(editingItem.label)}</div>` : ''}
     </div>`;
+}
+
+function renderChecklistEditForm(listName, editingItem) {
+  if (!editingItem) return '';
+  return `
+    <div class="prep-entry-row">
+      <label>${escapeHtml(t('newChecklistItem'))}<input data-checklist-input="${listName}" value="${escapeHtml(editingItem.label || '')}" placeholder="${escapeHtml(t('newChecklistItem'))}"></label>
+      <button class="btn btn-primary" type="button" data-checklist-update="${listName}">${escapeHtml(t('updateChecklistItem'))}</button>
+      <button class="btn" type="button" data-checklist-cancel-edit>${escapeHtml(t('cancelEdit'))}</button>
+    </div>
+    <div style="font-size:.78rem;color:var(--muted);font-weight:800;margin-top:8px">${escapeHtml(t('editingChecklistItem'))}: ${escapeHtml(editingItem.label)}</div>`;
 }
 
 export function renderGearItems(items = [], categories = [], options = {}) {
   const totalCount = (options.allItems || items).length;
-  const editingGear = (options.allItems || items).find(item => Number(item.id) === Number(options.editingGearId));
   return `
     <div style="display:grid;gap:8px">
       ${items.map(item => `
@@ -190,18 +193,28 @@ export function renderGearItems(items = [], categories = [], options = {}) {
           <button class="btn btn-sm btn-danger" type="button" data-gear-delete="${escapeHtml(item.id)}">${escapeHtml(t('delete'))}</button>
         </div>
       `).join('') || `<div style="color:var(--muted);font-weight:900">${escapeHtml(totalCount ? t('noMatchingItems') : t('noGearYet'))}</div>`}
-      <div style="display:grid;grid-template-columns:2fr 1fr 90px auto auto;gap:8px;align-items:end">
-        <label>${escapeHtml(t('gearName'))}<input data-gear-name value="${escapeHtml(editingGear?.name || '')}" placeholder="${escapeHtml(t('gearName'))}"></label>
-        <label>${escapeHtml(t('category'))}<input data-gear-category list="gear-category-list" value="${escapeHtml(editingGear?.category || '')}" placeholder="${escapeHtml(t('category'))}"></label>
-        <label>${escapeHtml(t('qty'))}<input data-gear-qty type="number" min="1" value="${escapeHtml(editingGear?.qty || 1)}"></label>
-        ${editingGear
-          ? `<button class="btn btn-primary" type="button" data-gear-update>${escapeHtml(t('updateGear'))}</button>`
-          : `<button class="btn btn-primary" type="button" data-gear-add>${escapeHtml(t('addItem'))}</button>`}
-        ${editingGear ? `<button class="btn" type="button" data-gear-cancel-edit>${escapeHtml(t('cancelEdit'))}</button>` : ''}
+      <div class="prep-gear-entry-row">
+        <label>${escapeHtml(t('gearName'))}<input data-gear-name value="" placeholder="${escapeHtml(t('gearName'))}"></label>
+        <label>${escapeHtml(t('category'))}<input data-gear-category list="gear-category-list" value="" placeholder="${escapeHtml(t('category'))}"></label>
+        <label>${escapeHtml(t('qty'))}<input data-gear-qty type="number" min="1" value="1"></label>
+        <button class="btn btn-primary" type="button" data-gear-add>${escapeHtml(t('addItem'))}</button>
       </div>
-      ${editingGear ? `<div style="font-size:.78rem;color:var(--muted);font-weight:800">${escapeHtml(t('editingGear'))}: ${escapeHtml(editingGear.name)}</div>` : ''}
       <datalist id="gear-category-list">${categories.map(category => `<option value="${escapeHtml(category)}"></option>`).join('')}</datalist>
     </div>`;
+}
+
+function renderGearEditForm(editingGear, categories = []) {
+  if (!editingGear) return '';
+  return `
+    <div class="prep-gear-entry-row">
+      <label>${escapeHtml(t('gearName'))}<input data-gear-name value="${escapeHtml(editingGear.name || '')}" placeholder="${escapeHtml(t('gearName'))}"></label>
+      <label>${escapeHtml(t('category'))}<input data-gear-category list="gear-category-list-modal" value="${escapeHtml(editingGear.category || '')}" placeholder="${escapeHtml(t('category'))}"></label>
+      <label>${escapeHtml(t('qty'))}<input data-gear-qty type="number" min="1" value="${escapeHtml(editingGear.qty || 1)}"></label>
+      <button class="btn btn-primary" type="button" data-gear-update>${escapeHtml(t('updateGear'))}</button>
+      <button class="btn" type="button" data-gear-cancel-edit>${escapeHtml(t('cancelEdit'))}</button>
+    </div>
+    <div style="font-size:.78rem;color:var(--muted);font-weight:800;margin-top:8px">${escapeHtml(t('editingGear'))}: ${escapeHtml(editingGear.name)}</div>
+    <datalist id="gear-category-list-modal">${categories.map(category => `<option value="${escapeHtml(category)}"></option>`).join('')}</datalist>`;
 }
 
 export function renderPrepCenter(state, options = {}) {
@@ -216,6 +229,10 @@ export function renderPrepCenter(state, options = {}) {
   const visiblePredive = filterChecklistItems(state.data.prediveChecklist, filters);
   const visibleGear = filterGearItems(state.data.gearItems, filters);
   const activeFilterChips = getActivePrepFilterChips(filters);
+  const editingChecklistItem = options.editingChecklist?.listName
+    ? (state.data[options.editingChecklist.listName] || []).find(item => Number(item.id) === Number(options.editingChecklist.id))
+    : null;
+  const editingGear = state.data.gearItems.find(item => Number(item.id) === Number(options.editingGearId));
   return `
     <section id="page-prep" class="page active" style="display:grid;gap:12px">
       <div class="page-topbar">
@@ -274,6 +291,13 @@ export function renderPrepCenter(state, options = {}) {
       <div class="card">
         ${renderPrepSectionHeading(t('gearItems'), visibleGear.length, state.data.gearItems.length)}
         ${renderGearItems(visibleGear, gearCategories, { editingGearId: options.editingGearId, prepFocus, allItems: state.data.gearItems })}
+      </div>
+
+      <div class="modal-bg ${editingChecklistItem || editingGear ? 'open' : ''}" data-prep-modal-bg>
+        <div class="modal wide" role="dialog" aria-modal="true" aria-labelledby="prep-modal-title" data-prep-modal>
+          <h3 id="prep-modal-title">${escapeHtml(editingGear ? t('editingGear') : t('editingChecklistItem'))}</h3>
+          ${editingGear ? renderGearEditForm(editingGear, gearCategories) : renderChecklistEditForm(options.editingChecklist?.listName, editingChecklistItem)}
+        </div>
       </div>
     </section>`;
 }

@@ -291,7 +291,12 @@
   /* Mission Run 備註／賽中事件：保留換行以便閱讀 */
   .mission-note-cell { white-space: pre-wrap; word-break: break-word; line-height: 1.45; max-width: min(520px, 42vw); }
 
-  select, input[type=text], input[type=date], textarea {
+  label {
+    display: grid;
+    gap: 4px;
+    align-content: start;
+  }
+  select, input[type=text], input[type=date], input[type=url], input[type=number], textarea {
     border: 1px solid var(--border); border-radius: 6px; padding: 5px 8px;
     font-size: .85rem; width: 100%; font-family: inherit; background: var(--input-bg); color: var(--text); }
   select { width: auto; min-width: 100px; }
@@ -303,7 +308,7 @@
   .btn-danger { background: var(--red); color: #fff; }
   .btn-success { background: var(--green); color: #fff; }
   .btn-sm { padding: 3px 9px; font-size: .78rem; }
-  .task-summary-row { display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); gap:8px; margin-bottom:10px; }
+  .task-summary-row { position:relative; z-index:1; display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); gap:8px; margin-bottom:10px; }
   .task-summary-card { min-height:76px; text-align:left; border:1px solid var(--task-summary-active, var(--border)); border-left:4px solid var(--task-summary-accent, var(--green)); border-radius:8px; background:var(--task-summary-bg, var(--input-bg)); padding:8px; cursor:pointer; color:var(--text); display:flex; flex-direction:column; justify-content:center; min-width:0; }
   .task-summary-card:hover { background:var(--table-hover); }
   .task-summary-label { font-size:.73rem; color:var(--muted); font-weight:900; line-height:1.2; overflow-wrap:anywhere; }
@@ -312,13 +317,15 @@
   .task-sort-button { width:100%; min-height:38px; padding:8px 12px; border:0; background:transparent; color:inherit; cursor:pointer; display:flex; align-items:center; justify-content:flex-start; gap:6px; font:inherit; font-weight:900; text-align:left; }
   .task-sort-button:hover, .task-sort-button:focus-visible { background:rgba(255,255,255,.12); outline:none; }
   .task-sort-button span { min-width:12px; font-weight:900; }
+  .task-table-wrap { overflow:auto; border:1px solid var(--border); border-radius:8px; }
+  .task-table-wrap table { min-width:760px; }
   .task-status-cell { display:grid; grid-template-columns:72px 126px; gap:8px; align-items:center; justify-content:start; }
   .task-status-badge { width:72px; min-height:32px; display:inline-flex; align-items:center; justify-content:center; border:1px solid var(--border); cursor:pointer; line-height:1; white-space:nowrap; padding:4px 8px; }
   .task-status-select { width:126px; min-width:126px; height:32px; margin:0; }
-  .task-filter-bar { display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:8px; align-items:end; margin-bottom:8px; }
+  .task-filter-bar { position:relative; z-index:1; display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:8px; align-items:end; margin-bottom:8px; }
   .task-filter-bar label { min-width:0; }
   .task-filter-bar select { width:100%; min-width:0; }
-  .task-toolbar-actions { display:grid; grid-template-columns:repeat(4,minmax(170px,1fr)); gap:10px; align-items:stretch; margin-bottom:10px; }
+  .task-toolbar-actions { position:relative; z-index:2; display:grid; grid-template-columns:repeat(4,minmax(170px,1fr)); gap:10px; align-items:stretch; margin-bottom:10px; }
   .task-toolbar-btn { min-height:42px; padding:8px 14px; font-size:.88rem; font-weight:900; border-radius:8px; white-space:normal; }
   .task-toolbar-search { min-height:42px; margin:0; padding:0; display:grid; grid-template-columns:minmax(0,1fr) auto; gap:6px; align-items:stretch; min-width:0; }
   .task-toolbar-search label { margin:0; min-width:0; }
@@ -326,6 +333,8 @@
   .task-search-submit { min-height:42px; padding:8px 14px; border-radius:8px; font-size:.88rem; font-weight:900; white-space:nowrap; }
   .task-toolbar-clear { background:#FFF3CD; color:#7A4B00; border:1px solid rgba(245,158,11,.45); box-shadow:inset 0 0 0 1px rgba(255,255,255,.55); }
   .task-toolbar-clear:hover { background:#FDE68A; opacity:1; }
+  .prep-entry-row { display:grid; grid-template-columns:minmax(0,1fr) auto auto; gap:8px; align-items:end; }
+  .prep-gear-entry-row { display:grid; grid-template-columns:minmax(0,2fr) minmax(0,1fr) 90px auto auto; gap:8px; align-items:end; }
 
   /* ── GANTT ── */
   .gantt-wrap { overflow-x: auto; }
@@ -471,12 +480,21 @@
     nav { flex-wrap: wrap; height: auto; padding: 8px 12px; gap:4px; }
     .tab-btn { font-size:.8rem; padding:7px 9px; min-height:42px; }
     .page { padding: 12px; }
+    .card { padding: 12px; }
     .chart-grid { grid-template-columns: 1fr; }
     .dashboard-chart-grid { grid-template-columns: 1fr; }
     .task-status-counts { grid-template-columns:repeat(2,minmax(0,1fr)); }
     .task-summary-row { grid-template-columns:repeat(2,minmax(0,1fr)); }
     .task-filter-bar { grid-template-columns:1fr; }
     .task-toolbar-actions { grid-template-columns:1fr; }
+    .task-toolbar-search { grid-template-columns:1fr; }
+    .prep-entry-row,
+    .prep-gear-entry-row { grid-template-columns:1fr; }
+    .task-toolbar-search input,
+    .task-search-submit,
+    .task-toolbar-btn,
+    [data-checklist-add],
+    [data-gear-add] { min-height:46px; }
     .competition-hero, .practice-grid, .score-grid, .prep-grid, .command-shell, .quick-score-layout { grid-template-columns: 1fr; }
     .command-topbar { position:static; grid-template-columns: 1fr; overflow-x:visible; }
     .quick-score-field { grid-template-columns:1fr; gap:4px; }
@@ -2907,7 +2925,7 @@ function renderTaskTable(tasks = [], members = [], options = {}) {
     return `<th class="task-sort-th"><button class="task-sort-button" type="button" data-task-header-sort="${escapeHtml(nextSort)}" aria-label="${escapeHtml(`${label} ${t('sort')}`)}">${escapeHtml(label)}<span>${escapeHtml(mark)}</span></button></th>`;
   };
   return `
-    <div style="overflow:auto;border:1px solid var(--border);border-radius:8px">
+    <div class="task-table-wrap">
       <table>
         <thead><tr>${sortHeader('name', t('task'))}${sortHeader('owner', t('owner'))}${sortHeader('due', t('due'))}${sortHeader('priority', t('priority'))}${sortHeader('status', t('status'))}<th></th></tr></thead>
         <tbody>
@@ -2994,10 +3012,6 @@ function renderTasksPage(state, options = {}) {
         </div>
         <div class="page-top-summary">${escapeHtml(t('openTasks'))} ${stats.open} | ${escapeHtml(t('overdue'))} ${stats.overdue} | ${escapeHtml(t('blocked'))} ${stats.blocked} | ${escapeHtml(t('visible'))} ${visibleTasks.length}/${tasks.length}</div>
       </div>
-      ${editingTask ? `<div class="card" id="task-edit-form">
-        ${renderTaskForm(editingTask, { master, ownerSuggestions })}
-        ${editingTask ? `<div style="font-size:.78rem;color:var(--muted);font-weight:800;margin-top:8px">${escapeHtml(t('editingTask'))}: ${escapeHtml(editingTask.name)}</div>` : ''}
-      </div>` : ''}
       <div class="card">
         <div class="task-summary-row" data-task-evidence-summary data-task-health-summary>
           ${[
@@ -3071,10 +3085,11 @@ function renderTasksPage(state, options = {}) {
         </div>
         ${renderTaskTable(visibleTasks, state.data.members || [], { totalCount: tasks.length, filters })}
       </div>
-      <div class="modal-bg ${options.taskModalOpen ? 'open' : ''}" data-task-modal-bg>
+      <div class="modal-bg ${options.taskModalOpen || editingTask ? 'open' : ''}" data-task-modal-bg>
         <div class="modal wide" role="dialog" aria-modal="true" aria-labelledby="task-modal-title" data-task-modal>
-          <h3 id="task-modal-title">${escapeHtml(t('addTask'))}</h3>
-          ${renderTaskForm(null, { master, ownerSuggestions })}
+          <h3 id="task-modal-title">${escapeHtml(editingTask ? t('editingTask') : t('addTask'))}</h3>
+          ${renderTaskForm(editingTask || null, { master, ownerSuggestions })}
+          ${editingTask ? `<div style="font-size:.78rem;color:var(--muted);font-weight:800;margin-top:8px">${escapeHtml(t('editingTask'))}: ${escapeHtml(editingTask.name)}</div>` : ''}
         </div>
       </div>
     </section>`;
@@ -3400,6 +3415,20 @@ function getActiveMemberFilterChips(filters = {}) {
   ].filter(Boolean);
 }
 
+function renderMemberForm(editingMember = null, roles = [], groups = []) {
+  return `
+    <form data-member-form style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:8px;align-items:end">
+      <label>${escapeHtml(t('memberName'))}<input name="name" required value="${escapeHtml(editingMember?.name || '')}" placeholder="${escapeHtml(t('memberName'))}"></label>
+      <label>${escapeHtml(t('role'))}<input name="role" list="member-role-list" value="${escapeHtml(editingMember?.role || '')}" placeholder="${escapeHtml(t('role'))}"></label>
+      <label>${escapeHtml(t('group'))}<input name="group" list="member-group-list" value="${escapeHtml(editingMember?.group || '')}" placeholder="${escapeHtml(t('group'))}"></label>
+      <label>${escapeHtml(t('status'))}<select name="status">${['Active', 'Standby', 'Away'].map(status => `<option value="${status}" ${clean(editingMember?.status) === status ? 'selected' : ''}>${escapeHtml(labelFor(status))}</option>`).join('')}</select></label>
+      <button class="btn btn-primary" type="submit">${escapeHtml(editingMember ? t('updateMember') : t('addMember'))}</button>
+      ${editingMember ? `<button class="btn" type="button" data-member-cancel-edit>${escapeHtml(t('cancelEdit'))}</button>` : ''}
+    </form>
+    <datalist id="member-role-list">${roles.map(role => `<option value="${escapeHtml(role)}"></option>`).join('')}</datalist>
+    <datalist id="member-group-list">${groups.map(group => `<option value="${escapeHtml(group)}"></option>`).join('')}</datalist>`;
+}
+
 function renderMembersPage(state, options = {}) {
   const members = state.data.members || [];
   const tasks = state.data.tasks || [];
@@ -3426,17 +3455,7 @@ function renderMembersPage(state, options = {}) {
       </div>
 
       <div class="card">
-        <form data-member-form style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:8px;align-items:end">
-          <label>${escapeHtml(t('memberName'))}<input name="name" required value="${escapeHtml(editingMember?.name || '')}" placeholder="${escapeHtml(t('memberName'))}"></label>
-          <label>${escapeHtml(t('role'))}<input name="role" list="member-role-list" value="${escapeHtml(editingMember?.role || '')}" placeholder="${escapeHtml(t('role'))}"></label>
-          <label>${escapeHtml(t('group'))}<input name="group" list="member-group-list" value="${escapeHtml(editingMember?.group || '')}" placeholder="${escapeHtml(t('group'))}"></label>
-          <label>${escapeHtml(t('status'))}<select name="status">${['Active', 'Standby', 'Away'].map(status => `<option value="${status}" ${clean(editingMember?.status) === status ? 'selected' : ''}>${escapeHtml(labelFor(status))}</option>`).join('')}</select></label>
-          <button class="btn btn-primary" type="submit">${escapeHtml(editingMember ? t('updateMember') : t('addMember'))}</button>
-          ${editingMember ? `<button class="btn" type="button" data-member-cancel-edit>${escapeHtml(t('cancelEdit'))}</button>` : ''}
-        </form>
-        ${editingMember ? `<div style="font-size:.78rem;color:var(--muted);font-weight:800;margin-top:8px">${escapeHtml(t('editingMember'))}: ${escapeHtml(editingMember.name)}</div>` : ''}
-        <datalist id="member-role-list">${roles.map(role => `<option value="${escapeHtml(role)}"></option>`).join('')}</datalist>
-        <datalist id="member-group-list">${groups.map(group => `<option value="${escapeHtml(group)}"></option>`).join('')}</datalist>
+        ${renderMemberForm(null, roles, groups)}
       </div>
 
       <div class="card">
@@ -3480,6 +3499,14 @@ function renderMembersPage(state, options = {}) {
           ${renderHandoffCards(visible, tasks, { totalCount: members.length })}
         </div>
       </details>
+
+      <div class="modal-bg ${editingMember ? 'open' : ''}" data-member-modal-bg>
+        <div class="modal wide" role="dialog" aria-modal="true" aria-labelledby="member-modal-title" data-member-modal>
+          <h3 id="member-modal-title">${escapeHtml(t('editingMember'))}</h3>
+          ${editingMember ? renderMemberForm(editingMember, roles, groups) : ''}
+          ${editingMember ? `<div style="font-size:.78rem;color:var(--muted);font-weight:800;margin-top:8px">${escapeHtml(t('editingMember'))}: ${escapeHtml(editingMember.name)}</div>` : ''}
+        </div>
+      </div>
     </section>`;
 }
 
@@ -3799,16 +3826,23 @@ function renderIntelPage(state, options = {}) {
 
       <div class="card">
         ${renderKnowledgeSectionHeading(t('intel'), visibleIntel.length, intel.length)}
-        ${renderKnowledgeForm('intel', editingIntel)}
+        ${renderKnowledgeForm('intel')}
         ${renderKnowledgeFilters('intel', intelFilters)}
         <div style="margin-top:10px">${renderKnowledgeList('intel', visibleIntel, { intelFocus, totalCount: intel.length })}</div>
       </div>
 
       <div class="card">
         ${renderKnowledgeSectionHeading(t('strategy'), visibleStrategy.length, strategy.length)}
-        ${renderKnowledgeForm('strategy', editingStrategy)}
+        ${renderKnowledgeForm('strategy')}
         ${renderKnowledgeFilters('strategy', strategyFilters)}
         <div style="margin-top:10px">${renderKnowledgeList('strategy', visibleStrategy, { intelFocus, totalCount: strategy.length })}</div>
+      </div>
+
+      <div class="modal-bg ${editingIntel || editingStrategy ? 'open' : ''}" data-knowledge-modal-bg>
+        <div class="modal wide" role="dialog" aria-modal="true" aria-labelledby="knowledge-modal-title" data-knowledge-modal>
+          <h3 id="knowledge-modal-title">${escapeHtml(t('editingItem'))}</h3>
+          ${editingIntel ? renderKnowledgeForm('intel', editingIntel) : renderKnowledgeForm('strategy', editingStrategy)}
+        </div>
       </div>
     </section>`;
 }
@@ -4171,6 +4205,49 @@ function getRunDraftFromRun(run = null) {
   } : null;
 }
 
+function renderRunEditor({ editingRun = null, runDraft = null, scoreItems = [], scoreSummary = {} } = {}) {
+  return `
+    <div style="display:grid;gap:12px">
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        ${editingRun
+          ? `<button class="btn btn-success" type="button" data-action="update-run">${escapeHtml(t('updateRun'))}</button>`
+          : `<button class="btn btn-success" type="button" data-action="save-run">${escapeHtml(t('saveRun'))}</button>`}
+        ${editingRun ? `<button class="btn" type="button" data-run-cancel-edit>${escapeHtml(t('cancelEdit'))}</button>` : ''}
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px">
+        <label>${escapeHtml(t('grossScore'))}<input data-run-gross-score type="number" value="${escapeHtml(scoreSummary.gross || 0)}" readonly></label>
+        <label>${escapeHtml(t('penalty'))}<input data-run-penalty type="number" min="0" value="${escapeHtml(editingRun?.penalty ?? runDraft?.penalty ?? 0)}"></label>
+        <label>${escapeHtml(t('score'))}<input data-run-score type="number" value="${escapeHtml(editingRun?.score ?? runDraft?.score ?? 0)}"></label>
+        <label>${escapeHtml(t('note'))}<input data-run-note value="${escapeHtml(editingRun?.note ?? runDraft?.note ?? '')}" placeholder="${escapeHtml(t('note'))}"></label>
+      </div>
+      <div data-mission-scoreboard style="display:grid;gap:8px">
+        <div style="display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap">
+          <strong style="color:var(--navy)">${escapeHtml(t('missionScoreboard'))}</strong>
+          <span class="badge done">${escapeHtml(t('successRate'))}: ${escapeHtml(scoreSummary.successRate || 0)}%</span>
+        </div>
+        ${scoreItems.map(item => `
+          <div data-score-item="${escapeHtml(item.id)}" data-score-label="${escapeHtml(item.label)}" data-score-max="${escapeHtml(item.max || 0)}" style="display:grid;grid-template-columns:minmax(140px,1fr) 96px 130px;gap:8px;align-items:center;border:1px solid var(--border);border-radius:8px;background:var(--input-bg);padding:8px">
+            <div>
+              <strong>${escapeHtml(item.label)}</strong>
+              <div style="font-size:.72rem;color:var(--muted);font-weight:900">${escapeHtml(t('maxScore'))}: ${escapeHtml(item.max || '-')}</div>
+            </div>
+            <input data-score-item-value type="number" min="0" max="${escapeHtml(item.max || '')}" value="${escapeHtml(item.score || 0)}">
+            <select data-score-item-status>
+              ${[
+                ['pending', t('pending')],
+                ['done', t('done')],
+                ['failed', t('failed')],
+                ['skipped', t('skipped')],
+              ].map(([value, label]) => `<option value="${value}" ${item.status === value ? 'selected' : ''}>${escapeHtml(label)}</option>`).join('')}
+            </select>
+          </div>
+        `).join('')}
+      </div>
+      ${!editingRun && runDraft ? `<div style="font-size:.78rem;color:var(--muted);font-weight:800">${escapeHtml(t('runDraftReady'))}</div>` : ''}
+      ${editingRun ? `<div style="font-size:.78rem;color:var(--muted);font-weight:800">${escapeHtml(t('editingRun'))}: ${escapeHtml(new Date(editingRun.ts).toLocaleString())}</div>` : ''}
+    </div>`;
+}
+
 function normalizeRunFilters(filters = {}) {
   return {
     search: clean(filters.search).toLowerCase(),
@@ -4318,42 +4395,8 @@ function renderCompetitionCenter(state, timer, options = {}) {
         <div style="display:flex;gap:8px;flex-wrap:wrap">
           <button class="btn btn-primary" type="button" data-timer-action="${timer?.running ? 'pause' : 'start'}">${escapeHtml(timer?.running ? t('pause') : t('start'))}</button>
           <button class="btn" type="button" data-timer-action="reset">${escapeHtml(t('reset'))}</button>
-          ${editingRun
-            ? `<button class="btn btn-success" type="button" data-action="update-run">${escapeHtml(t('updateRun'))}</button>`
-            : `<button class="btn btn-success" type="button" data-action="save-run">${escapeHtml(t('saveRun'))}</button>`}
-          ${editingRun ? `<button class="btn" type="button" data-run-cancel-edit>${escapeHtml(t('cancelEdit'))}</button>` : ''}
         </div>
-        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px">
-          <label>${escapeHtml(t('grossScore'))}<input data-run-gross-score type="number" value="${escapeHtml(scoreSummary.gross)}" readonly></label>
-          <label>${escapeHtml(t('penalty'))}<input data-run-penalty type="number" min="0" value="${escapeHtml(editingRun?.penalty ?? runDraft?.penalty ?? 0)}"></label>
-          <label>${escapeHtml(t('score'))}<input data-run-score type="number" value="${escapeHtml(editingRun?.score ?? runDraft?.score ?? 0)}"></label>
-          <label>${escapeHtml(t('note'))}<input data-run-note value="${escapeHtml(editingRun?.note ?? runDraft?.note ?? '')}" placeholder="${escapeHtml(t('note'))}"></label>
-        </div>
-        <div data-mission-scoreboard style="display:grid;gap:8px">
-          <div style="display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap">
-            <strong style="color:var(--navy)">${escapeHtml(t('missionScoreboard'))}</strong>
-            <span class="badge done">${escapeHtml(t('successRate'))}: ${escapeHtml(scoreSummary.successRate)}%</span>
-          </div>
-          ${scoreItems.map(item => `
-            <div data-score-item="${escapeHtml(item.id)}" data-score-label="${escapeHtml(item.label)}" data-score-max="${escapeHtml(item.max || 0)}" style="display:grid;grid-template-columns:minmax(140px,1fr) 96px 130px;gap:8px;align-items:center;border:1px solid var(--border);border-radius:8px;background:var(--input-bg);padding:8px">
-              <div>
-                <strong>${escapeHtml(item.label)}</strong>
-                <div style="font-size:.72rem;color:var(--muted);font-weight:900">${escapeHtml(t('maxScore'))}: ${escapeHtml(item.max || '-')}</div>
-              </div>
-              <input data-score-item-value type="number" min="0" max="${escapeHtml(item.max || '')}" value="${escapeHtml(item.score || 0)}">
-              <select data-score-item-status>
-                ${[
-                  ['pending', t('pending')],
-                  ['done', t('done')],
-                  ['failed', t('failed')],
-                  ['skipped', t('skipped')],
-                ].map(([value, label]) => `<option value="${value}" ${item.status === value ? 'selected' : ''}>${escapeHtml(label)}</option>`).join('')}
-              </select>
-            </div>
-          `).join('')}
-        </div>
-        ${!editingRun && runDraft ? `<div style="font-size:.78rem;color:var(--muted);font-weight:800">${escapeHtml(t('runDraftReady'))}</div>` : ''}
-        ${editingRun ? `<div style="font-size:.78rem;color:var(--muted);font-weight:800">${escapeHtml(t('editingRun'))}: ${escapeHtml(new Date(editingRun.ts).toLocaleString())}</div>` : ''}
+        ${!editingRun ? renderRunEditor({ runDraft, scoreItems, scoreSummary }) : ''}
       </div>
       <div class="card" data-run-stats>
         <div style="display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap">
@@ -4435,6 +4478,12 @@ function renderCompetitionCenter(state, timer, options = {}) {
           ${activeFilterChips.length ? `<strong style="font-size:.76rem;color:var(--muted)">${escapeHtml(t('activeFilters'))}</strong>${activeFilterChips.map(chip => `<button class="badge mid" type="button" data-run-remove-filter="${escapeHtml(chip.key)}" title="${escapeHtml(t('removeFilter'))}" style="cursor:pointer">${escapeHtml(chip.label)}: ${escapeHtml(chip.value)} x</button>`).join('')}` : `<span style="font-size:.76rem;color:var(--muted);font-weight:800">${escapeHtml(t('noActiveFilters'))}</span>`}
         </div>
         ${renderRunHistory(visibleRuns, { totalCount: state.data.missionRuns.length })}
+      </div>
+      <div class="modal-bg ${editingRun ? 'open' : ''}" data-run-modal-bg>
+        <div class="modal wide" role="dialog" aria-modal="true" aria-labelledby="run-modal-title" data-run-modal>
+          <h3 id="run-modal-title">${escapeHtml(t('editingRun'))}</h3>
+          ${editingRun ? renderRunEditor({ editingRun, scoreItems, scoreSummary }) : ''}
+        </div>
       </div>
     </section>`;
 }
@@ -4590,9 +4639,6 @@ function renderPrepSectionHeading(label, visibleCount, totalCount) {
 
 function renderChecklist(listName, items = [], options = {}) {
   const totalCount = (options.allItems || items).length;
-  const editingItem = options.editingChecklist?.listName === listName
-    ? (options.allItems || items).find(item => Number(item.id) === Number(options.editingChecklist.id))
-    : null;
   return `
     <div style="display:grid;gap:6px">
       ${items.map(item => `
@@ -4606,20 +4652,26 @@ function renderChecklist(listName, items = [], options = {}) {
           <button class="btn btn-sm btn-danger" type="button" data-checklist-delete="${listName}" data-check-id="${item.id}">${escapeHtml(t('delete'))}</button>
         </div>
       `).join('') || `<div style="color:var(--muted);font-weight:900">${escapeHtml(totalCount ? t('noMatchingItems') : t('noItemsYet'))}</div>`}
-      <div style="display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:end">
-        <label>${escapeHtml(t('newChecklistItem'))}<input data-checklist-input="${listName}" value="${escapeHtml(editingItem?.label || '')}" placeholder="${escapeHtml(t('newChecklistItem'))}"></label>
-        ${editingItem
-          ? `<button class="btn btn-primary" type="button" data-checklist-update="${listName}">${escapeHtml(t('updateChecklistItem'))}</button>`
-          : `<button class="btn btn-primary" type="button" data-checklist-add="${listName}">${escapeHtml(t('addItem'))}</button>`}
-        ${editingItem ? `<button class="btn" type="button" data-checklist-cancel-edit>${escapeHtml(t('cancelEdit'))}</button>` : ''}
+      <div class="prep-entry-row">
+        <label>${escapeHtml(t('newChecklistItem'))}<input data-checklist-input="${listName}" value="" placeholder="${escapeHtml(t('newChecklistItem'))}"></label>
+        <button class="btn btn-primary" type="button" data-checklist-add="${listName}">${escapeHtml(t('addItem'))}</button>
       </div>
-      ${editingItem ? `<div style="font-size:.78rem;color:var(--muted);font-weight:800">${escapeHtml(t('editingChecklistItem'))}: ${escapeHtml(editingItem.label)}</div>` : ''}
     </div>`;
+}
+
+function renderChecklistEditForm(listName, editingItem) {
+  if (!editingItem) return '';
+  return `
+    <div class="prep-entry-row">
+      <label>${escapeHtml(t('newChecklistItem'))}<input data-checklist-input="${listName}" value="${escapeHtml(editingItem.label || '')}" placeholder="${escapeHtml(t('newChecklistItem'))}"></label>
+      <button class="btn btn-primary" type="button" data-checklist-update="${listName}">${escapeHtml(t('updateChecklistItem'))}</button>
+      <button class="btn" type="button" data-checklist-cancel-edit>${escapeHtml(t('cancelEdit'))}</button>
+    </div>
+    <div style="font-size:.78rem;color:var(--muted);font-weight:800;margin-top:8px">${escapeHtml(t('editingChecklistItem'))}: ${escapeHtml(editingItem.label)}</div>`;
 }
 
 function renderGearItems(items = [], categories = [], options = {}) {
   const totalCount = (options.allItems || items).length;
-  const editingGear = (options.allItems || items).find(item => Number(item.id) === Number(options.editingGearId));
   return `
     <div style="display:grid;gap:8px">
       ${items.map(item => `
@@ -4634,18 +4686,28 @@ function renderGearItems(items = [], categories = [], options = {}) {
           <button class="btn btn-sm btn-danger" type="button" data-gear-delete="${escapeHtml(item.id)}">${escapeHtml(t('delete'))}</button>
         </div>
       `).join('') || `<div style="color:var(--muted);font-weight:900">${escapeHtml(totalCount ? t('noMatchingItems') : t('noGearYet'))}</div>`}
-      <div style="display:grid;grid-template-columns:2fr 1fr 90px auto auto;gap:8px;align-items:end">
-        <label>${escapeHtml(t('gearName'))}<input data-gear-name value="${escapeHtml(editingGear?.name || '')}" placeholder="${escapeHtml(t('gearName'))}"></label>
-        <label>${escapeHtml(t('category'))}<input data-gear-category list="gear-category-list" value="${escapeHtml(editingGear?.category || '')}" placeholder="${escapeHtml(t('category'))}"></label>
-        <label>${escapeHtml(t('qty'))}<input data-gear-qty type="number" min="1" value="${escapeHtml(editingGear?.qty || 1)}"></label>
-        ${editingGear
-          ? `<button class="btn btn-primary" type="button" data-gear-update>${escapeHtml(t('updateGear'))}</button>`
-          : `<button class="btn btn-primary" type="button" data-gear-add>${escapeHtml(t('addItem'))}</button>`}
-        ${editingGear ? `<button class="btn" type="button" data-gear-cancel-edit>${escapeHtml(t('cancelEdit'))}</button>` : ''}
+      <div class="prep-gear-entry-row">
+        <label>${escapeHtml(t('gearName'))}<input data-gear-name value="" placeholder="${escapeHtml(t('gearName'))}"></label>
+        <label>${escapeHtml(t('category'))}<input data-gear-category list="gear-category-list" value="" placeholder="${escapeHtml(t('category'))}"></label>
+        <label>${escapeHtml(t('qty'))}<input data-gear-qty type="number" min="1" value="1"></label>
+        <button class="btn btn-primary" type="button" data-gear-add>${escapeHtml(t('addItem'))}</button>
       </div>
-      ${editingGear ? `<div style="font-size:.78rem;color:var(--muted);font-weight:800">${escapeHtml(t('editingGear'))}: ${escapeHtml(editingGear.name)}</div>` : ''}
       <datalist id="gear-category-list">${categories.map(category => `<option value="${escapeHtml(category)}"></option>`).join('')}</datalist>
     </div>`;
+}
+
+function renderGearEditForm(editingGear, categories = []) {
+  if (!editingGear) return '';
+  return `
+    <div class="prep-gear-entry-row">
+      <label>${escapeHtml(t('gearName'))}<input data-gear-name value="${escapeHtml(editingGear.name || '')}" placeholder="${escapeHtml(t('gearName'))}"></label>
+      <label>${escapeHtml(t('category'))}<input data-gear-category list="gear-category-list-modal" value="${escapeHtml(editingGear.category || '')}" placeholder="${escapeHtml(t('category'))}"></label>
+      <label>${escapeHtml(t('qty'))}<input data-gear-qty type="number" min="1" value="${escapeHtml(editingGear.qty || 1)}"></label>
+      <button class="btn btn-primary" type="button" data-gear-update>${escapeHtml(t('updateGear'))}</button>
+      <button class="btn" type="button" data-gear-cancel-edit>${escapeHtml(t('cancelEdit'))}</button>
+    </div>
+    <div style="font-size:.78rem;color:var(--muted);font-weight:800;margin-top:8px">${escapeHtml(t('editingGear'))}: ${escapeHtml(editingGear.name)}</div>
+    <datalist id="gear-category-list-modal">${categories.map(category => `<option value="${escapeHtml(category)}"></option>`).join('')}</datalist>`;
 }
 
 function renderPrepCenter(state, options = {}) {
@@ -4660,6 +4722,10 @@ function renderPrepCenter(state, options = {}) {
   const visiblePredive = filterChecklistItems(state.data.prediveChecklist, filters);
   const visibleGear = filterGearItems(state.data.gearItems, filters);
   const activeFilterChips = getActivePrepFilterChips(filters);
+  const editingChecklistItem = options.editingChecklist?.listName
+    ? (state.data[options.editingChecklist.listName] || []).find(item => Number(item.id) === Number(options.editingChecklist.id))
+    : null;
+  const editingGear = state.data.gearItems.find(item => Number(item.id) === Number(options.editingGearId));
   return `
     <section id="page-prep" class="page active" style="display:grid;gap:12px">
       <div class="page-topbar">
@@ -4718,6 +4784,13 @@ function renderPrepCenter(state, options = {}) {
       <div class="card">
         ${renderPrepSectionHeading(t('gearItems'), visibleGear.length, state.data.gearItems.length)}
         ${renderGearItems(visibleGear, gearCategories, { editingGearId: options.editingGearId, prepFocus, allItems: state.data.gearItems })}
+      </div>
+
+      <div class="modal-bg ${editingChecklistItem || editingGear ? 'open' : ''}" data-prep-modal-bg>
+        <div class="modal wide" role="dialog" aria-modal="true" aria-labelledby="prep-modal-title" data-prep-modal>
+          <h3 id="prep-modal-title">${escapeHtml(editingGear ? t('editingGear') : t('editingChecklistItem'))}</h3>
+          ${editingGear ? renderGearEditForm(editingGear, gearCategories) : renderChecklistEditForm(options.editingChecklist?.listName, editingChecklistItem)}
+        </div>
       </div>
     </section>`;
 }
@@ -7912,12 +7985,13 @@ appRoot?.addEventListener('click', (event) => {
   const editTaskTarget = event.target.closest('[data-task-edit]');
   if (editTaskTarget) {
     editingTaskId = editTaskTarget.dataset.taskEdit;
-    taskModalOpen = false;
+    taskModalOpen = true;
     renderAppShell();
     return;
   }
   if (event.target.closest('[data-task-cancel-edit]')) {
     editingTaskId = null;
+    taskModalOpen = false;
     renderAppShell();
     return;
   }
@@ -7930,6 +8004,7 @@ appRoot?.addEventListener('click', (event) => {
   const taskModalBg = event.target.closest('[data-task-modal-bg]');
   if (event.target.closest('[data-task-close-modal]') || (taskModalBg && !event.target.closest('[data-task-modal]'))) {
     taskModalOpen = false;
+    editingTaskId = null;
     renderAppShell();
     return;
   }
@@ -7950,6 +8025,12 @@ appRoot?.addEventListener('click', (event) => {
     return;
   }
   if (event.target.closest('[data-member-cancel-edit]')) {
+    editingMemberId = null;
+    renderAppShell();
+    return;
+  }
+  const memberModalBg = event.target.closest('[data-member-modal-bg]');
+  if (memberModalBg && !event.target.closest('[data-member-modal]')) {
     editingMemberId = null;
     renderAppShell();
     return;
@@ -8044,7 +8125,8 @@ appRoot?.addEventListener('click', (event) => {
     return;
   }
   if (event.target.closest('[data-action="update-run"]')) {
-    const payload = getRunPayloadFromDom();
+    const root = event.target.closest('[data-run-modal]') || document;
+    const payload = getRunPayloadFromDom(root);
     captureUndo(actionMessage(t('saved'), `${t('missionRun')} ${payload.score}`));
     if (updateMissionRun(appState, editingRunId, payload)) {
       editingRunId = null;
@@ -8089,7 +8171,8 @@ appRoot?.addEventListener('click', (event) => {
   const updateChecklistTarget = event.target.closest('[data-checklist-update]');
   if (updateChecklistTarget) {
     const listName = updateChecklistTarget.dataset.checklistUpdate;
-    const input = document.querySelector(`[data-checklist-input="${listName}"]`);
+    const root = updateChecklistTarget.closest('[data-prep-modal]') || document;
+    const input = root.querySelector(`[data-checklist-input="${listName}"]`);
     const message = actionMessage(t('saved'), input?.value || t('checklist'));
     captureUndo(message);
     if (updateChecklistItem(appState, listName, editingChecklist?.id, input?.value)) {
@@ -8148,7 +8231,8 @@ appRoot?.addEventListener('click', (event) => {
     return;
   }
   if (event.target.closest('[data-gear-update]')) {
-    const payload = getGearPayloadFromDom();
+    const root = event.target.closest('[data-prep-modal]') || document;
+    const payload = getGearPayloadFromDom(root);
     const message = actionMessage(t('saved'), payload.name || t('gearItems'));
     captureUndo(message);
     if (updateGearItem(appState, editingGearId, payload)) {
@@ -8200,8 +8284,14 @@ appRoot?.addEventListener('click', (event) => {
   }
   const editKnowledgeTarget = event.target.closest('[data-knowledge-edit]');
   if (editKnowledgeTarget) {
-    if (editKnowledgeTarget.dataset.knowledgeEdit === 'intel') editingIntelId = editKnowledgeTarget.dataset.knowledgeId;
-    if (editKnowledgeTarget.dataset.knowledgeEdit === 'strategy') editingStrategyId = editKnowledgeTarget.dataset.knowledgeId;
+    if (editKnowledgeTarget.dataset.knowledgeEdit === 'intel') {
+      editingIntelId = editKnowledgeTarget.dataset.knowledgeId;
+      editingStrategyId = null;
+    }
+    if (editKnowledgeTarget.dataset.knowledgeEdit === 'strategy') {
+      editingStrategyId = editKnowledgeTarget.dataset.knowledgeId;
+      editingIntelId = null;
+    }
     renderAppShell();
     return;
   }
@@ -8221,6 +8311,27 @@ appRoot?.addEventListener('click', (event) => {
     if (deleteKnowledgeTarget.dataset.knowledgeDelete === 'intel' && Number(editingIntelId) === Number(deleteKnowledgeTarget.dataset.knowledgeId)) editingIntelId = null;
     if (deleteKnowledgeTarget.dataset.knowledgeDelete === 'strategy' && Number(editingStrategyId) === Number(deleteKnowledgeTarget.dataset.knowledgeId)) editingStrategyId = null;
     if (deleteKnowledgeItem(appState, deleteKnowledgeTarget.dataset.knowledgeDelete, deleteKnowledgeTarget.dataset.knowledgeId)) persistAndRender(message, { keepUndo: true });
+    return;
+  }
+  const prepModalBg = event.target.closest('[data-prep-modal-bg]');
+  if (prepModalBg && !event.target.closest('[data-prep-modal]')) {
+    editingChecklist = null;
+    editingGearId = null;
+    renderAppShell();
+    return;
+  }
+  const knowledgeModalBg = event.target.closest('[data-knowledge-modal-bg]');
+  if (knowledgeModalBg && !event.target.closest('[data-knowledge-modal]')) {
+    editingIntelId = null;
+    editingStrategyId = null;
+    renderAppShell();
+    return;
+  }
+  const runModalBg = event.target.closest('[data-run-modal-bg]');
+  if (runModalBg && !event.target.closest('[data-run-modal]')) {
+    editingRunId = null;
+    runDraft = null;
+    renderAppShell();
     return;
   }
 });
@@ -8244,7 +8355,10 @@ appRoot?.addEventListener('submit', (event) => {
   const message = actionMessage(t('saved'), task.name || t('task'));
   captureUndo(message);
   if (editingTaskId) {
-    if (updateTask(appState, editingTaskId, task)) editingTaskId = null;
+    if (updateTask(appState, editingTaskId, task)) {
+      editingTaskId = null;
+      taskModalOpen = false;
+    }
   } else {
     addTask(appState, task);
     taskModalOpen = false;
@@ -8420,8 +8534,15 @@ appRoot?.addEventListener('change', (event) => {
 });
 
 appRoot?.addEventListener('keydown', (event) => {
-  if (event.key === 'Escape' && taskModalOpen) {
+  if (event.key === 'Escape' && (taskModalOpen || editingTaskId || editingMemberId || editingRunId || editingGearId || editingChecklist || editingIntelId || editingStrategyId)) {
     taskModalOpen = false;
+    editingTaskId = null;
+    editingMemberId = null;
+    editingRunId = null;
+    editingGearId = null;
+    editingChecklist = null;
+    editingIntelId = null;
+    editingStrategyId = null;
     renderAppShell();
     return;
   }
@@ -8447,7 +8568,8 @@ appRoot?.addEventListener('keydown', (event) => {
   if (!input && !checklistInput && !gearInput) return;
   event.preventDefault();
   if (gearInput) {
-    const payload = getGearPayloadFromDom();
+    const root = gearInput.closest('[data-prep-modal]') || document;
+    const payload = getGearPayloadFromDom(root);
     const message = actionMessage(t('saved'), payload.name || t('gearItems'));
     if (editingGearId) {
       captureUndo(message);

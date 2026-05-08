@@ -245,16 +245,23 @@ export function renderIntelPage(state, options = {}) {
 
       <div class="card">
         ${renderKnowledgeSectionHeading(t('intel'), visibleIntel.length, intel.length)}
-        ${renderKnowledgeForm('intel', editingIntel)}
+        ${renderKnowledgeForm('intel')}
         ${renderKnowledgeFilters('intel', intelFilters)}
         <div style="margin-top:10px">${renderKnowledgeList('intel', visibleIntel, { intelFocus, totalCount: intel.length })}</div>
       </div>
 
       <div class="card">
         ${renderKnowledgeSectionHeading(t('strategy'), visibleStrategy.length, strategy.length)}
-        ${renderKnowledgeForm('strategy', editingStrategy)}
+        ${renderKnowledgeForm('strategy')}
         ${renderKnowledgeFilters('strategy', strategyFilters)}
         <div style="margin-top:10px">${renderKnowledgeList('strategy', visibleStrategy, { intelFocus, totalCount: strategy.length })}</div>
+      </div>
+
+      <div class="modal-bg ${editingIntel || editingStrategy ? 'open' : ''}" data-knowledge-modal-bg>
+        <div class="modal wide" role="dialog" aria-modal="true" aria-labelledby="knowledge-modal-title" data-knowledge-modal>
+          <h3 id="knowledge-modal-title">${escapeHtml(t('editingItem'))}</h3>
+          ${editingIntel ? renderKnowledgeForm('intel', editingIntel) : renderKnowledgeForm('strategy', editingStrategy)}
+        </div>
       </div>
     </section>`;
 }

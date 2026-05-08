@@ -1741,12 +1741,13 @@ appRoot?.addEventListener('click', (event) => {
   const editTaskTarget = event.target.closest('[data-task-edit]');
   if (editTaskTarget) {
     editingTaskId = editTaskTarget.dataset.taskEdit;
-    taskModalOpen = false;
+    taskModalOpen = true;
     renderAppShell();
     return;
   }
   if (event.target.closest('[data-task-cancel-edit]')) {
     editingTaskId = null;
+    taskModalOpen = false;
     renderAppShell();
     return;
   }
@@ -1759,6 +1760,7 @@ appRoot?.addEventListener('click', (event) => {
   const taskModalBg = event.target.closest('[data-task-modal-bg]');
   if (event.target.closest('[data-task-close-modal]') || (taskModalBg && !event.target.closest('[data-task-modal]'))) {
     taskModalOpen = false;
+    editingTaskId = null;
     renderAppShell();
     return;
   }
@@ -1779,6 +1781,12 @@ appRoot?.addEventListener('click', (event) => {
     return;
   }
   if (event.target.closest('[data-member-cancel-edit]')) {
+    editingMemberId = null;
+    renderAppShell();
+    return;
+  }
+  const memberModalBg = event.target.closest('[data-member-modal-bg]');
+  if (memberModalBg && !event.target.closest('[data-member-modal]')) {
     editingMemberId = null;
     renderAppShell();
     return;
@@ -1873,7 +1881,8 @@ appRoot?.addEventListener('click', (event) => {
     return;
   }
   if (event.target.closest('[data-action="update-run"]')) {
-    const payload = getRunPayloadFromDom();
+    const root = event.target.closest('[data-run-modal]') || document;
+    const payload = getRunPayloadFromDom(root);
     captureUndo(actionMessage(t('saved'), `${t('missionRun')} ${payload.score}`));
     if (updateMissionRun(appState, editingRunId, payload)) {
       editingRunId = null;
@@ -1918,7 +1927,8 @@ appRoot?.addEventListener('click', (event) => {
   const updateChecklistTarget = event.target.closest('[data-checklist-update]');
   if (updateChecklistTarget) {
     const listName = updateChecklistTarget.dataset.checklistUpdate;
-    const input = document.querySelector(`[data-checklist-input="${listName}"]`);
+    const root = updateChecklistTarget.closest('[data-prep-modal]') || document;
+    const input = root.querySelector(`[data-checklist-input="${listName}"]`);
     const message = actionMessage(t('saved'), input?.value || t('checklist'));
     captureUndo(message);
     if (updateChecklistItem(appState, listName, editingChecklist?.id, input?.value)) {
@@ -1977,7 +1987,8 @@ appRoot?.addEventListener('click', (event) => {
     return;
   }
   if (event.target.closest('[data-gear-update]')) {
-    const payload = getGearPayloadFromDom();
+    const root = event.target.closest('[data-prep-modal]') || document;
+    const payload = getGearPayloadFromDom(root);
     const message = actionMessage(t('saved'), payload.name || t('gearItems'));
     captureUndo(message);
     if (updateGearItem(appState, editingGearId, payload)) {
@@ -2029,8 +2040,14 @@ appRoot?.addEventListener('click', (event) => {
   }
   const editKnowledgeTarget = event.target.closest('[data-knowledge-edit]');
   if (editKnowledgeTarget) {
-    if (editKnowledgeTarget.dataset.knowledgeEdit === 'intel') editingIntelId = editKnowledgeTarget.dataset.knowledgeId;
-    if (editKnowledgeTarget.dataset.knowledgeEdit === 'strategy') editingStrategyId = editKnowledgeTarget.dataset.knowledgeId;
+    if (editKnowledgeTarget.dataset.knowledgeEdit === 'intel') {
+      editingIntelId = editKnowledgeTarget.dataset.knowledgeId;
+      editingStrategyId = null;
+    }
+    if (editKnowledgeTarget.dataset.knowledgeEdit === 'strategy') {
+      editingStrategyId = editKnowledgeTarget.dataset.knowledgeId;
+      editingIntelId = null;
+    }
     renderAppShell();
     return;
   }
@@ -2050,6 +2067,27 @@ appRoot?.addEventListener('click', (event) => {
     if (deleteKnowledgeTarget.dataset.knowledgeDelete === 'intel' && Number(editingIntelId) === Number(deleteKnowledgeTarget.dataset.knowledgeId)) editingIntelId = null;
     if (deleteKnowledgeTarget.dataset.knowledgeDelete === 'strategy' && Number(editingStrategyId) === Number(deleteKnowledgeTarget.dataset.knowledgeId)) editingStrategyId = null;
     if (deleteKnowledgeItem(appState, deleteKnowledgeTarget.dataset.knowledgeDelete, deleteKnowledgeTarget.dataset.knowledgeId)) persistAndRender(message, { keepUndo: true });
+    return;
+  }
+  const prepModalBg = event.target.closest('[data-prep-modal-bg]');
+  if (prepModalBg && !event.target.closest('[data-prep-modal]')) {
+    editingChecklist = null;
+    editingGearId = null;
+    renderAppShell();
+    return;
+  }
+  const knowledgeModalBg = event.target.closest('[data-knowledge-modal-bg]');
+  if (knowledgeModalBg && !event.target.closest('[data-knowledge-modal]')) {
+    editingIntelId = null;
+    editingStrategyId = null;
+    renderAppShell();
+    return;
+  }
+  const runModalBg = event.target.closest('[data-run-modal-bg]');
+  if (runModalBg && !event.target.closest('[data-run-modal]')) {
+    editingRunId = null;
+    runDraft = null;
+    renderAppShell();
     return;
   }
 });
@@ -2073,7 +2111,10 @@ appRoot?.addEventListener('submit', (event) => {
   const message = actionMessage(t('saved'), task.name || t('task'));
   captureUndo(message);
   if (editingTaskId) {
-    if (updateTask(appState, editingTaskId, task)) editingTaskId = null;
+    if (updateTask(appState, editingTaskId, task)) {
+      editingTaskId = null;
+      taskModalOpen = false;
+    }
   } else {
     addTask(appState, task);
     taskModalOpen = false;
@@ -2249,8 +2290,15 @@ appRoot?.addEventListener('change', (event) => {
 });
 
 appRoot?.addEventListener('keydown', (event) => {
-  if (event.key === 'Escape' && taskModalOpen) {
+  if (event.key === 'Escape' && (taskModalOpen || editingTaskId || editingMemberId || editingRunId || editingGearId || editingChecklist || editingIntelId || editingStrategyId)) {
     taskModalOpen = false;
+    editingTaskId = null;
+    editingMemberId = null;
+    editingRunId = null;
+    editingGearId = null;
+    editingChecklist = null;
+    editingIntelId = null;
+    editingStrategyId = null;
     renderAppShell();
     return;
   }
@@ -2276,7 +2324,8 @@ appRoot?.addEventListener('keydown', (event) => {
   if (!input && !checklistInput && !gearInput) return;
   event.preventDefault();
   if (gearInput) {
-    const payload = getGearPayloadFromDom();
+    const root = gearInput.closest('[data-prep-modal]') || document;
+    const payload = getGearPayloadFromDom(root);
     const message = actionMessage(t('saved'), payload.name || t('gearItems'));
     if (editingGearId) {
       captureUndo(message);

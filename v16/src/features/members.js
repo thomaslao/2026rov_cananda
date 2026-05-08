@@ -94,6 +94,20 @@ function getActiveMemberFilterChips(filters = {}) {
   ].filter(Boolean);
 }
 
+function renderMemberForm(editingMember = null, roles = [], groups = []) {
+  return `
+    <form data-member-form style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:8px;align-items:end">
+      <label>${escapeHtml(t('memberName'))}<input name="name" required value="${escapeHtml(editingMember?.name || '')}" placeholder="${escapeHtml(t('memberName'))}"></label>
+      <label>${escapeHtml(t('role'))}<input name="role" list="member-role-list" value="${escapeHtml(editingMember?.role || '')}" placeholder="${escapeHtml(t('role'))}"></label>
+      <label>${escapeHtml(t('group'))}<input name="group" list="member-group-list" value="${escapeHtml(editingMember?.group || '')}" placeholder="${escapeHtml(t('group'))}"></label>
+      <label>${escapeHtml(t('status'))}<select name="status">${['Active', 'Standby', 'Away'].map(status => `<option value="${status}" ${clean(editingMember?.status) === status ? 'selected' : ''}>${escapeHtml(labelFor(status))}</option>`).join('')}</select></label>
+      <button class="btn btn-primary" type="submit">${escapeHtml(editingMember ? t('updateMember') : t('addMember'))}</button>
+      ${editingMember ? `<button class="btn" type="button" data-member-cancel-edit>${escapeHtml(t('cancelEdit'))}</button>` : ''}
+    </form>
+    <datalist id="member-role-list">${roles.map(role => `<option value="${escapeHtml(role)}"></option>`).join('')}</datalist>
+    <datalist id="member-group-list">${groups.map(group => `<option value="${escapeHtml(group)}"></option>`).join('')}</datalist>`;
+}
+
 export function renderMembersPage(state, options = {}) {
   const members = state.data.members || [];
   const tasks = state.data.tasks || [];
@@ -120,17 +134,7 @@ export function renderMembersPage(state, options = {}) {
       </div>
 
       <div class="card">
-        <form data-member-form style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:8px;align-items:end">
-          <label>${escapeHtml(t('memberName'))}<input name="name" required value="${escapeHtml(editingMember?.name || '')}" placeholder="${escapeHtml(t('memberName'))}"></label>
-          <label>${escapeHtml(t('role'))}<input name="role" list="member-role-list" value="${escapeHtml(editingMember?.role || '')}" placeholder="${escapeHtml(t('role'))}"></label>
-          <label>${escapeHtml(t('group'))}<input name="group" list="member-group-list" value="${escapeHtml(editingMember?.group || '')}" placeholder="${escapeHtml(t('group'))}"></label>
-          <label>${escapeHtml(t('status'))}<select name="status">${['Active', 'Standby', 'Away'].map(status => `<option value="${status}" ${clean(editingMember?.status) === status ? 'selected' : ''}>${escapeHtml(labelFor(status))}</option>`).join('')}</select></label>
-          <button class="btn btn-primary" type="submit">${escapeHtml(editingMember ? t('updateMember') : t('addMember'))}</button>
-          ${editingMember ? `<button class="btn" type="button" data-member-cancel-edit>${escapeHtml(t('cancelEdit'))}</button>` : ''}
-        </form>
-        ${editingMember ? `<div style="font-size:.78rem;color:var(--muted);font-weight:800;margin-top:8px">${escapeHtml(t('editingMember'))}: ${escapeHtml(editingMember.name)}</div>` : ''}
-        <datalist id="member-role-list">${roles.map(role => `<option value="${escapeHtml(role)}"></option>`).join('')}</datalist>
-        <datalist id="member-group-list">${groups.map(group => `<option value="${escapeHtml(group)}"></option>`).join('')}</datalist>
+        ${renderMemberForm(null, roles, groups)}
       </div>
 
       <div class="card">
@@ -174,6 +178,14 @@ export function renderMembersPage(state, options = {}) {
           ${renderHandoffCards(visible, tasks, { totalCount: members.length })}
         </div>
       </details>
+
+      <div class="modal-bg ${editingMember ? 'open' : ''}" data-member-modal-bg>
+        <div class="modal wide" role="dialog" aria-modal="true" aria-labelledby="member-modal-title" data-member-modal>
+          <h3 id="member-modal-title">${escapeHtml(t('editingMember'))}</h3>
+          ${editingMember ? renderMemberForm(editingMember, roles, groups) : ''}
+          ${editingMember ? `<div style="font-size:.78rem;color:var(--muted);font-weight:800;margin-top:8px">${escapeHtml(t('editingMember'))}: ${escapeHtml(editingMember.name)}</div>` : ''}
+        </div>
+      </div>
     </section>`;
 }
 

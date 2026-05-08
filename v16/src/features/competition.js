@@ -148,6 +148,49 @@ export function getRunDraftFromRun(run = null) {
   } : null;
 }
 
+function renderRunEditor({ editingRun = null, runDraft = null, scoreItems = [], scoreSummary = {} } = {}) {
+  return `
+    <div style="display:grid;gap:12px">
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        ${editingRun
+          ? `<button class="btn btn-success" type="button" data-action="update-run">${escapeHtml(t('updateRun'))}</button>`
+          : `<button class="btn btn-success" type="button" data-action="save-run">${escapeHtml(t('saveRun'))}</button>`}
+        ${editingRun ? `<button class="btn" type="button" data-run-cancel-edit>${escapeHtml(t('cancelEdit'))}</button>` : ''}
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px">
+        <label>${escapeHtml(t('grossScore'))}<input data-run-gross-score type="number" value="${escapeHtml(scoreSummary.gross || 0)}" readonly></label>
+        <label>${escapeHtml(t('penalty'))}<input data-run-penalty type="number" min="0" value="${escapeHtml(editingRun?.penalty ?? runDraft?.penalty ?? 0)}"></label>
+        <label>${escapeHtml(t('score'))}<input data-run-score type="number" value="${escapeHtml(editingRun?.score ?? runDraft?.score ?? 0)}"></label>
+        <label>${escapeHtml(t('note'))}<input data-run-note value="${escapeHtml(editingRun?.note ?? runDraft?.note ?? '')}" placeholder="${escapeHtml(t('note'))}"></label>
+      </div>
+      <div data-mission-scoreboard style="display:grid;gap:8px">
+        <div style="display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap">
+          <strong style="color:var(--navy)">${escapeHtml(t('missionScoreboard'))}</strong>
+          <span class="badge done">${escapeHtml(t('successRate'))}: ${escapeHtml(scoreSummary.successRate || 0)}%</span>
+        </div>
+        ${scoreItems.map(item => `
+          <div data-score-item="${escapeHtml(item.id)}" data-score-label="${escapeHtml(item.label)}" data-score-max="${escapeHtml(item.max || 0)}" style="display:grid;grid-template-columns:minmax(140px,1fr) 96px 130px;gap:8px;align-items:center;border:1px solid var(--border);border-radius:8px;background:var(--input-bg);padding:8px">
+            <div>
+              <strong>${escapeHtml(item.label)}</strong>
+              <div style="font-size:.72rem;color:var(--muted);font-weight:900">${escapeHtml(t('maxScore'))}: ${escapeHtml(item.max || '-')}</div>
+            </div>
+            <input data-score-item-value type="number" min="0" max="${escapeHtml(item.max || '')}" value="${escapeHtml(item.score || 0)}">
+            <select data-score-item-status>
+              ${[
+                ['pending', t('pending')],
+                ['done', t('done')],
+                ['failed', t('failed')],
+                ['skipped', t('skipped')],
+              ].map(([value, label]) => `<option value="${value}" ${item.status === value ? 'selected' : ''}>${escapeHtml(label)}</option>`).join('')}
+            </select>
+          </div>
+        `).join('')}
+      </div>
+      ${!editingRun && runDraft ? `<div style="font-size:.78rem;color:var(--muted);font-weight:800">${escapeHtml(t('runDraftReady'))}</div>` : ''}
+      ${editingRun ? `<div style="font-size:.78rem;color:var(--muted);font-weight:800">${escapeHtml(t('editingRun'))}: ${escapeHtml(new Date(editingRun.ts).toLocaleString())}</div>` : ''}
+    </div>`;
+}
+
 export function normalizeRunFilters(filters = {}) {
   return {
     search: clean(filters.search).toLowerCase(),
@@ -295,42 +338,8 @@ export function renderCompetitionCenter(state, timer, options = {}) {
         <div style="display:flex;gap:8px;flex-wrap:wrap">
           <button class="btn btn-primary" type="button" data-timer-action="${timer?.running ? 'pause' : 'start'}">${escapeHtml(timer?.running ? t('pause') : t('start'))}</button>
           <button class="btn" type="button" data-timer-action="reset">${escapeHtml(t('reset'))}</button>
-          ${editingRun
-            ? `<button class="btn btn-success" type="button" data-action="update-run">${escapeHtml(t('updateRun'))}</button>`
-            : `<button class="btn btn-success" type="button" data-action="save-run">${escapeHtml(t('saveRun'))}</button>`}
-          ${editingRun ? `<button class="btn" type="button" data-run-cancel-edit>${escapeHtml(t('cancelEdit'))}</button>` : ''}
         </div>
-        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px">
-          <label>${escapeHtml(t('grossScore'))}<input data-run-gross-score type="number" value="${escapeHtml(scoreSummary.gross)}" readonly></label>
-          <label>${escapeHtml(t('penalty'))}<input data-run-penalty type="number" min="0" value="${escapeHtml(editingRun?.penalty ?? runDraft?.penalty ?? 0)}"></label>
-          <label>${escapeHtml(t('score'))}<input data-run-score type="number" value="${escapeHtml(editingRun?.score ?? runDraft?.score ?? 0)}"></label>
-          <label>${escapeHtml(t('note'))}<input data-run-note value="${escapeHtml(editingRun?.note ?? runDraft?.note ?? '')}" placeholder="${escapeHtml(t('note'))}"></label>
-        </div>
-        <div data-mission-scoreboard style="display:grid;gap:8px">
-          <div style="display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap">
-            <strong style="color:var(--navy)">${escapeHtml(t('missionScoreboard'))}</strong>
-            <span class="badge done">${escapeHtml(t('successRate'))}: ${escapeHtml(scoreSummary.successRate)}%</span>
-          </div>
-          ${scoreItems.map(item => `
-            <div data-score-item="${escapeHtml(item.id)}" data-score-label="${escapeHtml(item.label)}" data-score-max="${escapeHtml(item.max || 0)}" style="display:grid;grid-template-columns:minmax(140px,1fr) 96px 130px;gap:8px;align-items:center;border:1px solid var(--border);border-radius:8px;background:var(--input-bg);padding:8px">
-              <div>
-                <strong>${escapeHtml(item.label)}</strong>
-                <div style="font-size:.72rem;color:var(--muted);font-weight:900">${escapeHtml(t('maxScore'))}: ${escapeHtml(item.max || '-')}</div>
-              </div>
-              <input data-score-item-value type="number" min="0" max="${escapeHtml(item.max || '')}" value="${escapeHtml(item.score || 0)}">
-              <select data-score-item-status>
-                ${[
-                  ['pending', t('pending')],
-                  ['done', t('done')],
-                  ['failed', t('failed')],
-                  ['skipped', t('skipped')],
-                ].map(([value, label]) => `<option value="${value}" ${item.status === value ? 'selected' : ''}>${escapeHtml(label)}</option>`).join('')}
-              </select>
-            </div>
-          `).join('')}
-        </div>
-        ${!editingRun && runDraft ? `<div style="font-size:.78rem;color:var(--muted);font-weight:800">${escapeHtml(t('runDraftReady'))}</div>` : ''}
-        ${editingRun ? `<div style="font-size:.78rem;color:var(--muted);font-weight:800">${escapeHtml(t('editingRun'))}: ${escapeHtml(new Date(editingRun.ts).toLocaleString())}</div>` : ''}
+        ${!editingRun ? renderRunEditor({ runDraft, scoreItems, scoreSummary }) : ''}
       </div>
       <div class="card" data-run-stats>
         <div style="display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap">
@@ -412,6 +421,12 @@ export function renderCompetitionCenter(state, timer, options = {}) {
           ${activeFilterChips.length ? `<strong style="font-size:.76rem;color:var(--muted)">${escapeHtml(t('activeFilters'))}</strong>${activeFilterChips.map(chip => `<button class="badge mid" type="button" data-run-remove-filter="${escapeHtml(chip.key)}" title="${escapeHtml(t('removeFilter'))}" style="cursor:pointer">${escapeHtml(chip.label)}: ${escapeHtml(chip.value)} x</button>`).join('')}` : `<span style="font-size:.76rem;color:var(--muted);font-weight:800">${escapeHtml(t('noActiveFilters'))}</span>`}
         </div>
         ${renderRunHistory(visibleRuns, { totalCount: state.data.missionRuns.length })}
+      </div>
+      <div class="modal-bg ${editingRun ? 'open' : ''}" data-run-modal-bg>
+        <div class="modal wide" role="dialog" aria-modal="true" aria-labelledby="run-modal-title" data-run-modal>
+          <h3 id="run-modal-title">${escapeHtml(t('editingRun'))}</h3>
+          ${editingRun ? renderRunEditor({ editingRun, scoreItems, scoreSummary }) : ''}
+        </div>
       </div>
     </section>`;
 }

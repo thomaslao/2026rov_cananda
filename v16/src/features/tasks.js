@@ -319,7 +319,7 @@ export function renderTaskTable(tasks = [], members = [], options = {}) {
     return `<th class="task-sort-th"><button class="task-sort-button" type="button" data-task-header-sort="${escapeHtml(nextSort)}" aria-label="${escapeHtml(`${label} ${t('sort')}`)}">${escapeHtml(label)}<span>${escapeHtml(mark)}</span></button></th>`;
   };
   return `
-    <div style="overflow:auto;border:1px solid var(--border);border-radius:8px">
+    <div class="task-table-wrap">
       <table>
         <thead><tr>${sortHeader('name', t('task'))}${sortHeader('owner', t('owner'))}${sortHeader('due', t('due'))}${sortHeader('priority', t('priority'))}${sortHeader('status', t('status'))}<th></th></tr></thead>
         <tbody>
@@ -406,10 +406,6 @@ export function renderTasksPage(state, options = {}) {
         </div>
         <div class="page-top-summary">${escapeHtml(t('openTasks'))} ${stats.open} | ${escapeHtml(t('overdue'))} ${stats.overdue} | ${escapeHtml(t('blocked'))} ${stats.blocked} | ${escapeHtml(t('visible'))} ${visibleTasks.length}/${tasks.length}</div>
       </div>
-      ${editingTask ? `<div class="card" id="task-edit-form">
-        ${renderTaskForm(editingTask, { master, ownerSuggestions })}
-        ${editingTask ? `<div style="font-size:.78rem;color:var(--muted);font-weight:800;margin-top:8px">${escapeHtml(t('editingTask'))}: ${escapeHtml(editingTask.name)}</div>` : ''}
-      </div>` : ''}
       <div class="card">
         <div class="task-summary-row" data-task-evidence-summary data-task-health-summary>
           ${[
@@ -483,10 +479,11 @@ export function renderTasksPage(state, options = {}) {
         </div>
         ${renderTaskTable(visibleTasks, state.data.members || [], { totalCount: tasks.length, filters })}
       </div>
-      <div class="modal-bg ${options.taskModalOpen ? 'open' : ''}" data-task-modal-bg>
+      <div class="modal-bg ${options.taskModalOpen || editingTask ? 'open' : ''}" data-task-modal-bg>
         <div class="modal wide" role="dialog" aria-modal="true" aria-labelledby="task-modal-title" data-task-modal>
-          <h3 id="task-modal-title">${escapeHtml(t('addTask'))}</h3>
-          ${renderTaskForm(null, { master, ownerSuggestions })}
+          <h3 id="task-modal-title">${escapeHtml(editingTask ? t('editingTask') : t('addTask'))}</h3>
+          ${renderTaskForm(editingTask || null, { master, ownerSuggestions })}
+          ${editingTask ? `<div style="font-size:.78rem;color:var(--muted);font-weight:800;margin-top:8px">${escapeHtml(t('editingTask'))}: ${escapeHtml(editingTask.name)}</div>` : ''}
         </div>
       </div>
     </section>`;
