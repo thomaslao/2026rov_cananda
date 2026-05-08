@@ -149,9 +149,11 @@ test('tasks flow supports add modal, search, sort, status, edit and delete', asy
   await page.locator('[data-task-modal] [name="name"]').fill(taskName);
   await page.locator('[data-task-modal] [name="owner"]').fill('Navigator');
   await page.locator('[data-task-modal] [name="priority"]').selectOption('Medium');
+  await page.locator('[data-task-modal] [name="evidenceUrl"]').fill('https://drive.google.com/drive/folders/test-task-evidence');
   await page.locator('[data-task-modal] [data-task-form]').evaluate(form => form.requestSubmit());
   await expect(page.locator('[data-task-modal-bg]')).not.toHaveClass(/open/);
   await expect(page.locator('#page-tasks')).toContainText(taskName);
+  await expect(page.locator('tbody tr', { hasText: taskName })).toContainText('證據');
 
   await page.locator('[data-task-search]').fill('no-match-until-button');
   await expect(page.locator('#page-tasks')).toContainText(taskName);
@@ -181,6 +183,7 @@ test('tasks flow supports add modal, search, sort, status, edit and delete', asy
   await expect(page.locator('#page-tasks')).toBeVisible();
   await expect(page.locator('#page-tasks')).toContainText(editedName);
   await expect(page.locator('#page-tasks')).not.toContainText(taskName);
+  await expect(page.locator('tbody tr', { hasText: editedName })).toContainText('證據');
 
   await page.locator('tbody tr', { hasText: editedName }).locator('[data-task-delete]').evaluate(button => button.click());
   await expect(page.locator('#page-tasks')).not.toContainText(editedName);

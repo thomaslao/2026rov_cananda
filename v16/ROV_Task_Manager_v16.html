@@ -6748,6 +6748,47 @@ function getLocalSyncSignature() {
   return syncSignatureForData(appState.data);
 }
 
+function normalizeTaskEvidenceForSync(task = {}) {
+  return (Array.isArray(task.evidence) ? task.evidence : [])
+    .map((item, index) => ({
+      id: Number(item?.id || `${task.id || Date.now()}${index + 1}`),
+      task_id: Number(task.id || 0),
+      file_name: String(item?.label || item?.name || item?.title || item?.url || `Evidence ${index + 1}`).trim(),
+      public_url: String(item?.url || item?.href || item?.link || '').trim(),
+      file_path: String(item?.path || item?.url || item?.href || item?.link || '').trim(),
+      mime_type: String(item?.note || item?.type || 'link').trim(),
+    }))
+    .filter(row => row.task_id && (row.file_name || row.public_url || row.file_path || row.mime_type));
+}
+
+function getMissingColumnFromSupabaseError(error) {
+  const message = String(error?.message || '');
+  const match = message.match(/Could not find the '([^']+)' column/i)
+    || message.match(/column "([^"]+)" .*does not exist/i);
+  return match?.[1] || '';
+}
+
+async function upsertTaskEvidenceRows(client, task = {}) {
+  let rows = normalizeTaskEvidenceForSync(task);
+  if (!rows.length) return { ok: true, written: 0, skipped: true, error: '' };
+  const droppedFields = [];
+  for (let attempt = 0; attempt < 6; attempt += 1) {
+    const { error } = await client.from('task_attachments').upsert(rows, { onConflict: 'id' });
+    if (!error) return { ok: true, written: rows.length, droppedFields, error: '' };
+    const missingField = getMissingColumnFromSupabaseError(error);
+    if (!missingField || droppedFields.includes(missingField)) {
+      return { ok: false, written: 0, droppedFields, error: error.message || String(error) };
+    }
+    droppedFields.push(missingField);
+    rows = rows.map((row) => {
+      const next = { ...row };
+      delete next[missingField];
+      return next;
+    });
+  }
+  return { ok: false, written: 0, droppedFields, error: 'task_attachments schema fallback exceeded retry limit' };
+}
+
 function markLocalDataSynced() {
   localStorage.setItem(SYNCED_DATA_SIGNATURE_KEY, getLocalSyncSignature());
   setPendingLocalSync(false);
@@ -6774,12 +6815,14 @@ async function confirmSupabaseTasksSync(message = t('saved')) {
     const client = await ensureSupabaseClient();
     const preview = buildSupabaseSyncPreview(appState, before);
     const result = await executeAutoSupabaseWriteSync(client, appState, before, { schemaStatus: lastSchemaStatus, tables: ['tasks'] });
+    const taskEvidenceResults = await Promise.all((appState.data.tasks || []).map(task => upsertTaskEvidenceRows(client, task)));
+    const evidenceError = taskEvidenceResults.find(row => !row.ok);
     lastWriteResult = result;
     const summary = summarizeWriteResult(result);
     saveWriteAuditEntry(buildWriteAuditEntry({ preview, writeResult: result, postWritePreview: null, tables: ['tasks'] }));
-    if (!summary.ok) {
+    if (!summary.ok || evidenceError) {
       setPendingLocalSync(true);
-      showToast(`${message} | Supabase sync failed: ${summary.errors[0]?.error || 'Unknown error'}`, 'error');
+      showToast(`${message} | Supabase sync failed: ${summary.errors[0]?.error || evidenceError?.error || 'Unknown error'}`, 'error');
       recordAction('Task Supabase sync failed', 'error');
       renderAppShell();
       return false;
