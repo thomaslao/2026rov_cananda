@@ -176,7 +176,7 @@ test('tasks flow supports add modal, search, sort, status, edit and delete', asy
   await page.locator('[data-task-modal] [data-task-form]').evaluate(form => form.requestSubmit());
   await expect(page.locator('[data-task-modal-bg]')).not.toHaveClass(/open/);
   await expect(page.locator('#page-tasks')).toContainText(editedName);
-  await expect.poll(() => page.evaluate(() => localStorage.getItem('rov_v16_pending_local_sync'))).toBe(null);
+  await expect.poll(() => page.evaluate(() => localStorage.getItem('rov_v16_pending_local_sync'))).toBe('1');
   await page.reload();
   await expect(page.locator('#page-tasks')).toBeVisible();
   await expect(page.locator('#page-tasks')).toContainText(editedName);

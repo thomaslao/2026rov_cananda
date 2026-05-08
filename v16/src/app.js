@@ -73,6 +73,7 @@ import { getLocale, labelFor, LOCALE_STORAGE_KEY, setLocale, t } from './utils/i
 const UNDO_STORAGE_KEY = 'rov_v16_last_undo';
 const ACTION_LOG_STORAGE_KEY = 'rov_v16_action_log';
 const PENDING_LOCAL_SYNC_KEY = 'rov_v16_pending_local_sync';
+const SYNCED_DATA_SIGNATURE_KEY = 'rov_v16_synced_data_signature';
 const ACTION_LOG_LIMIT = 8;
 const UNDO_BAR_AUTO_CLEAR_MS = 5000;
 const appState = loadAppState();
@@ -470,6 +471,48 @@ function setPendingLocalSync(pending) {
   else localStorage.removeItem(PENDING_LOCAL_SYNC_KEY);
 }
 
+function syncSignatureForData(data = {}) {
+  const normalizeTask = task => ({
+    id: Number(task.id || 0),
+    name: String(task.name || ''),
+    owner: String(task.owner || ''),
+    due: String(task.due || ''),
+    priority: String(task.priority || ''),
+    status: String(task.status || ''),
+    category: String(task.category || task.cat || ''),
+  });
+  const normalizeMember = member => ({
+    id: Number(member.id || 0),
+    name: String(member.name || ''),
+    role: String(member.role || ''),
+  });
+  const normalizeChecklist = item => ({
+    id: Number(item.id || item.item_id || 0),
+    label: String(item.label || item.name || ''),
+    done: Boolean(item.done),
+  });
+  const byId = (a, b) => Number(a.id || 0) - Number(b.id || 0) || String(a.name || a.label || '').localeCompare(String(b.name || b.label || ''));
+  return JSON.stringify({
+    tasks: (data.tasks || []).map(normalizeTask).sort(byId),
+    members: (data.members || []).map(normalizeMember).sort(byId),
+    checklist: (data.checklist || []).map(normalizeChecklist).sort(byId),
+    prediveChecklist: (data.prediveChecklist || []).map(normalizeChecklist).sort(byId),
+  });
+}
+
+function getLocalSyncSignature() {
+  return syncSignatureForData(appState.data);
+}
+
+function markLocalDataSynced() {
+  localStorage.setItem(SYNCED_DATA_SIGNATURE_KEY, getLocalSyncSignature());
+  setPendingLocalSync(false);
+}
+
+function localDataNeedsSyncProtection() {
+  return hasPendingLocalSync() || localStorage.getItem(SYNCED_DATA_SIGNATURE_KEY) !== getLocalSyncSignature();
+}
+
 function persistAndRender(message = t('saved'), options = {}) {
   if (!options.skipAutoSync) setPendingLocalSync(true);
   saveAppState(appState);
@@ -499,7 +542,7 @@ async function runAutoSupabaseSync() {
     const preview = buildSupabaseSyncPreview(appState, lastDbStatus);
     const hasWrites = preview.totalCreate + preview.totalUpdate > 0;
     if (!hasWrites) {
-      setPendingLocalSync(false);
+      markLocalDataSynced();
       return;
     }
     const client = await ensureSupabaseClient();
@@ -513,9 +556,15 @@ async function runAutoSupabaseSync() {
       renderAppShell();
       return;
     }
-    setPendingLocalSync(false);
     lastDbStatus = await loadSupabaseReadOnly();
     lastPostWritePreview = buildSupabaseSyncPreview(appState, lastDbStatus);
+    if (lastPostWritePreview.totalCreate + lastPostWritePreview.totalUpdate === 0) {
+      markLocalDataSynced();
+    } else {
+      setPendingLocalSync(true);
+      showToast('Auto Supabase sync incomplete. Local changes kept.', 'error');
+      recordAction('Auto Supabase sync incomplete', 'error');
+    }
     showToast(`Synced to Supabase: ${summary.written}`);
     recordAction(`Synced to Supabase: ${summary.written}`);
     renderAppShell();
@@ -574,7 +623,7 @@ function loadSupabaseIntoApp({ silent = false, preserveLocal = false } = {}) {
       payload.importDelta = importDelta;
       if (!preserveLocal) {
         applySupabaseReadOnlyData(appState, payload);
-        setPendingLocalSync(false);
+        markLocalDataSynced();
       }
       lastDbStatus = payload;
       lastSyncPreview = null;
@@ -583,6 +632,8 @@ function loadSupabaseIntoApp({ silent = false, preserveLocal = false } = {}) {
       if (!preserveLocal) {
         saveAppState(appState);
         showToast(`${t('imported')} | ${changed} changed groups`);
+      } else if (!silent) {
+        showToast('Local changes kept. Supabase import skipped.');
       }
       renderAppShell();
       return payload;
@@ -599,7 +650,7 @@ function scheduleInitialSupabaseLoad() {
   if (initialSupabaseLoadStarted) return;
   initialSupabaseLoadStarted = true;
   const defer = typeof window?.setTimeout === 'function' ? window.setTimeout.bind(window) : setTimeout;
-  defer(() => loadSupabaseIntoApp({ silent: true, preserveLocal: hasPendingLocalSync() }), 250);
+  defer(() => loadSupabaseIntoApp({ silent: true, preserveLocal: localDataNeedsSyncProtection() }), 250);
 }
 
 function updateIntelFiltersFromControl(target) {
@@ -1869,7 +1920,7 @@ appRoot?.addEventListener('click', (event) => {
     const payload = getRunPayloadFromDom();
     const message = actionMessage(t('saved'), `${t('missionRun')} ${payload.score}`);
     captureUndo(message);
-    createMissionRun(appState, currentElapsedSeconds());
+    createMissionRun(appState, currentElapsedSeconds(), payload);
     runDraft = null;
     saveAppState(appState);
     showToast(message);

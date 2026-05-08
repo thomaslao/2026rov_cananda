@@ -77,13 +77,13 @@ export function calculateMissionScore(scoreItems = [], penalty = 0) {
   };
 }
 
-export function createMissionRun(state, elapsedSeconds = 0) {
-  const scoreItems = getScoreItemsFromDom();
-  const penalty = Number(document.querySelector('[data-run-penalty]')?.value || 0);
+export function createMissionRun(state, elapsedSeconds = 0, payload = null) {
+  const scoreItems = payload?.scoreItems || getScoreItemsFromDom();
+  const penalty = payload ? Number(payload.penalty || 0) : Number(document.querySelector('[data-run-penalty]')?.value || 0);
   const scoreSummary = calculateMissionScore(scoreItems, penalty);
   const manualScore = document.querySelector('[data-run-score]')?.value;
-  const score = manualScore === '' ? scoreSummary.total : Number(manualScore || scoreSummary.total);
-  const note = document.querySelector('[data-run-note]')?.value?.trim() || '';
+  const score = payload ? Number(payload.score || scoreSummary.total) : manualScore === '' ? scoreSummary.total : Number(manualScore || scoreSummary.total);
+  const note = payload ? String(payload.note || '').trim() : document.querySelector('[data-run-note]')?.value?.trim() || '';
   const eventSummary = buildMissionEventSummary(state.data.missionEvents || []);
   const run = {
     id: Date.now(),
