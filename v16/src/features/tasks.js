@@ -406,7 +406,7 @@ export function renderTasksPage(state, options = {}) {
         </div>
         <div class="page-top-summary">${escapeHtml(t('openTasks'))} ${stats.open} | ${escapeHtml(t('overdue'))} ${stats.overdue} | ${escapeHtml(t('blocked'))} ${stats.blocked} | ${escapeHtml(t('visible'))} ${visibleTasks.length}/${tasks.length}</div>
       </div>
-      ${editingTask ? `<div class="card">
+      ${editingTask ? `<div class="card" id="task-edit-form">
         ${renderTaskForm(editingTask, { master, ownerSuggestions })}
         ${editingTask ? `<div style="font-size:.78rem;color:var(--muted);font-weight:800;margin-top:8px">${escapeHtml(t('editingTask'))}: ${escapeHtml(editingTask.name)}</div>` : ''}
       </div>` : ''}

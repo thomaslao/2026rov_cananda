@@ -87,7 +87,6 @@ let lastDiagnosticsSummary = null;
 let autoSyncTimer = null;
 let autoSyncInFlight = false;
 let autoSyncQueued = false;
-let taskModalOpen = false;
 let editingTaskId = null;
 let editingMemberId = null;
 let editingRunId = null;
@@ -103,6 +102,7 @@ let toastTimer = null;
 let undoState = loadUndoState();
 let undoClearTimer = null;
 let actionLog = loadActionLog();
+let taskModalOpen = false;
 const taskFilters = {
   search: '',
   owner: '',
@@ -1722,8 +1722,8 @@ appRoot?.addEventListener('click', (event) => {
   }
   const editTaskTarget = event.target.closest('[data-task-edit]');
   if (editTaskTarget) {
-    taskModalOpen = false;
     editingTaskId = editTaskTarget.dataset.taskEdit;
+    taskModalOpen = false;
     renderAppShell();
     return;
   }
@@ -1738,13 +1738,8 @@ appRoot?.addEventListener('click', (event) => {
     renderAppShell();
     return;
   }
-  if (event.target.closest('[data-task-close-modal]')) {
-    taskModalOpen = false;
-    renderAppShell();
-    return;
-  }
   const taskModalBg = event.target.closest('[data-task-modal-bg]');
-  if (taskModalBg && !event.target.closest('[data-task-modal]')) {
+  if (event.target.closest('[data-task-close-modal]') || (taskModalBg && !event.target.closest('[data-task-modal]'))) {
     taskModalOpen = false;
     renderAppShell();
     return;
