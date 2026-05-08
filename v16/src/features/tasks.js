@@ -339,9 +339,9 @@ export function renderTaskTable(tasks = [], members = [], options = {}) {
                 <td style="color:${late ? 'var(--red)' : 'var(--text)'}">${escapeHtml(task.due || '-')} ${due.days !== null ? `(${due.days}d)` : ''}</td>
                 <td><span class="badge ${task.priority === 'High' ? 'urgent' : task.priority === 'Low' ? 'done' : 'mid'}">${escapeHtml(labelFor(task.priority || 'Medium'))}</span></td>
                 <td>
-                  <div style="display:flex;gap:5px;align-items:center;flex-wrap:wrap">
-                    <button class="badge ${task.status === 'Done' ? 'done' : task.status === 'In Progress' ? 'mid' : ''}" type="button" data-task-next-status="${task.id}" title="${escapeHtml(t('nextStatus'))}" style="cursor:pointer;border:1px solid var(--border)">${escapeHtml(labelFor(task.status || 'Open'))}</button>
-                    <select data-task-status="${task.id}" aria-label="${escapeHtml(t('status'))}">
+                  <div class="task-status-cell">
+                    <button class="badge task-status-badge ${task.status === 'Done' ? 'done' : task.status === 'In Progress' ? 'mid' : ''}" type="button" data-task-next-status="${task.id}" title="${escapeHtml(t('nextStatus'))}">${escapeHtml(labelFor(task.status || 'Open'))}</button>
+                    <select class="task-status-select" data-task-status="${task.id}" aria-label="${escapeHtml(t('status'))}">
                       ${['Open', 'In Progress', 'Done'].map(status => `<option value="${status}" ${task.status === status ? 'selected' : ''}>${escapeHtml(labelFor(status))}</option>`).join('')}
                     </select>
                   </div>

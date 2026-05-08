@@ -305,6 +305,9 @@
   .task-sort-button { width:100%; min-height:38px; padding:8px 12px; border:0; background:transparent; color:inherit; cursor:pointer; display:flex; align-items:center; justify-content:flex-start; gap:6px; font:inherit; font-weight:900; text-align:left; }
   .task-sort-button:hover, .task-sort-button:focus-visible { background:rgba(255,255,255,.12); outline:none; }
   .task-sort-button span { min-width:12px; font-weight:900; }
+  .task-status-cell { display:grid; grid-template-columns:72px 126px; gap:8px; align-items:center; justify-content:start; }
+  .task-status-badge { width:72px; min-height:32px; display:inline-flex; align-items:center; justify-content:center; border:1px solid var(--border); cursor:pointer; line-height:1; white-space:nowrap; padding:4px 8px; }
+  .task-status-select { width:126px; min-width:126px; height:32px; margin:0; }
   .task-filter-bar { display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:8px; align-items:end; margin-bottom:8px; }
   .task-filter-bar label { min-width:0; }
   .task-filter-bar select { width:100%; min-width:0; }
