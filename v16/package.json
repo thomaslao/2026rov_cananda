@@ -1,0 +1,24 @@
+{
+  "name": "rov-task-manager-v16",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "check:js": "node --check serve.mjs && node --check status-v16.mjs && node --check src/app.js && node --check src/data/defaults.js && node --check src/data/diagnostics.js && node --check src/data/migration.js && node --check src/data/state.js && node --check src/data/supabase.js && node --check src/data/sync.js && node --check src/features/competition.js && node --check src/features/health.js && node --check src/features/intel.js && node --check src/features/legacy.js && node --check src/features/members.js && node --check src/features/navigation.js && node --check src/features/prep.js && node --check src/features/settings.js && node --check src/features/tasks.js && node --check src/utils/date.js && node --check src/utils/dom.js && node --check src/utils/i18n.js && node --check src/utils/index.js",
+    "serve": "node serve.mjs",
+    "start:local": "powershell -ExecutionPolicy Bypass -File start-local.ps1",
+    "stop:local": "powershell -ExecutionPolicy Bypass -File stop-local.ps1",
+    "status": "node status-v16.mjs",
+    "build:single": "node build-single-html.mjs",
+    "smoke": "node smoke-v16.mjs",
+    "smoke:single": "node smoke-single-html.mjs",
+    "smoke:server": "node smoke-server.mjs",
+    "smoke:server:local": "powershell -ExecutionPolicy Bypass -File validate-local.ps1",
+    "validate": "npm run check:js && npm run smoke && npm run build:single && npm run smoke:single && npm run smoke:server:local",
+    "e2e:ready": "node e2e-readiness.mjs",
+    "test:e2e": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.52.0"
+  }
+}

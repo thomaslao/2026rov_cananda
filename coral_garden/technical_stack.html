@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MATE ROV 2026 - Task 1.2 Coral Garden 技术栈</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Microsoft YaHei', 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .header .subtitle {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+        
+        .content {
+            padding: 30px;
+        }
+        
+        .section {
+            margin-bottom: 30px;
+            page-break-inside: avoid;
+        }
+        
+        .section-title {
+            font-size: 1.8em;
+            color: #1e3c72;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .score-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .score-table th {
+            background: #1e3c72;
+            color: white;
+            padding: 15px;
+            text-align: left;
+            font-size: 1.1em;
+        }
+        
+        .score-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .score-table tr:nth-child(even) {
+            background: #f8f9ff;
+        }
+        
+        .score-table tr:hover {
+            background: #e8ecff;
+        }
+        
+        .highlight {
+            background: #fff3cd;
+            padding: 15px;
+            border-left: 5px solid #ffc107;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        
+        .tech-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+        
+        .tech-card {
+            background: #f8f9ff;
+            padding: 20px;
+            border-radius: 10px;
+            border: 2px solid #667eea;
+        }
+        
+        .tech-card h3 {
+            color: #1e3c72;
+            margin-bottom: 10px;
+            font-size: 1.3em;
+        }
+        
+        .tech-card ul {
+            list-style: none;
+            padding-left: 0;
+        }
+        
+        .tech-card li {
+            padding: 5px 0;
+            padding-left: 20px;
+            position: relative;
+        }
+        
+        .tech-card li:before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: #667eea;
+            font-weight: bold;
+        }
+        
+        .sop-timeline {
+            position: relative;
+            padding-left: 40px;
+        }
+        
+        .sop-step {
+            position: relative;
+            margin-bottom: 25px;
+            padding: 20px;
+            background: #f8f9ff;
+            border-radius: 10px;
+            border-left: 5px solid #667eea;
+        }
+        
+        .sop-step::before {
+            content: attr(data-step);
+            position: absolute;
+            left: -55px;
+            top: 20px;
+            width: 40px;
+            height: 40px;
+            background: #667eea;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.2em;
+        }
+        
+        .sop-step h4 {
+            color: #1e3c72;
+            margin-bottom: 10px;
+            font-size: 1.2em;
+        }
+        
+        .backup-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .backup-card {
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        
+        .backup-card.plan-a {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: white;
+        }
+        
+        .backup-card.plan-b {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+        }
+        
+        .backup-card.plan-c {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+        }
+        
+        .backup-card h4 {
+            font-size: 1.5em;
+            margin-bottom: 10px;
+        }
+        
+        .backup-card .score {
+            font-size: 2em;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        
+        .footer {
+            background: #f8f9ff;
+            padding: 20px;
+            text-align: center;
+            color: #666;
+            border-top: 2px solid #e0e0e0;
+        }
+        
+        .checklist {
+            background: #f8f9ff;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+        
+        .checklist h3 {
+            color: #1e3c72;
+            margin-bottom: 15px;
+        }
+        
+        .checklist-item {
+            padding: 8px 0;
+            padding-left: 30px;
+            position: relative;
+        }
+        
+        .checklist-item::before {
+            content: "☐";
+            position: absolute;
+            left: 0;
+            color: #667eea;
+            font-size: 1.2em;
+        }
+        
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+            }
+            
+            .container {
+                box-shadow: none;
+            }
+            
+            .section {
+                page-break-inside: avoid;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1> MATE ROV 2026 World Championship</h1>
+            <div class="subtitle">Task 1.2 Coral Garden Modeling - Photogrammetry Technical Stack</div>
+            <div class="subtitle" style="margin-top: 10px; font-size: 1em;">最高得分：40分 | 场地：Flume Tank（有水流）</div>
+        </div>
+        
+        <div class="content">
+            <!-- 评分方法 -->
+            <div class="section">
+                <h2 class="section-title">📊 评分方法对比</h2>
+                <table class="score-table">
+                    <thead>
+                        <tr>
+                            <th>方法</th>
+                            <th>最高分</th>
+                            <th>核心要求</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>摄影测量 Photogrammetry（自动）</strong></td>
+                            <td style="font-size: 1.5em; color: #11998e;">40分</td>
+                            <td>彩色目标方块可见、长度已量测验证、比例正确、高度误差 ≤5 cm</td>
+                        </tr>
+                        <tr>
+                            <td><strong>手工 CAD 建模</strong></td>
+                            <td style="font-size: 1.5em; color: #f093fb;">30分</td>
+                            <td>长度与高度误差各 ≤5 cm，可旋转 3D 模型</td>
+                        </tr>
+                        <tr>
+                            <td><strong>纸面三视图</strong></td>
+                            <td style="font-size: 1.5em; color: #4facfe;">20分</td>
+                            <td>长度与高度误差各 ≤5 cm，正、俯、侧三视图</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div class="highlight">
+                    ️ <strong>重要：</strong>三种方法可同时进行，但只计最高分一种。
+                </div>
+            </div>
+            
+            <!-- 技术栈 -->
+            <div class="section">
+                <h2 class="section-title">🔧 推荐技术栈（Photogrammetry 路线）</h2>
+                
+                <div class="tech-grid">
+                    <div class="tech-card">
+                        <h3>📷 硬件层</h3>
+                        <ul>
+                            <li>1080p@30fps 广角镜头（FoV ≥ 90°）</li>
+                            <li>防水 ArUco marker（≥4×4 cm，≥8个）</li>
+                            <li>2×LED 水下灯（≥1000 lm）</li>
+                            <li>6 推进器配置（5自由度以上）</li>
+                            <li>MS5837-30BA 深度传感器</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="tech-card">
+                        <h3>💻 软件层 - 影像采集</h3>
+                        <ul>
+                            <li>GStreamer / OpenCV VideoCapture</li>
+                            <li>视频录制：H.264 MP4，≥30fps，1080p</li>
+                            <li>libcamera / Pi Camera 驱动</li>
+                            <li>UDP 串流 → 5600 port</li>
+                            <li>时间戳记同步（NTP 或 PPS）</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="tech-card">
+                        <h3>🎨 软件层 - 3D 建模</h3>
+                        <ul>
+                            <li><strong>Meshroom</strong>（首选，GPU加速）</li>
+                            <li>COLMAP（备用，CLI友好）</li>
+                            <li>OpenDroneMap（Docker部署）</li>
+                            <li><strong>CloudCompare</strong>（必装，量测用）</li>
+                            <li>Python 3.10+（opencv-python, numpy）</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="tech-card">
+                        <h3>️ 软件层 - CAD 备案</h3>
+                        <ul>
+                            <li>FreeCAD（免费，跨平台）</li>
+                            <li>Fusion 360（教育版）</li>
+                            <li>Tinkercad（最快上手）</li>
+                            <li>目标：5分钟内完成基本模型</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 目标方块规格 -->
+            <div class="section">
+                <h2 class="section-title">🎯 目标方块规格（Photogrammetry 必要）</h2>
+                <table class="score-table">
+                    <tbody>
+                        <tr>
+                            <td><strong>类型</strong></td>
+                            <td>ArUco DICT_4X4_50 或彩色编码圆形标靶</td>
+                        </tr>
+                        <tr>
+                            <td><strong>尺寸</strong></td>
+                            <td>5×5 cm（实体），防水护贝或防水打印</td>
+                        </tr>
+                        <tr>
+                            <td><strong>数量</strong></td>
+                            <td>≥8 个（分布于前、中、后、左、右、顶部）</td>
+                        </tr>
+                        <tr>
+                            <td><strong>固定方式</strong></td>
+                            <td>磁吸底座 / 吸盘，赛前由操作员摆放</td>
+                        </tr>
+                        <tr>
+                            <td><strong>已知距离</strong></td>
+                            <td>两个标靶间距需事先量测记录（作为比例尺）</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- 操作SOP -->
+            <div class="section">
+                <h2 class="section-title"> 操作 SOP（15 分钟内完成）</h2>
+                <div class="sop-timeline">
+                    <div class="sop-step" data-step="0">
+                        <h4>赛前准备（入水前）</h4>
+                        <ul>
+                            <li>确认目标板已摆放，记录两板间已知距离</li>
+                            <li>确认摄影机白平衡锁定（避免曝光变化）</li>
+                            <li>开始录制视频（1080p@30fps）</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="sop-step" data-step="1">
+                        <h4>扫描飞行（入水后 ~3 分钟）</h4>
+                        <ul>
+                            <li><strong>Z 字形扫描：</strong>从左→右，前→后，覆盖所有目标板</li>
+                            <li><strong>补充环绕扫描：</strong>围绕珊瑚礁顶部一圈（确保覆盖高度）</li>
+                            <li>确认每个目标板至少出现 3 次以上画面</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="sop-step" data-step="2">
+                        <h4>离水后建模（~8 分钟）</h4>
+                        <ul>
+                            <li><strong>ffmpeg 拆幀：</strong>每秒取 5 幀</li>
+                            <li><strong>模糊侦测：</strong>删除低质量幀</li>
+                            <li><strong>Meshroom 建模：</strong>GPU 模式 ~5 分钟</li>
+                            <li><strong>CloudCompare 量测：</strong>测量 L 和 H，验证误差 ≤5 cm</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="sop-step" data-step="3">
+                        <h4>赛场交付</h4>
+                        <ul>
+                            <li>旋转展示 3D 模型给评分官</li>
+                            <li>报告 L（长度）和 H（高度）量测值</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 降级策略 -->
+            <div class="section">
+                <h2 class="section-title">🔄 降级策略（Plan B / C）</h2>
+                <div class="backup-grid">
+                    <div class="backup-card plan-a">
+                        <h4>Plan A - Photogrammetry</h4>
+                        <div class="score">40分</div>
+                        <p>自动3D建模<br>最佳方案</p>
+                    </div>
+                    <div class="backup-card plan-b">
+                        <h4>Plan B - CAD建模</h4>
+                        <div class="score">30分</div>
+                        <p>手工建模<br>FreeCAD/Tinkercad</p>
+                    </div>
+                    <div class="backup-card plan-c">
+                        <h4>Plan C - 纸面三视图</h4>
+                        <div class="score">20分</div>
+                        <p>手绘三视图<br>紧急备案</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 检查清单 -->
+            <div class="section">
+                <h2 class="section-title">✅ 待办清单（Backlog）</h2>
+                <div class="checklist">
+                    <div class="checklist-item">采购并防水处理 ArUco 目标板（≥8 个）</div>
+                    <div class="checklist-item">测试 Meshroom GPU 模式在赛场笔电上的建模时间</div>
+                    <div class="checklist-item">建立 ffmpeg 一键拆幀 + 模糊筛选脚本</div>
+                    <div class="checklist-item">训练操控员完成 Z 字形扫描路径（目标：3 分钟内）</div>
+                    <div class="checklist-item">制作 CloudCompare 量测 SOP 录像</div>
+                    <div class="checklist-item">验证 CAD 备案流程（FreeCAD）可在 5 分钟内完成基本模型</div>
+                    <div class="checklist-item">在 Flume Tank 水流环境中测试悬停稳定性</div>
+                </div>
+            </div>
+            
+            <!-- 处理管线 -->
+            <div class="section">
+                <h2 class="section-title">🔗 标准处理管线</h2>
+                <div class="highlight">
+                    <div style="font-family: monospace; font-size: 1.1em; line-height: 2;">
+                        <strong>视频录制</strong>（1080p@30fps）<br>
+                        ↓<br>
+                        <strong>视频拆幀</strong>（ffmpeg，每秒5幀）<br>
+                        ↓<br>
+                        <strong>影像品质筛选</strong>（模糊侦测）<br>
+                        ↓<br>
+                        <strong>Meshroom SfM</strong> → 稠密点云 → Mesh<br>
+                        ↓<br>
+                        <strong>CloudCompare 量测</strong>（长度 L、高度 H）<br>
+                        ↓<br>
+                        <strong>导出 OBJ / PLY</strong><br>
+                        ↓<br>
+                        <strong>赛场电脑展示</strong>（旋转 3D 模型）
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p><strong>MATE ROV 2026 World Championship | Task 1.2 Coral Garden Modeling</strong></p>
+            <p>最后更新：2026-05-06 | 参考：MATE ROV 2026 官方规则手册</p>
+            <p style="margin-top: 10px; color: #999;">📧 如需帮助，请联系技术团队</p>
+        </div>
+    </div>
+</body>
+</html>

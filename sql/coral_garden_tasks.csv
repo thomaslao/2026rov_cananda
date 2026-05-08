@@ -1,0 +1,10 @@
+Task 1.2 Coral Garden建模 - 目标板采购与防水处理,🔴 紧急,工程组+洪嘉濠,2026-05-10,待辦,采购≥8个ArUco目标板，5×5cm，防水护贝处理
+Task 1.2 Coral Garden建模 - Meshroom GPU性能测试,🟠 高优先,工程组,2026-05-12,待辦,在赛场笔电上测试Meshroom建模时间（目标<5分钟）
+Task 1.2 Coral Garden建模 - ffmpeg拆幀+模糊筛选脚本,🟠 高优先,洪嘉濠,2026-05-12,待辦,建立一键拆幀脚本：ffmpeg + OpenCV模糊检测
+Task 1.2 Coral Garden建模 - Z字形扫描路径训练, 高优先,全体操控员,2026-05-13,待辦,训练操控员在Flume Tank水流中完成Z字形扫描（目标3分钟内）
+Task 1.2 Coral Garden建模 - CloudCompare量测SOP制作,🟡 中优先,工程组,2026-05-14,待辦,制作CloudCompare长度L和高度H量测SOP视频
+Task 1.2 Coral Garden建模 - CAD备案流程验证, 中优先,工程组,2026-05-14,待辦,验证FreeCAD/Tinkercad可在5分钟内完成基本3D模型
+Task 1.2 Coral Garden建模 - Flume Tank悬停稳定性测试,🟠 高优先,工程组+操控员,2026-05-15,待辦,在水流环境中测试ROV悬停稳定性（≥3分钟稳定）
+Task 1.2 Coral Garden建模 - 目标板摆放与已知距离测量,🟡 中优先,全体,2026-05-15,待辦,赛前摆放≥8个目标板，记录两板间已知距离（用于比例尺）
+Task 1.2 Coral Garden建模 - 摄影机白平衡锁定测试,🟡 中优先,洪嘉濠,2026-05-15,待辦,测试并锁定摄影机白平衡，避免曝光变化影响建模
+Task 1.2 Coral Garden建模 - 完整管线集成测试,🟠 高优先,全体,2026-05-16,待辦,完整测试：扫描→拆幀→Meshroom→CloudCompare量测全流程
