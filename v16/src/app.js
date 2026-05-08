@@ -72,6 +72,7 @@ import { getLocale, labelFor, LOCALE_STORAGE_KEY, setLocale, t } from './utils/i
 
 const UNDO_STORAGE_KEY = 'rov_v16_last_undo';
 const ACTION_LOG_STORAGE_KEY = 'rov_v16_action_log';
+const PENDING_LOCAL_SYNC_KEY = 'rov_v16_pending_local_sync';
 const ACTION_LOG_LIMIT = 8;
 const UNDO_BAR_AUTO_CLEAR_MS = 5000;
 const appState = loadAppState();
@@ -460,7 +461,17 @@ function restoreUndo() {
   return true;
 }
 
+function hasPendingLocalSync() {
+  return localStorage.getItem(PENDING_LOCAL_SYNC_KEY) === '1';
+}
+
+function setPendingLocalSync(pending) {
+  if (pending) localStorage.setItem(PENDING_LOCAL_SYNC_KEY, '1');
+  else localStorage.removeItem(PENDING_LOCAL_SYNC_KEY);
+}
+
 function persistAndRender(message = t('saved'), options = {}) {
+  if (!options.skipAutoSync) setPendingLocalSync(true);
   saveAppState(appState);
   saveMasterData(appState);
   if (!options.keepUndo) clearUndo();
@@ -487,7 +498,10 @@ async function runAutoSupabaseSync() {
     }
     const preview = buildSupabaseSyncPreview(appState, lastDbStatus);
     const hasWrites = preview.totalCreate + preview.totalUpdate > 0;
-    if (!hasWrites) return;
+    if (!hasWrites) {
+      setPendingLocalSync(false);
+      return;
+    }
     const client = await ensureSupabaseClient();
     const result = await executeAutoSupabaseWriteSync(client, appState, lastDbStatus, { schemaStatus: lastSchemaStatus });
     lastWriteResult = result;
@@ -499,6 +513,7 @@ async function runAutoSupabaseSync() {
       renderAppShell();
       return;
     }
+    setPendingLocalSync(false);
     lastDbStatus = await loadSupabaseReadOnly();
     lastPostWritePreview = buildSupabaseSyncPreview(appState, lastDbStatus);
     showToast(`Synced to Supabase: ${summary.written}`);
@@ -559,6 +574,7 @@ function loadSupabaseIntoApp({ silent = false, preserveLocal = false } = {}) {
       payload.importDelta = importDelta;
       if (!preserveLocal) {
         applySupabaseReadOnlyData(appState, payload);
+        setPendingLocalSync(false);
       }
       lastDbStatus = payload;
       lastSyncPreview = null;
@@ -583,7 +599,7 @@ function scheduleInitialSupabaseLoad() {
   if (initialSupabaseLoadStarted) return;
   initialSupabaseLoadStarted = true;
   const defer = typeof window?.setTimeout === 'function' ? window.setTimeout.bind(window) : setTimeout;
-  defer(() => loadSupabaseIntoApp({ silent: true, preserveLocal: Boolean(appState.savedAt) }), 250);
+  defer(() => loadSupabaseIntoApp({ silent: true, preserveLocal: hasPendingLocalSync() }), 250);
 }
 
 function updateIntelFiltersFromControl(target) {

@@ -98,7 +98,17 @@ async function preparePage(page) {
             limit: () => Promise.resolve({ data: (tableRows[table] || []).slice(0, 1), error: null }),
             then: (resolve) => resolve({ data: tableRows[table] || [], error: null }),
           }),
-          upsert: () => Promise.resolve({ data: [], error: null }),
+          upsert: (rows = []) => {
+            const idKey = table === 'checklist_items' || table === 'predive_checklist_items' ? 'item_id' : 'id';
+            const existing = tableRows[table] || [];
+            rows.forEach((row) => {
+              const index = existing.findIndex(item => Number(item[idKey]) === Number(row[idKey]));
+              if (index >= 0) existing[index] = { ...existing[index], ...row };
+              else existing.push(row);
+            });
+            tableRows[table] = existing;
+            return Promise.resolve({ data: rows, error: null });
+          },
           insert: () => Promise.resolve({ data: [], error: null }),
           update: () => ({ eq: () => Promise.resolve({ data: [], error: null }) }),
         }),
@@ -166,6 +176,7 @@ test('tasks flow supports add modal, search, sort, status, edit and delete', asy
   await page.locator('[data-task-modal] [data-task-form]').evaluate(form => form.requestSubmit());
   await expect(page.locator('[data-task-modal-bg]')).not.toHaveClass(/open/);
   await expect(page.locator('#page-tasks')).toContainText(editedName);
+  await expect.poll(() => page.evaluate(() => localStorage.getItem('rov_v16_pending_local_sync'))).toBe(null);
   await page.reload();
   await expect(page.locator('#page-tasks')).toBeVisible();
   await expect(page.locator('#page-tasks')).toContainText(editedName);
