@@ -793,6 +793,8 @@ check('diagnostics viewer highlights imported audit', settings.includes("const i
   'hasDashboardTaskEvidence',
   'dashboardValidationSummary',
   'scheduleAutoSupabaseSync',
+  'scheduleInitialSupabaseLoad',
+  'loadSupabaseIntoApp',
   'runAutoSupabaseSync',
   'lastDbStatus = await loadSupabaseReadOnly()',
   'Auto Supabase sync failed',

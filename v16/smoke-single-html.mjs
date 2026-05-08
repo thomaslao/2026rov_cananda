@@ -98,6 +98,7 @@ if (!existsSync(htmlPath)) {
     check('single html includes action log', script.includes('rov_v16_action_log') && script.includes('recordAction') && script.includes('data-settings-action-log'), '');
     check('single html includes action log management', script.includes('data-action="export-action-log"') && script.includes('clearActionLog') && script.includes('exportActionLog'), '');
     check('single html auto syncs saved edits', script.includes('scheduleAutoSupabaseSync') && script.includes('executeAutoSupabaseWriteSync') && script.includes('lastDbStatus = await loadSupabaseReadOnly()') && script.includes('Synced to Supabase') && script.includes('Auto Supabase sync failed'), '');
+    check('single html auto loads supabase on startup', script.includes('scheduleInitialSupabaseLoad') && script.includes('loadSupabaseIntoApp') && script.includes('scheduleInitialSupabaseLoad();'), '');
     check('single html auto sync has schema fallback', script.includes('upsertRowsWithSchemaFallback') && script.includes('getMissingColumnFromError') && script.includes("Could not find the '"), '');
     check('single html includes safety status summary', script.includes('data-settings-safety-status') && script.includes('undoSnapshot') && script.includes('notAvailable'), '');
     check('single html includes safety report export', script.includes('data-action="export-safety-report"') && script.includes('exportSafetyReport') && script.includes('rov_v16_safety_report'), '');

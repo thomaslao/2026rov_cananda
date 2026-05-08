@@ -87,6 +87,7 @@ let lastDiagnosticsSummary = null;
 let autoSyncTimer = null;
 let autoSyncInFlight = false;
 let autoSyncQueued = false;
+let initialSupabaseLoadStarted = false;
 let editingTaskId = null;
 let editingMemberId = null;
 let editingRunId = null;
@@ -547,6 +548,38 @@ function applyTaskSearchFromDom() {
   const input = document.querySelector('[data-task-search]');
   taskFilters.search = input?.value || '';
   return true;
+}
+
+function loadSupabaseIntoApp({ silent = false } = {}) {
+  lastDbStatus = { loadedAt: new Date().toISOString(), error: 'Loading...' };
+  if (!silent) renderAppShell();
+  return loadSupabaseReadOnly()
+    .then((payload) => {
+      const importDelta = buildSupabaseReadOnlyImportDelta(appState.data, payload.data);
+      payload.importDelta = importDelta;
+      applySupabaseReadOnlyData(appState, payload);
+      lastDbStatus = payload;
+      lastSyncPreview = null;
+      lastPostWritePreview = null;
+      const changed = importDelta.rows.filter(row => row.delta !== 0).length;
+      saveAppState(appState);
+      showToast(`${t('imported')} | ${changed} changed groups`);
+      renderAppShell();
+      return payload;
+    })
+    .catch((error) => {
+      lastDbStatus = { loadedAt: new Date().toISOString(), error: error.message || String(error), tables: {} };
+      if (!silent) showToast(`Supabase load failed: ${error.message || error}`, 'error');
+      renderAppShell();
+      return null;
+    });
+}
+
+function scheduleInitialSupabaseLoad() {
+  if (initialSupabaseLoadStarted) return;
+  initialSupabaseLoadStarted = true;
+  const defer = typeof window?.setTimeout === 'function' ? window.setTimeout.bind(window) : setTimeout;
+  defer(() => loadSupabaseIntoApp({ silent: true }), 250);
 }
 
 function updateIntelFiltersFromControl(target) {
@@ -1352,6 +1385,7 @@ window.ROV_V16 = {
 };
 
 renderAppShell();
+scheduleInitialSupabaseLoad();
 
 appRoot?.addEventListener('click', (event) => {
   if (event.target.closest('[data-action="undo-last-change"]')) {
@@ -1571,23 +1605,7 @@ appRoot?.addEventListener('click', (event) => {
     return;
   }
   if (event.target.closest('[data-action="load-supabase-readonly"]')) {
-    lastDbStatus = { loadedAt: new Date().toISOString(), error: 'Loading...' };
-    renderAppShell();
-    loadSupabaseReadOnly()
-      .then((payload) => {
-        const importDelta = buildSupabaseReadOnlyImportDelta(appState.data, payload.data);
-        payload.importDelta = importDelta;
-        applySupabaseReadOnlyData(appState, payload);
-        lastDbStatus = payload;
-        lastSyncPreview = null;
-        lastPostWritePreview = null;
-        const changed = importDelta.rows.filter(row => row.delta !== 0).length;
-        persistAndRender(`${t('imported')} | ${changed} changed groups`);
-      })
-      .catch((error) => {
-        lastDbStatus = { loadedAt: new Date().toISOString(), error: error.message || String(error), tables: {} };
-        renderAppShell();
-      });
+    loadSupabaseIntoApp();
     return;
   }
   if (event.target.closest('[data-action="build-sync-preview"]')) {
