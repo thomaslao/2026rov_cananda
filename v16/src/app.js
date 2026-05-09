@@ -110,6 +110,7 @@ let editingChecklist = null;
 let editingIntelId = null;
 let editingStrategyId = null;
 let prepFocus = null;
+let prepActiveTab = 'checklist';
 let intelFocus = null;
 let toastState = null;
 let toastTimer = null;
@@ -1187,10 +1188,13 @@ function applyPrepFocusPreset(target) {
   const preset = target.closest('[data-prep-focus-section]');
   if (!preset) return false;
   const query = preset.dataset.prepFocusQuery || '';
+  const section = preset.dataset.prepFocusSection || '';
   prepFocus = {
-    section: preset.dataset.prepFocusSection || '',
+    section,
     query,
   };
+  if (section === 'prediveChecklist' || section === 'gearItems') prepActiveTab = section;
+  else prepActiveTab = 'checklist';
   prepFilters.search = query;
   prepFilters.status = '';
   Object.assign(prepFilters, normalizePrepFilters(prepFilters));
@@ -1238,6 +1242,13 @@ function clearIntelFocus() {
 
 function cleanFocusText(value) {
   return String(value || '').trim().toLowerCase();
+}
+
+function prepChecklistItemId(item = {}, index = -1) {
+  const candidates = [item.id, item.item_id, item.itemId]
+    .map(value => Number(value))
+    .filter(value => Number.isFinite(value) && value > 0);
+  return candidates[0] || (index >= 0 ? index + 1 : '');
 }
 
 function clearPrepFocusIfComplete(section, query, complete) {
@@ -1626,7 +1637,7 @@ function renderDashboard() {
 }
 
 function renderCurrentPage() {
-  if (appState.currentPage === 'prep') return renderPrepCenter(appState, { editingGearId, editingChecklist, prepFocus, filters: prepFilters });
+  if (appState.currentPage === 'prep') return renderPrepCenter(appState, { editingGearId, editingChecklist, prepFocus, filters: prepFilters, activeTab: prepActiveTab });
   if (appState.currentPage === 'tasks') {
     pruneSelectedTaskIds();
     return renderTasksPage(appState, { editingTaskId, addingTask, viewingTaskId, filters: taskFilters, myOwner: myTaskOwner, selectedTaskIds: [...selectedTaskIds], visibleColumns: visibleTaskColumns, taskDensity });
@@ -1671,6 +1682,23 @@ function renderAppShell() {
     });
     renderSmokeTestPanel(getSmokePanel(), getSmokeTestLog()[0], getSmokeTestLog());
   }
+}
+
+function openPrepEdit(kind, listName, id) {
+  if (kind === 'gear') {
+    editingGearId = id;
+    editingChecklist = null;
+    prepActiveTab = 'gearItems';
+  } else {
+    editingChecklist = { listName: listName || 'checklist', id };
+    editingGearId = null;
+    prepActiveTab = listName === 'prediveChecklist' ? 'prediveChecklist' : 'checklist';
+  }
+  renderAppShell();
+}
+
+if (typeof window !== 'undefined') {
+  window.rovOpenPrepEdit = openPrepEdit;
 }
 
 function runAndRenderSmokeTest() {
@@ -1814,6 +1842,24 @@ scheduleInitialSupabaseLoad();
 startSupabaseRealtimeRefresh();
 
 appRoot?.addEventListener('click', (event) => {
+  const prepEditTarget = event.target.closest('[data-prep-edit]');
+  if (prepEditTarget) {
+    if (prepEditTarget.dataset.prepEdit === 'gear') {
+      editingGearId = prepEditTarget.dataset.prepId;
+      editingChecklist = null;
+      prepActiveTab = 'gearItems';
+    } else {
+      const listName = prepEditTarget.dataset.prepList || 'checklist';
+      editingChecklist = {
+        listName,
+        id: prepEditTarget.dataset.prepId,
+      };
+      editingGearId = null;
+      prepActiveTab = listName === 'prediveChecklist' ? 'prediveChecklist' : 'checklist';
+    }
+    renderAppShell();
+    return;
+  }
   if (event.target.closest('[data-action="undo-last-change"]')) {
     restoreUndo();
     return;
@@ -1934,6 +1980,12 @@ appRoot?.addEventListener('click', (event) => {
   }
   if (event.target.closest('[data-prep-clear-focus]')) {
     clearPrepFocus();
+    renderAppShell();
+    return;
+  }
+  const prepTabTarget = event.target.closest('[data-prep-tab]');
+  if (prepTabTarget) {
+    prepActiveTab = prepTabTarget.dataset.prepTab || 'checklist';
     renderAppShell();
     return;
   }
@@ -2349,11 +2401,18 @@ appRoot?.addEventListener('click', (event) => {
       listName: editChecklistTarget.dataset.checklistEdit,
       id: editChecklistTarget.dataset.checkId,
     };
+    prepActiveTab = editChecklistTarget.dataset.checklistEdit === 'prediveChecklist' ? 'prediveChecklist' : 'checklist';
     renderAppShell();
     return;
   }
   if (event.target.closest('[data-checklist-cancel-edit]')) {
     editingChecklist = null;
+    renderAppShell();
+    return;
+  }
+  if (event.target.closest('[data-prep-cancel-edit]')) {
+    editingChecklist = null;
+    editingGearId = null;
     renderAppShell();
     return;
   }
@@ -2374,7 +2433,7 @@ appRoot?.addEventListener('click', (event) => {
   const deleteChecklistTarget = event.target.closest('[data-checklist-delete]');
   if (deleteChecklistTarget) {
     const list = appState.data[deleteChecklistTarget.dataset.checklistDelete] || [];
-    const item = list.find(row => Number(row.id) === Number(deleteChecklistTarget.dataset.checkId));
+    const item = list.find((row, index) => Number(prepChecklistItemId(row, index)) === Number(deleteChecklistTarget.dataset.checkId));
     if (!confirmDelete(item?.label || t('checklist'))) return;
     const message = actionMessage(t('deleted'), item?.label || t('checklist'));
     captureUndo(message);
@@ -2392,11 +2451,11 @@ appRoot?.addEventListener('click', (event) => {
   const toggleChecklistTarget = event.target.closest('[data-checklist-toggle]');
   if (toggleChecklistTarget) {
     const listName = toggleChecklistTarget.dataset.checklistToggle;
-    const beforeItem = appState.data[listName]?.find(row => Number(row.id) === Number(toggleChecklistTarget.dataset.checkId));
+    const beforeItem = appState.data[listName]?.find((row, index) => Number(prepChecklistItemId(row, index)) === Number(toggleChecklistTarget.dataset.checkId));
     const message = actionMessage(t('statusUpdated'), beforeItem?.label || t('checklist'));
     captureUndo(message);
     if (toggleChecklistItem(appState, listName, toggleChecklistTarget.dataset.checkId)) {
-      const item = appState.data[listName]?.find(row => Number(row.id) === Number(toggleChecklistTarget.dataset.checkId));
+      const item = appState.data[listName]?.find((row, index) => Number(prepChecklistItemId(row, index)) === Number(toggleChecklistTarget.dataset.checkId));
       clearPrepFocusIfComplete(listName, item?.label, item?.done);
       persistAndRender(message, { keepUndo: true });
     }
@@ -2412,6 +2471,7 @@ appRoot?.addEventListener('click', (event) => {
   const editGearTarget = event.target.closest('[data-gear-edit]');
   if (editGearTarget) {
     editingGearId = editGearTarget.dataset.gearEdit;
+    prepActiveTab = 'gearItems';
     renderAppShell();
     return;
   }
@@ -2711,11 +2771,11 @@ appRoot?.addEventListener('change', (event) => {
   }
   const check = event.target.closest('[data-checklist]');
   if (check) {
-    const item = appState.data[check.dataset.checklist]?.find(row => Number(row.id) === Number(check.dataset.checkId));
+    const item = appState.data[check.dataset.checklist]?.find((row, index) => Number(prepChecklistItemId(row, index)) === Number(check.dataset.checkId));
     const message = actionMessage(t('statusUpdated'), item?.label || t('checklist'));
     captureUndo(message);
     if (toggleChecklistItem(appState, check.dataset.checklist, check.dataset.checkId)) {
-      const updatedItem = appState.data[check.dataset.checklist]?.find(row => Number(row.id) === Number(check.dataset.checkId));
+      const updatedItem = appState.data[check.dataset.checklist]?.find((row, index) => Number(prepChecklistItemId(row, index)) === Number(check.dataset.checkId));
       clearPrepFocusIfComplete(check.dataset.checklist, updatedItem?.label, updatedItem?.done);
       persistAndRender(message, { keepUndo: true });
     }
