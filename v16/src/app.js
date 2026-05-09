@@ -242,6 +242,13 @@ function getVisibleTaskIdSet() {
   return new Set(getVisibleTasks(appState.data.tasks || [], appState.data.members || [], taskFilters).map(task => Number(task.id)));
 }
 
+function getAdjacentVisibleTaskId(currentId, direction = 1) {
+  const ids = getVisibleTasks(appState.data.tasks || [], appState.data.members || [], taskFilters).map(task => Number(task.id));
+  const index = ids.indexOf(Number(currentId));
+  if (index < 0 || !ids.length) return null;
+  return ids[index + direction] || null;
+}
+
 function pruneSelectedTaskIds() {
   const existingIds = new Set((appState.data.tasks || []).map(task => Number(task.id)));
   selectedTaskIds = new Set([...selectedTaskIds].filter(id => existingIds.has(Number(id))));
@@ -2116,6 +2123,15 @@ appRoot?.addEventListener('click', (event) => {
     renderAppShell();
     return;
   }
+  const taskDetailNav = event.target.closest('[data-task-detail-nav]');
+  if (taskDetailNav) {
+    const nextId = getAdjacentVisibleTaskId(viewingTaskId, Number(taskDetailNav.dataset.taskDetailNav || 1));
+    if (nextId) {
+      viewingTaskId = nextId;
+      renderAppShell();
+    }
+    return;
+  }
   if (event.target.closest('[data-task-open-add]')) {
     editingTaskId = null;
     viewingTaskId = null;
@@ -2608,6 +2624,14 @@ appRoot?.addEventListener('change', (event) => {
     const message = actionMessage(t('saved'), `${count} ${t('tasks')} -> ${bulkOwner.value}`);
     captureUndo(message);
     if (applyTaskBulkUpdate({ owner: bulkOwner.value })) persistAndRender(message, { keepUndo: true });
+    return;
+  }
+  const bulkCategory = event.target.closest('[data-task-bulk-category]');
+  if (bulkCategory && bulkCategory.value) {
+    const count = selectedTaskIds.size;
+    const message = actionMessage(t('saved'), `${count} ${t('tasks')} -> ${labelFor(bulkCategory.value)}`);
+    captureUndo(message);
+    if (applyTaskBulkUpdate({ category: bulkCategory.value })) persistAndRender(message, { keepUndo: true });
     return;
   }
   const taskCategory = event.target.closest('[data-task-category]');

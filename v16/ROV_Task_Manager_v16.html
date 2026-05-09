@@ -361,7 +361,7 @@
   .task-detail-field strong { color:var(--navy); font-size:.9rem; overflow-wrap:anywhere; }
   .task-detail-section { border:1px solid var(--border); border-radius:8px; background:var(--input-bg); padding:10px; }
   .task-detail-note { margin-top:6px; color:var(--text); font-size:.88rem; font-weight:800; line-height:1.45; white-space:pre-wrap; overflow-wrap:anywhere; }
-  .task-bulk-toolbar { display:none; grid-template-columns:minmax(115px,.8fr) repeat(3,minmax(128px,1fr)) auto auto; gap:8px; align-items:center; margin:0 0 10px; padding:9px; border:1px solid var(--border); border-left:5px solid var(--blue); border-radius:8px; background:#F7FAFF; }
+  .task-bulk-toolbar { display:none; grid-template-columns:minmax(115px,.8fr) repeat(4,minmax(120px,1fr)) auto auto; gap:8px; align-items:center; margin:0 0 10px; padding:9px; border:1px solid var(--border); border-left:5px solid var(--blue); border-radius:8px; background:#F7FAFF; }
   .task-bulk-toolbar.active { display:grid; }
   .task-bulk-count { color:var(--navy); font-size:.82rem; font-weight:900; text-align:center; }
   .task-bulk-toolbar select { width:100%; min-width:0; height:36px; margin:0; font-weight:800; }
@@ -1067,8 +1067,11 @@ const STRINGS = {
     bulkUpdateStatus: 'Set status',
     bulkUpdatePriority: 'Set priority',
     bulkUpdateOwner: 'Set owner',
+    bulkUpdateCategory: 'Set category',
     deleteSelected: 'Delete selected',
     clearSelection: 'Clear selection',
+    previousTask: 'Previous',
+    nextTask: 'Next',
     delete: 'Delete',
     confirmDelete: 'Delete this item?',
     noTasksYet: 'No tasks yet.',
@@ -1442,8 +1445,11 @@ const STRINGS = {
     bulkUpdateStatus: '\u6279\u91cf\u72c0\u614b',
     bulkUpdatePriority: '\u6279\u91cf\u512a\u5148\u7d1a',
     bulkUpdateOwner: '\u6279\u91cf\u8ca0\u8cac\u4eba',
+    bulkUpdateCategory: '\u6279\u91cf\u5206\u985e',
     deleteSelected: '\u522a\u9664\u5df2\u9078',
     clearSelection: '\u6e05\u9664\u9078\u53d6',
+    previousTask: '\u4e0a\u4e00\u500b',
+    nextTask: '\u4e0b\u4e00\u500b',
     delete: '\u522a\u9664',
     confirmDelete: '\u78ba\u5b9a\u8981\u522a\u9664\u9019\u500b\u9805\u76ee\uff1f',
     noTasksYet: '\u5c1a\u672a\u6709\u4efb\u52d9\u3002',
@@ -3091,7 +3097,7 @@ function renderTaskEvidence(evidence = []) {
     </div>`;
 }
 
-function renderTaskDetail(task = null, members = []) {
+function renderTaskDetail(task = null, members = [], nav = {}) {
   if (!task) return '';
   const evidence = normalizeEvidence(task.evidence);
   const due = getTaskDueInfo(task);
@@ -3140,6 +3146,8 @@ function renderTaskDetail(task = null, members = []) {
         ` : `<div class="task-detail-note">-</div>`}
       </div>
       <div class="modal-actions">
+        <button class="btn" type="button" data-task-detail-nav="-1" ${nav.prevId ? '' : 'disabled'}>${escapeHtml(t('previousTask'))}</button>
+        <button class="btn" type="button" data-task-detail-nav="1" ${nav.nextId ? '' : 'disabled'}>${escapeHtml(t('nextTask'))}</button>
         <button class="btn btn-primary" type="button" data-task-detail-edit="${task.id}">${escapeHtml(t('edit'))}</button>
         <button class="btn" type="button" data-task-cancel-edit>${escapeHtml(t('cancelEdit'))}</button>
       </div>
@@ -3358,6 +3366,12 @@ function renderTasksPage(state, options = {}) {
   const categories = master.taskTypes?.length ? master.taskTypes : ['General'];
   const healthSummary = getTaskHealthSummary(tasks, state.data.members || []);
   const visibleTasks = getVisibleTasks(tasks, state.data.members || [], filters);
+  const visibleTaskIds = visibleTasks.map(task => Number(task.id));
+  const viewingIndex = viewingTask ? visibleTaskIds.indexOf(Number(viewingTask.id)) : -1;
+  const detailNav = {
+    prevId: viewingIndex > 0 ? visibleTaskIds[viewingIndex - 1] : null,
+    nextId: viewingIndex >= 0 && viewingIndex < visibleTaskIds.length - 1 ? visibleTaskIds[viewingIndex + 1] : null,
+  };
   const activeFilterChips = getActiveFilterChips(filters);
   const selectedTaskIds = (options.selectedTaskIds || []).map(id => Number(id));
   const selectedCount = selectedTaskIds.length;
@@ -3388,7 +3402,7 @@ function renderTasksPage(state, options = {}) {
             <h3 id="task-modal-title">${escapeHtml(viewingTask ? t('taskDetails') : editingTask ? t('editingTask') : t('addTask'))}</h3>
             <button class="btn btn-sm" type="button" data-task-cancel-edit>${escapeHtml(t('cancelEdit'))}</button>
           </div>
-          ${viewingTask ? renderTaskDetail(viewingTask, state.data.members || []) : taskModalOpen ? renderTaskForm(editingTask || null, { master, ownerSuggestions }) : ''}
+          ${viewingTask ? renderTaskDetail(viewingTask, state.data.members || [], detailNav) : taskModalOpen ? renderTaskForm(editingTask || null, { master, ownerSuggestions }) : ''}
           ${editingTask ? `<div style="font-size:.78rem;color:var(--muted);font-weight:800;margin-top:8px">${escapeHtml(t('editingTask'))}: ${escapeHtml(editingTask.name)}</div>` : ''}
         </div>
       </div>
@@ -3487,6 +3501,10 @@ function renderTasksPage(state, options = {}) {
           <select data-task-bulk-owner aria-label="${escapeHtml(t('bulkUpdateOwner'))}">
             <option value="">${escapeHtml(t('bulkUpdateOwner'))}</option>
             ${ownerSuggestions.map(owner => `<option value="${escapeHtml(owner)}">${escapeHtml(owner)}</option>`).join('')}
+          </select>
+          <select data-task-bulk-category aria-label="${escapeHtml(t('bulkUpdateCategory'))}">
+            <option value="">${escapeHtml(t('bulkUpdateCategory'))}</option>
+            ${categories.map(category => `<option value="${escapeHtml(category)}">${escapeHtml(labelFor(category))}</option>`).join('')}
           </select>
           <button class="btn btn-danger task-bulk-delete" type="button" data-task-bulk-delete ${selectedCount ? '' : 'disabled'}>${escapeHtml(t('deleteSelected'))}</button>
           <button class="btn task-bulk-clear" type="button" data-task-bulk-clear ${selectedCount ? '' : 'disabled'}>${escapeHtml(t('clearSelection'))}</button>
@@ -6857,6 +6875,13 @@ function getVisibleTaskIdSet() {
   return new Set(getVisibleTasks(appState.data.tasks || [], appState.data.members || [], taskFilters).map(task => Number(task.id)));
 }
 
+function getAdjacentVisibleTaskId(currentId, direction = 1) {
+  const ids = getVisibleTasks(appState.data.tasks || [], appState.data.members || [], taskFilters).map(task => Number(task.id));
+  const index = ids.indexOf(Number(currentId));
+  if (index < 0 || !ids.length) return null;
+  return ids[index + direction] || null;
+}
+
 function pruneSelectedTaskIds() {
   const existingIds = new Set((appState.data.tasks || []).map(task => Number(task.id)));
   selectedTaskIds = new Set([...selectedTaskIds].filter(id => existingIds.has(Number(id))));
@@ -8731,6 +8756,15 @@ appRoot?.addEventListener('click', (event) => {
     renderAppShell();
     return;
   }
+  const taskDetailNav = event.target.closest('[data-task-detail-nav]');
+  if (taskDetailNav) {
+    const nextId = getAdjacentVisibleTaskId(viewingTaskId, Number(taskDetailNav.dataset.taskDetailNav || 1));
+    if (nextId) {
+      viewingTaskId = nextId;
+      renderAppShell();
+    }
+    return;
+  }
   if (event.target.closest('[data-task-open-add]')) {
     editingTaskId = null;
     viewingTaskId = null;
@@ -9223,6 +9257,14 @@ appRoot?.addEventListener('change', (event) => {
     const message = actionMessage(t('saved'), `${count} ${t('tasks')} -> ${bulkOwner.value}`);
     captureUndo(message);
     if (applyTaskBulkUpdate({ owner: bulkOwner.value })) persistAndRender(message, { keepUndo: true });
+    return;
+  }
+  const bulkCategory = event.target.closest('[data-task-bulk-category]');
+  if (bulkCategory && bulkCategory.value) {
+    const count = selectedTaskIds.size;
+    const message = actionMessage(t('saved'), `${count} ${t('tasks')} -> ${labelFor(bulkCategory.value)}`);
+    captureUndo(message);
+    if (applyTaskBulkUpdate({ category: bulkCategory.value })) persistAndRender(message, { keepUndo: true });
     return;
   }
   const taskCategory = event.target.closest('[data-task-category]');

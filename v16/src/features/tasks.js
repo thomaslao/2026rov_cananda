@@ -264,7 +264,7 @@ function renderTaskEvidence(evidence = []) {
     </div>`;
 }
 
-function renderTaskDetail(task = null, members = []) {
+function renderTaskDetail(task = null, members = [], nav = {}) {
   if (!task) return '';
   const evidence = normalizeEvidence(task.evidence);
   const due = getTaskDueInfo(task);
@@ -313,6 +313,8 @@ function renderTaskDetail(task = null, members = []) {
         ` : `<div class="task-detail-note">-</div>`}
       </div>
       <div class="modal-actions">
+        <button class="btn" type="button" data-task-detail-nav="-1" ${nav.prevId ? '' : 'disabled'}>${escapeHtml(t('previousTask'))}</button>
+        <button class="btn" type="button" data-task-detail-nav="1" ${nav.nextId ? '' : 'disabled'}>${escapeHtml(t('nextTask'))}</button>
         <button class="btn btn-primary" type="button" data-task-detail-edit="${task.id}">${escapeHtml(t('edit'))}</button>
         <button class="btn" type="button" data-task-cancel-edit>${escapeHtml(t('cancelEdit'))}</button>
       </div>
@@ -531,6 +533,12 @@ export function renderTasksPage(state, options = {}) {
   const categories = master.taskTypes?.length ? master.taskTypes : ['General'];
   const healthSummary = getTaskHealthSummary(tasks, state.data.members || []);
   const visibleTasks = getVisibleTasks(tasks, state.data.members || [], filters);
+  const visibleTaskIds = visibleTasks.map(task => Number(task.id));
+  const viewingIndex = viewingTask ? visibleTaskIds.indexOf(Number(viewingTask.id)) : -1;
+  const detailNav = {
+    prevId: viewingIndex > 0 ? visibleTaskIds[viewingIndex - 1] : null,
+    nextId: viewingIndex >= 0 && viewingIndex < visibleTaskIds.length - 1 ? visibleTaskIds[viewingIndex + 1] : null,
+  };
   const activeFilterChips = getActiveFilterChips(filters);
   const selectedTaskIds = (options.selectedTaskIds || []).map(id => Number(id));
   const selectedCount = selectedTaskIds.length;
@@ -561,7 +569,7 @@ export function renderTasksPage(state, options = {}) {
             <h3 id="task-modal-title">${escapeHtml(viewingTask ? t('taskDetails') : editingTask ? t('editingTask') : t('addTask'))}</h3>
             <button class="btn btn-sm" type="button" data-task-cancel-edit>${escapeHtml(t('cancelEdit'))}</button>
           </div>
-          ${viewingTask ? renderTaskDetail(viewingTask, state.data.members || []) : taskModalOpen ? renderTaskForm(editingTask || null, { master, ownerSuggestions }) : ''}
+          ${viewingTask ? renderTaskDetail(viewingTask, state.data.members || [], detailNav) : taskModalOpen ? renderTaskForm(editingTask || null, { master, ownerSuggestions }) : ''}
           ${editingTask ? `<div style="font-size:.78rem;color:var(--muted);font-weight:800;margin-top:8px">${escapeHtml(t('editingTask'))}: ${escapeHtml(editingTask.name)}</div>` : ''}
         </div>
       </div>
@@ -660,6 +668,10 @@ export function renderTasksPage(state, options = {}) {
           <select data-task-bulk-owner aria-label="${escapeHtml(t('bulkUpdateOwner'))}">
             <option value="">${escapeHtml(t('bulkUpdateOwner'))}</option>
             ${ownerSuggestions.map(owner => `<option value="${escapeHtml(owner)}">${escapeHtml(owner)}</option>`).join('')}
+          </select>
+          <select data-task-bulk-category aria-label="${escapeHtml(t('bulkUpdateCategory'))}">
+            <option value="">${escapeHtml(t('bulkUpdateCategory'))}</option>
+            ${categories.map(category => `<option value="${escapeHtml(category)}">${escapeHtml(labelFor(category))}</option>`).join('')}
           </select>
           <button class="btn btn-danger task-bulk-delete" type="button" data-task-bulk-delete ${selectedCount ? '' : 'disabled'}>${escapeHtml(t('deleteSelected'))}</button>
           <button class="btn task-bulk-clear" type="button" data-task-bulk-clear ${selectedCount ? '' : 'disabled'}>${escapeHtml(t('clearSelection'))}</button>

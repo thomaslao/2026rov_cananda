@@ -354,7 +354,7 @@
   .task-detail-field strong { color:var(--navy); font-size:.9rem; overflow-wrap:anywhere; }
   .task-detail-section { border:1px solid var(--border); border-radius:8px; background:var(--input-bg); padding:10px; }
   .task-detail-note { margin-top:6px; color:var(--text); font-size:.88rem; font-weight:800; line-height:1.45; white-space:pre-wrap; overflow-wrap:anywhere; }
-  .task-bulk-toolbar { display:none; grid-template-columns:minmax(115px,.8fr) repeat(3,minmax(128px,1fr)) auto auto; gap:8px; align-items:center; margin:0 0 10px; padding:9px; border:1px solid var(--border); border-left:5px solid var(--blue); border-radius:8px; background:#F7FAFF; }
+  .task-bulk-toolbar { display:none; grid-template-columns:minmax(115px,.8fr) repeat(4,minmax(120px,1fr)) auto auto; gap:8px; align-items:center; margin:0 0 10px; padding:9px; border:1px solid var(--border); border-left:5px solid var(--blue); border-radius:8px; background:#F7FAFF; }
   .task-bulk-toolbar.active { display:grid; }
   .task-bulk-count { color:var(--navy); font-size:.82rem; font-weight:900; text-align:center; }
   .task-bulk-toolbar select { width:100%; min-width:0; height:36px; margin:0; font-weight:800; }
