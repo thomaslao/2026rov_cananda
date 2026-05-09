@@ -8771,15 +8771,7 @@ appRoot?.addEventListener('change', (event) => {
     return;
   }
   const input = event.target.closest('[data-settings-pack-file]');
-  const backupInput = event.target.closest('[data-v15-backup-file]');
-  const v16BackupInput = event.target.closest('[data-v16-backup-file]');
   const diagnosticsInput = event.target.closest('[data-diagnostics-file]');
-  if (backupInput || v16BackupInput) {
-    showToast('Deprecated: backup imports are disabled. Use live Supabase data.', 'error');
-    if (backupInput) backupInput.value = '';
-    if (v16BackupInput) v16BackupInput.value = '';
-    return;
-  }
   const file = input?.files?.[0] || diagnosticsInput?.files?.[0];
   if (!file) return;
   const reader = new FileReader();
