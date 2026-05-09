@@ -110,6 +110,8 @@
   /* ── LAYOUT ── */
   .page { display: none; padding: 20px; max-width: 1200px; margin: 0 auto; }
   .page.active { display: block; }
+  #page-tasks { max-width:min(1500px, 100vw); width:100%; padding-left:10px; padding-right:10px; overflow-x:hidden; }
+  #page-tasks > .card { padding-left:12px; padding-right:12px; overflow:hidden; }
   h1 { font-size: 1.4rem; color: var(--navy); margin-bottom: 16px; }
   h2 { font-size: 1.05rem; color: var(--blue); margin: 18px 0 10px; border-left: 4px solid var(--blue); padding-left: 10px; }
 
@@ -303,6 +305,7 @@
   .btn-success { background: var(--green); color: #fff; }
   .btn-sm { padding: 3px 9px; font-size: .78rem; }
   .task-summary-row { position:relative; z-index:1; display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); gap:8px; margin-bottom:10px; }
+  .task-summary-row > *, .task-quick-tabs > *, .task-filter-bar > *, .task-toolbar-actions > *, .task-bulk-toolbar > * { min-width:0; }
   .task-quick-tabs { position:relative; z-index:2; display:grid; grid-template-columns:repeat(8,minmax(0,1fr)); gap:8px; align-items:center; margin-bottom:10px; }
   .task-quick-tab { width:100%; min-width:0; min-height:38px; padding:7px 8px; border:1px solid var(--border); border-radius:999px; background:var(--input-bg); color:var(--navy); font-size:.82rem; font-weight:900; cursor:pointer; line-height:1.1; text-align:center; display:flex; align-items:center; justify-content:center; gap:6px; white-space:normal; overflow-wrap:anywhere; }
   .task-quick-tab span { min-width:0; overflow-wrap:anywhere; }
@@ -319,14 +322,14 @@
   .task-sort-button { width:100%; min-height:38px; padding:8px 12px; border:0; background:transparent; color:inherit; cursor:pointer; display:flex; align-items:center; justify-content:flex-start; gap:6px; font:inherit; font-weight:900; text-align:left; white-space:nowrap; word-break:keep-all; }
   .task-sort-button:hover, .task-sort-button:focus-visible { background:rgba(255,255,255,.12); outline:none; }
   .task-sort-button span { min-width:12px; font-weight:900; }
-  .task-table-wrap { overflow:auto; border:1px solid var(--border); border-radius:8px; }
-  .task-table-wrap table { min-width:1300px; table-layout:fixed; }
+  .task-table-wrap { width:100%; max-width:100%; min-width:0; overflow-x:auto; overflow-y:hidden; border:1px solid var(--border); border-radius:8px; }
+  .task-table-wrap table { min-width:1180px; table-layout:fixed; }
   .task-table-wrap th, .task-table-wrap td { height:58px; vertical-align:middle; }
   .task-table-wrap td { padding:8px 10px; }
   .task-table-wrap tbody tr { min-height:58px; }
-  .task-select-col, .task-select-cell { width:46px; min-width:46px; text-align:center; padding-left:8px; padding-right:8px; }
+  .task-select-col, .task-select-cell { width:42px; min-width:42px; text-align:center; padding-left:6px; padding-right:6px; }
   .task-select-col input, .task-select-cell input { width:18px; height:18px; margin:0; }
-  .task-col-name, .task-name-cell { width:360px; max-width:360px; }
+  .task-col-name, .task-name-cell { width:310px; max-width:310px; }
   .task-name-cell { overflow-wrap:anywhere; line-height:1.25; }
   .task-name-cell strong { display:block; max-height:42px; overflow:hidden; }
   .task-name-button { width:100%; max-height:42px; padding:0; border:0; background:transparent; color:var(--navy); font:inherit; font-weight:900; text-align:left; overflow:hidden; overflow-wrap:anywhere; cursor:pointer; }
@@ -334,18 +337,18 @@
   .task-search-mark { background:#FFF3A3; color:var(--navy); border-radius:4px; padding:0 2px; font-weight:900; }
   .task-search-snippet { margin-top:4px; color:var(--muted); font-size:.72rem; font-weight:850; line-height:1.25; max-height:34px; overflow:hidden; }
   .task-updated-at { margin-top:3px; color:var(--muted); font-size:.7rem; font-weight:900; line-height:1.15; }
-  .task-col-owner, .task-owner-cell { width:128px; white-space:nowrap; word-break:keep-all; text-align:center; }
-  .task-col-due, .task-due-cell { width:134px; white-space:nowrap; word-break:keep-all; text-align:center; }
-  .task-col-priority, .task-priority-cell { width:94px; white-space:nowrap; word-break:keep-all; text-align:center; }
-  .task-col-category, .task-category-cell { width:158px; white-space:nowrap; text-align:center; }
-  .task-col-status, .task-status-table-cell { width:112px; white-space:nowrap; text-align:center; }
-  .task-actions-cell { width:196px; white-space:nowrap; text-align:right; }
+  .task-col-owner, .task-owner-cell { width:120px; white-space:nowrap; word-break:keep-all; text-align:center; }
+  .task-col-due, .task-due-cell { width:124px; white-space:nowrap; word-break:keep-all; text-align:center; }
+  .task-col-priority, .task-priority-cell { width:86px; white-space:nowrap; word-break:keep-all; text-align:center; }
+  .task-col-category, .task-category-cell { width:146px; white-space:nowrap; text-align:center; }
+  .task-col-status, .task-status-table-cell { width:104px; white-space:nowrap; text-align:center; }
+  .task-actions-cell { width:166px; white-space:nowrap; text-align:right; }
   .task-priority-cell .badge { min-width:68px; min-height:24px; display:inline-flex; align-items:center; justify-content:center; padding:3px 9px; font-weight:900; }
   .task-status-cell { display:flex; justify-content:center; min-width:94px; }
   .task-status-select { width:96px; min-width:96px; height:34px; margin:0; text-align:center; font-weight:800; }
-  .task-category-select { width:138px; min-width:138px; height:34px; margin:0; text-align:center; font-weight:800; }
-  .task-action-row { display:flex; gap:6px; flex-wrap:nowrap; justify-content:flex-end; align-items:center; min-width:180px; }
-  .task-action-row .btn-sm { width:56px; min-height:34px; padding:4px 8px; white-space:nowrap; display:flex; align-items:center; justify-content:center; text-align:center; font-weight:900; }
+  .task-category-select { width:128px; min-width:128px; height:34px; margin:0; text-align:center; font-weight:800; }
+  .task-action-row { display:flex; gap:5px; flex-wrap:nowrap; justify-content:flex-end; align-items:center; min-width:150px; }
+  .task-action-row .btn-sm { width:48px; min-height:34px; padding:4px 6px; white-space:nowrap; display:flex; align-items:center; justify-content:center; text-align:center; font-weight:900; }
   .task-detail-view { display:grid; gap:12px; }
   .task-detail-title { display:grid; gap:8px; }
   .task-detail-title h3 { margin:0; color:var(--navy); font-size:1.08rem; line-height:1.25; }
