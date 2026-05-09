@@ -451,6 +451,11 @@
   .task-category-row:first-child { border-top:0; }
   .task-category-row-head { background:#EEF3FB; color:var(--navy); font-size:.73rem; font-weight:900; }
   .task-category-row span { min-width:0; overflow-wrap:anywhere; }
+  .prep-section-heading { display:flex; justify-content:space-between; gap:12px; align-items:center; flex-wrap:wrap; margin-bottom:8px; }
+  .prep-progress-wrap { min-width:180px; display:grid; gap:5px; }
+  .prep-progress-meta { display:flex; justify-content:flex-end; gap:7px; align-items:center; color:var(--navy); font-size:.78rem; font-weight:900; }
+  .prep-progress-track { width:100%; height:8px; border-radius:999px; background:#E8EEF8; overflow:hidden; border:1px solid var(--border); }
+  .prep-progress-track span { display:block; height:100%; border-radius:999px; background:linear-gradient(90deg,var(--blue),var(--green)); }
   .prep-entry-row { display:grid; grid-template-columns:minmax(0,1fr) auto auto; gap:8px; align-items:end; }
   .prep-gear-entry-row { display:grid; grid-template-columns:minmax(0,2fr) minmax(0,1fr) 90px auto auto; gap:8px; align-items:end; }
 
@@ -999,6 +1004,7 @@ const STRINGS = {
     allPrepStatuses: 'All prep statuses',
     prepIncomplete: 'Incomplete',
     prepComplete: 'Complete',
+    prepOpenOnly: 'Open only',
     toggleComplete: 'Toggle complete',
     togglePacked: 'Toggle packed',
     clearFilters: 'Clear filters',
@@ -1390,6 +1396,7 @@ const STRINGS = {
     allPrepStatuses: '\u5168\u90e8\u5099\u6230\u72c0\u614b',
     prepIncomplete: '\u672a\u5b8c\u6210',
     prepComplete: '\u5df2\u5b8c\u6210',
+    prepOpenOnly: '\u53ea\u770b\u672a\u5b8c\u6210',
     toggleComplete: '\u5207\u63db\u5b8c\u6210\u72c0\u614b',
     togglePacked: '\u5207\u63db\u7269\u8cc7\u72c0\u614b',
     clearFilters: '\u6e05\u9664\u7be9\u9078',
@@ -5221,11 +5228,18 @@ function getActivePrepFilterChips(filters = {}) {
   ].filter(Boolean);
 }
 
-function renderPrepSectionHeading(label, visibleCount, totalCount) {
+function renderPrepSectionHeading(label, visibleCount, totalCount, completedCount = 0) {
+  const percent = totalCount ? Math.round((Number(completedCount || 0) / totalCount) * 100) : 0;
   return `
-    <div style="display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap">
+    <div class="prep-section-heading">
       <h2 style="margin:0">${escapeHtml(label)}</h2>
-      <span class="badge mid" data-prep-visible-count>${escapeHtml(visibleCount)}/${escapeHtml(totalCount)}</span>
+      <div class="prep-progress-wrap">
+        <div class="prep-progress-meta">
+          <span class="badge mid" data-prep-visible-count>${escapeHtml(visibleCount)}/${escapeHtml(totalCount)}</span>
+          <strong>${escapeHtml(percent)}%</strong>
+        </div>
+        <div class="prep-progress-track" aria-hidden="true"><span style="width:${escapeHtml(percent)}%"></span></div>
+      </div>
     </div>`;
 }
 
@@ -5359,6 +5373,7 @@ function renderPrepCenter(state, options = {}) {
               ['done', t('prepComplete')],
             ].map(([value, label]) => `<option value="${escapeHtml(value)}" ${filters.status === value ? 'selected' : ''}>${escapeHtml(label)}</option>`).join('')}
           </select></label>
+          <button class="btn btn-primary btn-sm" type="button" data-prep-open-only>${escapeHtml(t('prepOpenOnly'))}</button>
           <button class="btn btn-sm" type="button" data-prep-clear-filters>${escapeHtml(t('clearFilters'))}</button>
         </div>
         <div data-prep-active-filters style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;min-height:24px">
@@ -5366,15 +5381,15 @@ function renderPrepCenter(state, options = {}) {
         </div>
       </div>
       <div class="card">
-        ${renderPrepSectionHeading(t('buildChecklist'), visibleChecklist.length, state.data.checklist.length)}
+        ${renderPrepSectionHeading(t('buildChecklist'), visibleChecklist.length, state.data.checklist.length, checklistDone)}
         ${renderChecklist('checklist', visibleChecklist, { editingChecklist: options.editingChecklist, prepFocus, allItems: state.data.checklist })}
       </div>
       <div class="card">
-        ${renderPrepSectionHeading(t('preDiveChecklist'), visiblePredive.length, state.data.prediveChecklist.length)}
+        ${renderPrepSectionHeading(t('preDiveChecklist'), visiblePredive.length, state.data.prediveChecklist.length, prediveDone)}
         ${renderChecklist('prediveChecklist', visiblePredive, { editingChecklist: options.editingChecklist, prepFocus, allItems: state.data.prediveChecklist })}
       </div>
       <div class="card">
-        ${renderPrepSectionHeading(t('gearItems'), visibleGear.length, state.data.gearItems.length)}
+        ${renderPrepSectionHeading(t('gearItems'), visibleGear.length, state.data.gearItems.length, gearPacked)}
         ${renderGearItems(visibleGear, gearCategories, { editingGearId: options.editingGearId, prepFocus, allItems: state.data.gearItems })}
       </div>
 
@@ -8709,6 +8724,12 @@ appRoot?.addEventListener('click', (event) => {
   }
   if (event.target.closest('[data-prep-clear-filters]')) {
     clearPrepFilters();
+    renderAppShell();
+    return;
+  }
+  if (event.target.closest('[data-prep-open-only]')) {
+    prepFilters.status = 'open';
+    Object.assign(prepFilters, normalizePrepFilters(prepFilters));
     renderAppShell();
     return;
   }

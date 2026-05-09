@@ -444,6 +444,11 @@
   .task-category-row:first-child { border-top:0; }
   .task-category-row-head { background:#EEF3FB; color:var(--navy); font-size:.73rem; font-weight:900; }
   .task-category-row span { min-width:0; overflow-wrap:anywhere; }
+  .prep-section-heading { display:flex; justify-content:space-between; gap:12px; align-items:center; flex-wrap:wrap; margin-bottom:8px; }
+  .prep-progress-wrap { min-width:180px; display:grid; gap:5px; }
+  .prep-progress-meta { display:flex; justify-content:flex-end; gap:7px; align-items:center; color:var(--navy); font-size:.78rem; font-weight:900; }
+  .prep-progress-track { width:100%; height:8px; border-radius:999px; background:#E8EEF8; overflow:hidden; border:1px solid var(--border); }
+  .prep-progress-track span { display:block; height:100%; border-radius:999px; background:linear-gradient(90deg,var(--blue),var(--green)); }
   .prep-entry-row { display:grid; grid-template-columns:minmax(0,1fr) auto auto; gap:8px; align-items:end; }
   .prep-gear-entry-row { display:grid; grid-template-columns:minmax(0,2fr) minmax(0,1fr) 90px auto auto; gap:8px; align-items:end; }
 

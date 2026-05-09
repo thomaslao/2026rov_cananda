@@ -1926,6 +1926,12 @@ appRoot?.addEventListener('click', (event) => {
     renderAppShell();
     return;
   }
+  if (event.target.closest('[data-prep-open-only]')) {
+    prepFilters.status = 'open';
+    Object.assign(prepFilters, normalizePrepFilters(prepFilters));
+    renderAppShell();
+    return;
+  }
   if (event.target.closest('[data-prep-clear-focus]')) {
     clearPrepFocus();
     renderAppShell();

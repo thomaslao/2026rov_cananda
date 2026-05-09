@@ -136,11 +136,18 @@ function getActivePrepFilterChips(filters = {}) {
   ].filter(Boolean);
 }
 
-function renderPrepSectionHeading(label, visibleCount, totalCount) {
+function renderPrepSectionHeading(label, visibleCount, totalCount, completedCount = 0) {
+  const percent = totalCount ? Math.round((Number(completedCount || 0) / totalCount) * 100) : 0;
   return `
-    <div style="display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap">
+    <div class="prep-section-heading">
       <h2 style="margin:0">${escapeHtml(label)}</h2>
-      <span class="badge mid" data-prep-visible-count>${escapeHtml(visibleCount)}/${escapeHtml(totalCount)}</span>
+      <div class="prep-progress-wrap">
+        <div class="prep-progress-meta">
+          <span class="badge mid" data-prep-visible-count>${escapeHtml(visibleCount)}/${escapeHtml(totalCount)}</span>
+          <strong>${escapeHtml(percent)}%</strong>
+        </div>
+        <div class="prep-progress-track" aria-hidden="true"><span style="width:${escapeHtml(percent)}%"></span></div>
+      </div>
     </div>`;
 }
 
@@ -274,6 +281,7 @@ export function renderPrepCenter(state, options = {}) {
               ['done', t('prepComplete')],
             ].map(([value, label]) => `<option value="${escapeHtml(value)}" ${filters.status === value ? 'selected' : ''}>${escapeHtml(label)}</option>`).join('')}
           </select></label>
+          <button class="btn btn-primary btn-sm" type="button" data-prep-open-only>${escapeHtml(t('prepOpenOnly'))}</button>
           <button class="btn btn-sm" type="button" data-prep-clear-filters>${escapeHtml(t('clearFilters'))}</button>
         </div>
         <div data-prep-active-filters style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;min-height:24px">
@@ -281,15 +289,15 @@ export function renderPrepCenter(state, options = {}) {
         </div>
       </div>
       <div class="card">
-        ${renderPrepSectionHeading(t('buildChecklist'), visibleChecklist.length, state.data.checklist.length)}
+        ${renderPrepSectionHeading(t('buildChecklist'), visibleChecklist.length, state.data.checklist.length, checklistDone)}
         ${renderChecklist('checklist', visibleChecklist, { editingChecklist: options.editingChecklist, prepFocus, allItems: state.data.checklist })}
       </div>
       <div class="card">
-        ${renderPrepSectionHeading(t('preDiveChecklist'), visiblePredive.length, state.data.prediveChecklist.length)}
+        ${renderPrepSectionHeading(t('preDiveChecklist'), visiblePredive.length, state.data.prediveChecklist.length, prediveDone)}
         ${renderChecklist('prediveChecklist', visiblePredive, { editingChecklist: options.editingChecklist, prepFocus, allItems: state.data.prediveChecklist })}
       </div>
       <div class="card">
-        ${renderPrepSectionHeading(t('gearItems'), visibleGear.length, state.data.gearItems.length)}
+        ${renderPrepSectionHeading(t('gearItems'), visibleGear.length, state.data.gearItems.length, gearPacked)}
         ${renderGearItems(visibleGear, gearCategories, { editingGearId: options.editingGearId, prepFocus, allItems: state.data.gearItems })}
       </div>
 
