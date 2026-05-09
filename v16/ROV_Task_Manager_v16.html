@@ -324,10 +324,12 @@
   .task-sort-button:hover, .task-sort-button:focus-visible { background:rgba(255,255,255,.12); outline:none; }
   .task-sort-button span { min-width:12px; font-weight:900; }
   .task-table-wrap { overflow:auto; border:1px solid var(--border); border-radius:8px; }
-  .task-table-wrap table { min-width:1180px; table-layout:fixed; }
+  .task-table-wrap table { min-width:1230px; table-layout:fixed; }
   .task-table-wrap th, .task-table-wrap td { height:58px; vertical-align:middle; }
   .task-table-wrap td { padding:8px 10px; }
   .task-table-wrap tbody tr { min-height:58px; }
+  .task-select-col, .task-select-cell { width:46px; min-width:46px; text-align:center; padding-left:8px; padding-right:8px; }
+  .task-select-col input, .task-select-cell input { width:18px; height:18px; margin:0; }
   .task-col-name, .task-name-cell { width:360px; max-width:360px; }
   .task-name-cell { overflow-wrap:anywhere; line-height:1.25; }
   .task-name-cell strong { display:block; max-height:42px; overflow:hidden; }
@@ -343,6 +345,11 @@
   .task-category-select { width:138px; min-width:138px; height:34px; margin:0; text-align:center; font-weight:800; }
   .task-action-row { display:flex; gap:6px; flex-wrap:nowrap; justify-content:flex-end; align-items:center; min-width:118px; }
   .task-action-row .btn-sm { width:56px; min-height:34px; padding:4px 8px; white-space:nowrap; display:flex; align-items:center; justify-content:center; text-align:center; font-weight:900; }
+  .task-bulk-toolbar { display:none; grid-template-columns:minmax(115px,.8fr) repeat(3,minmax(128px,1fr)) auto auto; gap:8px; align-items:center; margin:0 0 10px; padding:9px; border:1px solid var(--border); border-left:5px solid var(--blue); border-radius:8px; background:#F7FAFF; }
+  .task-bulk-toolbar.active { display:grid; }
+  .task-bulk-count { color:var(--navy); font-size:.82rem; font-weight:900; text-align:center; }
+  .task-bulk-toolbar select { width:100%; min-width:0; height:36px; margin:0; font-weight:800; }
+  .task-bulk-toolbar .btn { min-height:36px; padding:7px 12px; font-size:.82rem; font-weight:900; white-space:nowrap; }
   .task-filter-bar { position:relative; z-index:1; display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:8px; align-items:end; margin-bottom:8px; }
   .task-filter-bar label { min-width:0; }
   .task-filter-bar select { width:100%; min-width:0; }
@@ -529,6 +536,7 @@
     .task-summary-row { grid-template-columns:repeat(2,minmax(0,1fr)); }
     .task-filter-bar { grid-template-columns:1fr; }
     .task-toolbar-actions { grid-template-columns:1fr; }
+    .task-bulk-toolbar.active { grid-template-columns:1fr; }
     .task-toolbar-search { grid-template-columns:1fr; }
     .prep-entry-row,
     .prep-gear-entry-row { grid-template-columns:1fr; }
@@ -545,6 +553,7 @@
   }
   @media (min-width:601px) and (max-width:900px) {
     .task-quick-tabs { grid-template-columns:repeat(4,minmax(0,1fr)); }
+    .task-bulk-toolbar.active { grid-template-columns:repeat(2,minmax(0,1fr)); }
   }
 
   /* ── NAV BADGE (逾期角標) ── */
@@ -1030,6 +1039,14 @@ const STRINGS = {
     addTask: 'Add task',
     updateTask: 'Update task',
     editingTask: 'Editing task',
+    selectedTasks: 'Selected tasks',
+    selectTask: 'Select task',
+    selectVisibleTasks: 'Select visible tasks',
+    bulkUpdateStatus: 'Set status',
+    bulkUpdatePriority: 'Set priority',
+    bulkUpdateOwner: 'Set owner',
+    deleteSelected: 'Delete selected',
+    clearSelection: 'Clear selection',
     delete: 'Delete',
     confirmDelete: 'Delete this item?',
     noTasksYet: 'No tasks yet.',
@@ -1392,6 +1409,14 @@ const STRINGS = {
     addTask: '\u65b0\u589e\u4efb\u52d9',
     updateTask: '\u66f4\u65b0\u4efb\u52d9',
     editingTask: '\u6b63\u5728\u7de8\u8f2f\u4efb\u52d9',
+    selectedTasks: '\u5df2\u9078\u4efb\u52d9',
+    selectTask: '\u9078\u53d6\u4efb\u52d9',
+    selectVisibleTasks: '\u9078\u53d6\u76ee\u524d\u986f\u793a\u4efb\u52d9',
+    bulkUpdateStatus: '\u6279\u91cf\u72c0\u614b',
+    bulkUpdatePriority: '\u6279\u91cf\u512a\u5148\u7d1a',
+    bulkUpdateOwner: '\u6279\u91cf\u8ca0\u8cac\u4eba',
+    deleteSelected: '\u522a\u9664\u5df2\u9078',
+    clearSelection: '\u6e05\u9664\u9078\u53d6',
     delete: '\u522a\u9664',
     confirmDelete: '\u78ba\u5b9a\u8981\u522a\u9664\u9019\u500b\u9805\u76ee\uff1f',
     noTasksYet: '\u5c1a\u672a\u6709\u4efb\u52d9\u3002',
@@ -3094,6 +3119,8 @@ function renderTaskTable(tasks = [], members = [], options = {}) {
   }
   const memberNames = new Set(members.map(member => clean(member.name)).filter(Boolean));
   const filters = normalizeTaskFilters(options.filters);
+  const selectedTaskIds = new Set((options.selectedTaskIds || []).map(id => Number(id)));
+  const allVisibleSelected = tasks.length > 0 && tasks.every(task => selectedTaskIds.has(Number(task.id)));
   const sortColumns = {
     name: ['name', 'name-desc'],
     owner: ['owner', 'owner-desc'],
@@ -3113,7 +3140,7 @@ function renderTaskTable(tasks = [], members = [], options = {}) {
   return `
     <div class="task-table-wrap">
       <table>
-        <thead><tr>${sortHeader('name', t('task'))}${sortHeader('owner', t('owner'))}${sortHeader('due', t('due'))}${sortHeader('priority', t('priority'))}${sortHeader('category', t('category'))}${sortHeader('status', t('status'))}<th></th></tr></thead>
+        <thead><tr><th class="task-select-col"><input type="checkbox" data-task-select-visible ${allVisibleSelected ? 'checked' : ''} aria-label="${escapeHtml(t('selectVisibleTasks'))}"></th>${sortHeader('name', t('task'))}${sortHeader('owner', t('owner'))}${sortHeader('due', t('due'))}${sortHeader('priority', t('priority'))}${sortHeader('category', t('category'))}${sortHeader('status', t('status'))}<th></th></tr></thead>
         <tbody>
           ${tasks.map((task) => {
             const due = getTaskDueInfo(task);
@@ -3126,8 +3153,10 @@ function renderTaskTable(tasks = [], members = [], options = {}) {
               late ? 'task-overdue' : '',
               task.status === 'Done' ? 'task-done' : '',
             ].filter(Boolean).join(' ');
+            const selected = selectedTaskIds.has(Number(task.id));
             return `
               <tr${rowClasses ? ` class="${rowClasses}"` : ''}>
+                <td class="task-select-cell"><input type="checkbox" data-task-select="${task.id}" ${selected ? 'checked' : ''} aria-label="${escapeHtml(`${t('selectTask')} ${task.name}`)}"></td>
                 <td class="task-name-cell">
                   <strong>${escapeHtml(task.name)}</strong>
                   ${task.blocked ? `<div style="font-size:.76rem;color:var(--muted)">${escapeHtml(t('blocked'))}</div>` : ''}
@@ -3203,6 +3232,8 @@ function renderTasksPage(state, options = {}) {
   const healthSummary = getTaskHealthSummary(tasks, state.data.members || []);
   const visibleTasks = getVisibleTasks(tasks, state.data.members || [], filters);
   const activeFilterChips = getActiveFilterChips(filters);
+  const selectedTaskIds = (options.selectedTaskIds || []).map(id => Number(id));
+  const selectedCount = selectedTaskIds.length;
   const activeQuickTab = getActiveTaskQuickTab(filters, myOwner);
   const quickTabs = [
     ['all', t('allTasks'), false],
@@ -3314,10 +3345,27 @@ function renderTasksPage(state, options = {}) {
             <button class="btn btn-primary task-search-submit" type="button" data-task-search-submit>${escapeHtml(t('search'))}</button>
           </div>
         </div>
+        <div class="task-bulk-toolbar ${selectedCount ? 'active' : ''}" data-task-bulk-toolbar>
+          <div class="task-bulk-count">${escapeHtml(t('selectedTasks'))}: ${selectedCount}</div>
+          <select data-task-bulk-status aria-label="${escapeHtml(t('bulkUpdateStatus'))}">
+            <option value="">${escapeHtml(t('bulkUpdateStatus'))}</option>
+            ${['Open', 'In Progress', 'Done'].map(status => `<option value="${status}">${escapeHtml(labelFor(status))}</option>`).join('')}
+          </select>
+          <select data-task-bulk-priority aria-label="${escapeHtml(t('bulkUpdatePriority'))}">
+            <option value="">${escapeHtml(t('bulkUpdatePriority'))}</option>
+            ${['High', 'Medium', 'Low'].map(priority => `<option value="${priority}">${escapeHtml(labelFor(priority))}</option>`).join('')}
+          </select>
+          <select data-task-bulk-owner aria-label="${escapeHtml(t('bulkUpdateOwner'))}">
+            <option value="">${escapeHtml(t('bulkUpdateOwner'))}</option>
+            ${ownerSuggestions.map(owner => `<option value="${escapeHtml(owner)}">${escapeHtml(owner)}</option>`).join('')}
+          </select>
+          <button class="btn btn-danger task-bulk-delete" type="button" data-task-bulk-delete ${selectedCount ? '' : 'disabled'}>${escapeHtml(t('deleteSelected'))}</button>
+          <button class="btn task-bulk-clear" type="button" data-task-bulk-clear ${selectedCount ? '' : 'disabled'}>${escapeHtml(t('clearSelection'))}</button>
+        </div>
         <div data-task-active-filters style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:10px;min-height:24px">
           ${activeFilterChips.length ? `<strong style="font-size:.76rem;color:var(--muted)">${escapeHtml(t('activeFilters'))}</strong>${activeFilterChips.map(chip => `<button class="badge mid" type="button" data-task-remove-filter="${escapeHtml(chip.key)}" title="${escapeHtml(t('removeFilter'))}" style="cursor:pointer">${escapeHtml(chip.label)}: ${escapeHtml(chip.value)} x</button>`).join('')}` : `<span style="font-size:.76rem;color:var(--muted);font-weight:800">${escapeHtml(t('noActiveFilters'))}</span>`}
         </div>
-        ${renderTaskTable(visibleTasks, state.data.members || [], { totalCount: tasks.length, filters, categories })}
+        ${renderTaskTable(visibleTasks, state.data.members || [], { totalCount: tasks.length, filters, categories, selectedTaskIds })}
       </div>
     </section>`;
 }
@@ -6535,6 +6583,7 @@ let supabaseRealtimeChannel = null;
 let initialSupabaseLoadStarted = false;
 let editingTaskId = null;
 let addingTask = false;
+let selectedTaskIds = new Set();
 let editingMemberId = null;
 let editingRunId = null;
 let runDraft = null;
@@ -6670,13 +6719,50 @@ function applyTaskQuickTab(tab = '') {
   else if (tab === 'active') Object.assign(taskFilters, base, { status: 'active' });
   else if (tab === 'done') Object.assign(taskFilters, base, { status: 'Done' });
   else Object.assign(taskFilters, base);
+  selectedTaskIds = new Set();
   return true;
+}
+
+function getVisibleTaskIdSet() {
+  return new Set(getVisibleTasks(appState.data.tasks || [], appState.data.members || [], taskFilters).map(task => Number(task.id)));
+}
+
+function pruneSelectedTaskIds() {
+  const existingIds = new Set((appState.data.tasks || []).map(task => Number(task.id)));
+  selectedTaskIds = new Set([...selectedTaskIds].filter(id => existingIds.has(Number(id))));
+}
+
+function applyTaskBulkUpdate(updates = {}) {
+  pruneSelectedTaskIds();
+  const ids = [...selectedTaskIds];
+  if (!ids.length) return false;
+  let changed = 0;
+  ids.forEach((id) => {
+    if (updateTask(appState, id, updates)) changed += 1;
+  });
+  if (!changed) return false;
+  selectedTaskIds = new Set();
+  return changed;
+}
+
+function deleteSelectedTasks() {
+  pruneSelectedTaskIds();
+  const ids = [...selectedTaskIds];
+  if (!ids.length) return false;
+  let changed = 0;
+  ids.forEach((id) => {
+    if (deleteTask(appState, id)) changed += 1;
+  });
+  if (!changed) return false;
+  selectedTaskIds = new Set();
+  return changed;
 }
 
 function clearEditingOutsidePage(page) {
   if (page !== 'tasks') {
     editingTaskId = null;
     addingTask = false;
+    selectedTaskIds = new Set();
   }
   if (page !== 'members') editingMemberId = null;
   if (page !== 'competition') editingRunId = null;
@@ -6701,6 +6787,7 @@ function clearTaskFilters() {
     evidence: '',
     sort: taskFilters.sort || 'due-asc',
   });
+  selectedTaskIds = new Set();
 }
 
 function clearTaskFilter(key) {
@@ -7999,7 +8086,10 @@ function renderDashboard() {
 
 function renderCurrentPage() {
   if (appState.currentPage === 'prep') return renderPrepCenter(appState, { editingGearId, editingChecklist, prepFocus, filters: prepFilters });
-  if (appState.currentPage === 'tasks') return renderTasksPage(appState, { editingTaskId, addingTask, filters: taskFilters, myOwner: myTaskOwner });
+  if (appState.currentPage === 'tasks') {
+    pruneSelectedTaskIds();
+    return renderTasksPage(appState, { editingTaskId, addingTask, filters: taskFilters, myOwner: myTaskOwner, selectedTaskIds: [...selectedTaskIds] });
+  }
   if (appState.currentPage === 'members') return renderMembersPage(appState, { editingMemberId, filters: memberFilters });
   if (appState.currentPage === 'intel') return renderIntelPage(appState, { editingIntelId, editingStrategyId, intelFocus, filters: intelFilters });
   if (appState.currentPage === 'presentation') return renderPresentationPage(appState);
@@ -8254,6 +8344,19 @@ appRoot?.addEventListener('click', (event) => {
     renderAppShell();
     return;
   }
+  if (event.target.closest('[data-task-bulk-clear]')) {
+    selectedTaskIds = new Set();
+    renderAppShell();
+    return;
+  }
+  if (event.target.closest('[data-task-bulk-delete]')) {
+    const count = selectedTaskIds.size;
+    if (!count || !confirmDelete(`${count} ${t('tasks')}`)) return;
+    const message = actionMessage(t('deleted'), `${count} ${t('tasks')}`);
+    captureUndo(message);
+    if (deleteSelectedTasks()) persistAndRender(message, { keepUndo: true });
+    return;
+  }
   const myTasksButton = event.target.closest('[data-my-tasks]');
   if (myTasksButton) {
     if (applyMyTasksFilter()) {
@@ -8475,6 +8578,7 @@ appRoot?.addEventListener('click', (event) => {
     const label = task?.name || task?.title || t('task');
     captureUndo(actionMessage(t('deleted'), label));
     if (Number(editingTaskId) === Number(deleteTaskTarget.dataset.taskDelete)) editingTaskId = null;
+    selectedTaskIds.delete(Number(deleteTaskTarget.dataset.taskDelete));
     if (deleteTask(appState, deleteTaskTarget.dataset.taskDelete)) persistAndRender(actionMessage(t('deleted'), label), { keepUndo: true });
     return;
   }
@@ -8923,6 +9027,49 @@ appRoot?.addEventListener('change', (event) => {
     const message = actionMessage(t('statusUpdated'), task ? `${task.name || t('task')} -> ${status.value}` : '');
     captureUndo(message);
     if (updateTaskStatus(appState, status.dataset.taskStatus, status.value)) persistAndRender(message, { keepUndo: true });
+    return;
+  }
+  const selectVisibleTasks = event.target.closest('[data-task-select-visible]');
+  if (selectVisibleTasks) {
+    const visibleIds = getVisibleTaskIdSet();
+    if (selectVisibleTasks.checked) {
+      visibleIds.forEach(id => selectedTaskIds.add(Number(id)));
+    } else {
+      visibleIds.forEach(id => selectedTaskIds.delete(Number(id)));
+    }
+    renderAppShell();
+    return;
+  }
+  const selectTask = event.target.closest('[data-task-select]');
+  if (selectTask) {
+    const id = Number(selectTask.dataset.taskSelect);
+    if (selectTask.checked) selectedTaskIds.add(id);
+    else selectedTaskIds.delete(id);
+    renderAppShell();
+    return;
+  }
+  const bulkStatus = event.target.closest('[data-task-bulk-status]');
+  if (bulkStatus && bulkStatus.value) {
+    const count = selectedTaskIds.size;
+    const message = actionMessage(t('statusUpdated'), `${count} ${t('tasks')} -> ${labelFor(bulkStatus.value)}`);
+    captureUndo(message);
+    if (applyTaskBulkUpdate({ status: bulkStatus.value })) persistAndRender(message, { keepUndo: true });
+    return;
+  }
+  const bulkPriority = event.target.closest('[data-task-bulk-priority]');
+  if (bulkPriority && bulkPriority.value) {
+    const count = selectedTaskIds.size;
+    const message = actionMessage(t('saved'), `${count} ${t('tasks')} -> ${labelFor(bulkPriority.value)}`);
+    captureUndo(message);
+    if (applyTaskBulkUpdate({ priority: bulkPriority.value })) persistAndRender(message, { keepUndo: true });
+    return;
+  }
+  const bulkOwner = event.target.closest('[data-task-bulk-owner]');
+  if (bulkOwner && bulkOwner.value) {
+    const count = selectedTaskIds.size;
+    const message = actionMessage(t('saved'), `${count} ${t('tasks')} -> ${bulkOwner.value}`);
+    captureUndo(message);
+    if (applyTaskBulkUpdate({ owner: bulkOwner.value })) persistAndRender(message, { keepUndo: true });
     return;
   }
   const taskCategory = event.target.closest('[data-task-category]');

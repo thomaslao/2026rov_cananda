@@ -322,6 +322,8 @@ export function renderTaskTable(tasks = [], members = [], options = {}) {
   }
   const memberNames = new Set(members.map(member => clean(member.name)).filter(Boolean));
   const filters = normalizeTaskFilters(options.filters);
+  const selectedTaskIds = new Set((options.selectedTaskIds || []).map(id => Number(id)));
+  const allVisibleSelected = tasks.length > 0 && tasks.every(task => selectedTaskIds.has(Number(task.id)));
   const sortColumns = {
     name: ['name', 'name-desc'],
     owner: ['owner', 'owner-desc'],
@@ -341,7 +343,7 @@ export function renderTaskTable(tasks = [], members = [], options = {}) {
   return `
     <div class="task-table-wrap">
       <table>
-        <thead><tr>${sortHeader('name', t('task'))}${sortHeader('owner', t('owner'))}${sortHeader('due', t('due'))}${sortHeader('priority', t('priority'))}${sortHeader('category', t('category'))}${sortHeader('status', t('status'))}<th></th></tr></thead>
+        <thead><tr><th class="task-select-col"><input type="checkbox" data-task-select-visible ${allVisibleSelected ? 'checked' : ''} aria-label="${escapeHtml(t('selectVisibleTasks'))}"></th>${sortHeader('name', t('task'))}${sortHeader('owner', t('owner'))}${sortHeader('due', t('due'))}${sortHeader('priority', t('priority'))}${sortHeader('category', t('category'))}${sortHeader('status', t('status'))}<th></th></tr></thead>
         <tbody>
           ${tasks.map((task) => {
             const due = getTaskDueInfo(task);
@@ -354,8 +356,10 @@ export function renderTaskTable(tasks = [], members = [], options = {}) {
               late ? 'task-overdue' : '',
               task.status === 'Done' ? 'task-done' : '',
             ].filter(Boolean).join(' ');
+            const selected = selectedTaskIds.has(Number(task.id));
             return `
               <tr${rowClasses ? ` class="${rowClasses}"` : ''}>
+                <td class="task-select-cell"><input type="checkbox" data-task-select="${task.id}" ${selected ? 'checked' : ''} aria-label="${escapeHtml(`${t('selectTask')} ${task.name}`)}"></td>
                 <td class="task-name-cell">
                   <strong>${escapeHtml(task.name)}</strong>
                   ${task.blocked ? `<div style="font-size:.76rem;color:var(--muted)">${escapeHtml(t('blocked'))}</div>` : ''}
@@ -431,6 +435,8 @@ export function renderTasksPage(state, options = {}) {
   const healthSummary = getTaskHealthSummary(tasks, state.data.members || []);
   const visibleTasks = getVisibleTasks(tasks, state.data.members || [], filters);
   const activeFilterChips = getActiveFilterChips(filters);
+  const selectedTaskIds = (options.selectedTaskIds || []).map(id => Number(id));
+  const selectedCount = selectedTaskIds.length;
   const activeQuickTab = getActiveTaskQuickTab(filters, myOwner);
   const quickTabs = [
     ['all', t('allTasks'), false],
@@ -542,10 +548,27 @@ export function renderTasksPage(state, options = {}) {
             <button class="btn btn-primary task-search-submit" type="button" data-task-search-submit>${escapeHtml(t('search'))}</button>
           </div>
         </div>
+        <div class="task-bulk-toolbar ${selectedCount ? 'active' : ''}" data-task-bulk-toolbar>
+          <div class="task-bulk-count">${escapeHtml(t('selectedTasks'))}: ${selectedCount}</div>
+          <select data-task-bulk-status aria-label="${escapeHtml(t('bulkUpdateStatus'))}">
+            <option value="">${escapeHtml(t('bulkUpdateStatus'))}</option>
+            ${['Open', 'In Progress', 'Done'].map(status => `<option value="${status}">${escapeHtml(labelFor(status))}</option>`).join('')}
+          </select>
+          <select data-task-bulk-priority aria-label="${escapeHtml(t('bulkUpdatePriority'))}">
+            <option value="">${escapeHtml(t('bulkUpdatePriority'))}</option>
+            ${['High', 'Medium', 'Low'].map(priority => `<option value="${priority}">${escapeHtml(labelFor(priority))}</option>`).join('')}
+          </select>
+          <select data-task-bulk-owner aria-label="${escapeHtml(t('bulkUpdateOwner'))}">
+            <option value="">${escapeHtml(t('bulkUpdateOwner'))}</option>
+            ${ownerSuggestions.map(owner => `<option value="${escapeHtml(owner)}">${escapeHtml(owner)}</option>`).join('')}
+          </select>
+          <button class="btn btn-danger task-bulk-delete" type="button" data-task-bulk-delete ${selectedCount ? '' : 'disabled'}>${escapeHtml(t('deleteSelected'))}</button>
+          <button class="btn task-bulk-clear" type="button" data-task-bulk-clear ${selectedCount ? '' : 'disabled'}>${escapeHtml(t('clearSelection'))}</button>
+        </div>
         <div data-task-active-filters style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:10px;min-height:24px">
           ${activeFilterChips.length ? `<strong style="font-size:.76rem;color:var(--muted)">${escapeHtml(t('activeFilters'))}</strong>${activeFilterChips.map(chip => `<button class="badge mid" type="button" data-task-remove-filter="${escapeHtml(chip.key)}" title="${escapeHtml(t('removeFilter'))}" style="cursor:pointer">${escapeHtml(chip.label)}: ${escapeHtml(chip.value)} x</button>`).join('')}` : `<span style="font-size:.76rem;color:var(--muted);font-weight:800">${escapeHtml(t('noActiveFilters'))}</span>`}
         </div>
-        ${renderTaskTable(visibleTasks, state.data.members || [], { totalCount: tasks.length, filters, categories })}
+        ${renderTaskTable(visibleTasks, state.data.members || [], { totalCount: tasks.length, filters, categories, selectedTaskIds })}
       </div>
     </section>`;
 }

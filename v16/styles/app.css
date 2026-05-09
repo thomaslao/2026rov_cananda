@@ -317,10 +317,12 @@
   .task-sort-button:hover, .task-sort-button:focus-visible { background:rgba(255,255,255,.12); outline:none; }
   .task-sort-button span { min-width:12px; font-weight:900; }
   .task-table-wrap { overflow:auto; border:1px solid var(--border); border-radius:8px; }
-  .task-table-wrap table { min-width:1180px; table-layout:fixed; }
+  .task-table-wrap table { min-width:1230px; table-layout:fixed; }
   .task-table-wrap th, .task-table-wrap td { height:58px; vertical-align:middle; }
   .task-table-wrap td { padding:8px 10px; }
   .task-table-wrap tbody tr { min-height:58px; }
+  .task-select-col, .task-select-cell { width:46px; min-width:46px; text-align:center; padding-left:8px; padding-right:8px; }
+  .task-select-col input, .task-select-cell input { width:18px; height:18px; margin:0; }
   .task-col-name, .task-name-cell { width:360px; max-width:360px; }
   .task-name-cell { overflow-wrap:anywhere; line-height:1.25; }
   .task-name-cell strong { display:block; max-height:42px; overflow:hidden; }
@@ -336,6 +338,11 @@
   .task-category-select { width:138px; min-width:138px; height:34px; margin:0; text-align:center; font-weight:800; }
   .task-action-row { display:flex; gap:6px; flex-wrap:nowrap; justify-content:flex-end; align-items:center; min-width:118px; }
   .task-action-row .btn-sm { width:56px; min-height:34px; padding:4px 8px; white-space:nowrap; display:flex; align-items:center; justify-content:center; text-align:center; font-weight:900; }
+  .task-bulk-toolbar { display:none; grid-template-columns:minmax(115px,.8fr) repeat(3,minmax(128px,1fr)) auto auto; gap:8px; align-items:center; margin:0 0 10px; padding:9px; border:1px solid var(--border); border-left:5px solid var(--blue); border-radius:8px; background:#F7FAFF; }
+  .task-bulk-toolbar.active { display:grid; }
+  .task-bulk-count { color:var(--navy); font-size:.82rem; font-weight:900; text-align:center; }
+  .task-bulk-toolbar select { width:100%; min-width:0; height:36px; margin:0; font-weight:800; }
+  .task-bulk-toolbar .btn { min-height:36px; padding:7px 12px; font-size:.82rem; font-weight:900; white-space:nowrap; }
   .task-filter-bar { position:relative; z-index:1; display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:8px; align-items:end; margin-bottom:8px; }
   .task-filter-bar label { min-width:0; }
   .task-filter-bar select { width:100%; min-width:0; }
@@ -522,6 +529,7 @@
     .task-summary-row { grid-template-columns:repeat(2,minmax(0,1fr)); }
     .task-filter-bar { grid-template-columns:1fr; }
     .task-toolbar-actions { grid-template-columns:1fr; }
+    .task-bulk-toolbar.active { grid-template-columns:1fr; }
     .task-toolbar-search { grid-template-columns:1fr; }
     .prep-entry-row,
     .prep-gear-entry-row { grid-template-columns:1fr; }
@@ -538,6 +546,7 @@
   }
   @media (min-width:601px) and (max-width:900px) {
     .task-quick-tabs { grid-template-columns:repeat(4,minmax(0,1fr)); }
+    .task-bulk-toolbar.active { grid-template-columns:repeat(2,minmax(0,1fr)); }
   }
 
   /* ── NAV BADGE (逾期角標) ── */

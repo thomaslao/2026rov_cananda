@@ -97,6 +97,7 @@ let supabaseRealtimeChannel = null;
 let initialSupabaseLoadStarted = false;
 let editingTaskId = null;
 let addingTask = false;
+let selectedTaskIds = new Set();
 let editingMemberId = null;
 let editingRunId = null;
 let runDraft = null;
@@ -232,13 +233,50 @@ function applyTaskQuickTab(tab = '') {
   else if (tab === 'active') Object.assign(taskFilters, base, { status: 'active' });
   else if (tab === 'done') Object.assign(taskFilters, base, { status: 'Done' });
   else Object.assign(taskFilters, base);
+  selectedTaskIds = new Set();
   return true;
+}
+
+function getVisibleTaskIdSet() {
+  return new Set(getVisibleTasks(appState.data.tasks || [], appState.data.members || [], taskFilters).map(task => Number(task.id)));
+}
+
+function pruneSelectedTaskIds() {
+  const existingIds = new Set((appState.data.tasks || []).map(task => Number(task.id)));
+  selectedTaskIds = new Set([...selectedTaskIds].filter(id => existingIds.has(Number(id))));
+}
+
+function applyTaskBulkUpdate(updates = {}) {
+  pruneSelectedTaskIds();
+  const ids = [...selectedTaskIds];
+  if (!ids.length) return false;
+  let changed = 0;
+  ids.forEach((id) => {
+    if (updateTask(appState, id, updates)) changed += 1;
+  });
+  if (!changed) return false;
+  selectedTaskIds = new Set();
+  return changed;
+}
+
+function deleteSelectedTasks() {
+  pruneSelectedTaskIds();
+  const ids = [...selectedTaskIds];
+  if (!ids.length) return false;
+  let changed = 0;
+  ids.forEach((id) => {
+    if (deleteTask(appState, id)) changed += 1;
+  });
+  if (!changed) return false;
+  selectedTaskIds = new Set();
+  return changed;
 }
 
 function clearEditingOutsidePage(page) {
   if (page !== 'tasks') {
     editingTaskId = null;
     addingTask = false;
+    selectedTaskIds = new Set();
   }
   if (page !== 'members') editingMemberId = null;
   if (page !== 'competition') editingRunId = null;
@@ -263,6 +301,7 @@ function clearTaskFilters() {
     evidence: '',
     sort: taskFilters.sort || 'due-asc',
   });
+  selectedTaskIds = new Set();
 }
 
 function clearTaskFilter(key) {
@@ -1561,7 +1600,10 @@ function renderDashboard() {
 
 function renderCurrentPage() {
   if (appState.currentPage === 'prep') return renderPrepCenter(appState, { editingGearId, editingChecklist, prepFocus, filters: prepFilters });
-  if (appState.currentPage === 'tasks') return renderTasksPage(appState, { editingTaskId, addingTask, filters: taskFilters, myOwner: myTaskOwner });
+  if (appState.currentPage === 'tasks') {
+    pruneSelectedTaskIds();
+    return renderTasksPage(appState, { editingTaskId, addingTask, filters: taskFilters, myOwner: myTaskOwner, selectedTaskIds: [...selectedTaskIds] });
+  }
   if (appState.currentPage === 'members') return renderMembersPage(appState, { editingMemberId, filters: memberFilters });
   if (appState.currentPage === 'intel') return renderIntelPage(appState, { editingIntelId, editingStrategyId, intelFocus, filters: intelFilters });
   if (appState.currentPage === 'presentation') return renderPresentationPage(appState);
@@ -1816,6 +1858,19 @@ appRoot?.addEventListener('click', (event) => {
     renderAppShell();
     return;
   }
+  if (event.target.closest('[data-task-bulk-clear]')) {
+    selectedTaskIds = new Set();
+    renderAppShell();
+    return;
+  }
+  if (event.target.closest('[data-task-bulk-delete]')) {
+    const count = selectedTaskIds.size;
+    if (!count || !confirmDelete(`${count} ${t('tasks')}`)) return;
+    const message = actionMessage(t('deleted'), `${count} ${t('tasks')}`);
+    captureUndo(message);
+    if (deleteSelectedTasks()) persistAndRender(message, { keepUndo: true });
+    return;
+  }
   const myTasksButton = event.target.closest('[data-my-tasks]');
   if (myTasksButton) {
     if (applyMyTasksFilter()) {
@@ -2037,6 +2092,7 @@ appRoot?.addEventListener('click', (event) => {
     const label = task?.name || task?.title || t('task');
     captureUndo(actionMessage(t('deleted'), label));
     if (Number(editingTaskId) === Number(deleteTaskTarget.dataset.taskDelete)) editingTaskId = null;
+    selectedTaskIds.delete(Number(deleteTaskTarget.dataset.taskDelete));
     if (deleteTask(appState, deleteTaskTarget.dataset.taskDelete)) persistAndRender(actionMessage(t('deleted'), label), { keepUndo: true });
     return;
   }
@@ -2485,6 +2541,49 @@ appRoot?.addEventListener('change', (event) => {
     const message = actionMessage(t('statusUpdated'), task ? `${task.name || t('task')} -> ${status.value}` : '');
     captureUndo(message);
     if (updateTaskStatus(appState, status.dataset.taskStatus, status.value)) persistAndRender(message, { keepUndo: true });
+    return;
+  }
+  const selectVisibleTasks = event.target.closest('[data-task-select-visible]');
+  if (selectVisibleTasks) {
+    const visibleIds = getVisibleTaskIdSet();
+    if (selectVisibleTasks.checked) {
+      visibleIds.forEach(id => selectedTaskIds.add(Number(id)));
+    } else {
+      visibleIds.forEach(id => selectedTaskIds.delete(Number(id)));
+    }
+    renderAppShell();
+    return;
+  }
+  const selectTask = event.target.closest('[data-task-select]');
+  if (selectTask) {
+    const id = Number(selectTask.dataset.taskSelect);
+    if (selectTask.checked) selectedTaskIds.add(id);
+    else selectedTaskIds.delete(id);
+    renderAppShell();
+    return;
+  }
+  const bulkStatus = event.target.closest('[data-task-bulk-status]');
+  if (bulkStatus && bulkStatus.value) {
+    const count = selectedTaskIds.size;
+    const message = actionMessage(t('statusUpdated'), `${count} ${t('tasks')} -> ${labelFor(bulkStatus.value)}`);
+    captureUndo(message);
+    if (applyTaskBulkUpdate({ status: bulkStatus.value })) persistAndRender(message, { keepUndo: true });
+    return;
+  }
+  const bulkPriority = event.target.closest('[data-task-bulk-priority]');
+  if (bulkPriority && bulkPriority.value) {
+    const count = selectedTaskIds.size;
+    const message = actionMessage(t('saved'), `${count} ${t('tasks')} -> ${labelFor(bulkPriority.value)}`);
+    captureUndo(message);
+    if (applyTaskBulkUpdate({ priority: bulkPriority.value })) persistAndRender(message, { keepUndo: true });
+    return;
+  }
+  const bulkOwner = event.target.closest('[data-task-bulk-owner]');
+  if (bulkOwner && bulkOwner.value) {
+    const count = selectedTaskIds.size;
+    const message = actionMessage(t('saved'), `${count} ${t('tasks')} -> ${bulkOwner.value}`);
+    captureUndo(message);
+    if (applyTaskBulkUpdate({ owner: bulkOwner.value })) persistAndRender(message, { keepUndo: true });
     return;
   }
   const taskCategory = event.target.closest('[data-task-category]');
