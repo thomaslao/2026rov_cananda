@@ -925,6 +925,14 @@ function confirmDelete(label = t('item')) {
   return window.confirm(`${t('confirmDelete')} ${label}`);
 }
 
+function confirmBulkDeleteSelectedTasks() {
+  const selected = (appState.data.tasks || []).filter(task => selectedTaskIds.has(Number(task.id)));
+  if (!selected.length) return false;
+  const names = selected.slice(0, 12).map((task, index) => `${index + 1}. ${task.name || task.title || t('task')}`);
+  const more = selected.length > names.length ? `\n${t('andMoreTasks')} ${selected.length - names.length}` : '';
+  return window.confirm(`${t('confirmBulkDeleteTasks')} ${selected.length}\n\n${names.join('\n')}${more}`);
+}
+
 function updateTaskFiltersFromControl(target) {
   const updates = [
     ['search', '[data-task-search]'],
@@ -1954,7 +1962,7 @@ appRoot?.addEventListener('click', (event) => {
   }
   if (event.target.closest('[data-task-bulk-delete]')) {
     const count = selectedTaskIds.size;
-    if (!count || !confirmDelete(`${count} ${t('tasks')}`)) return;
+    if (!count || !confirmBulkDeleteSelectedTasks()) return;
     const message = actionMessage(t('deleted'), `${count} ${t('tasks')}`);
     captureUndo(message);
     if (deleteSelectedTasks()) persistAndRender(message, { keepUndo: true });
@@ -2723,6 +2731,15 @@ appRoot?.addEventListener('change', (event) => {
     const message = actionMessage(t('saved'), `${count} ${t('tasks')} -> ${labelFor(bulkCategory.value)}`);
     captureUndo(message);
     if (applyTaskBulkUpdate({ category: bulkCategory.value })) persistAndRender(message, { keepUndo: true });
+    return;
+  }
+  const taskPriority = event.target.closest('[data-task-priority]');
+  if (taskPriority) {
+    const task = appState.data.tasks.find(row => Number(row.id) === Number(taskPriority.dataset.taskPriority));
+    if (task && String(task.priority || 'Medium') === taskPriority.value) return;
+    const message = actionMessage(t('saved'), task ? `${task.name || t('task')} -> ${labelFor(taskPriority.value)}` : labelFor(taskPriority.value));
+    captureUndo(message);
+    if (updateTask(appState, taskPriority.dataset.taskPriority, { priority: taskPriority.value })) persistAndRender(message, { keepUndo: true });
     return;
   }
   const taskCategory = event.target.closest('[data-task-category]');

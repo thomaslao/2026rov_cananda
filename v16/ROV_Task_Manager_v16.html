@@ -355,6 +355,10 @@
   .task-col-status, .task-status-table-cell { width:92px; min-width:92px; white-space:nowrap; text-align:center; }
   .task-actions-cell { width:112px; min-width:112px; white-space:nowrap; text-align:right; }
   .task-priority-cell .badge { min-width:68px; min-height:24px; display:inline-flex; align-items:center; justify-content:center; padding:3px 9px; font-weight:900; }
+  .task-priority-select { width:74px; min-width:74px; height:34px; margin:0; border:1px solid var(--border); border-radius:999px; text-align:center; text-align-last:center; font-size:.72rem; font-weight:900; }
+  .task-priority-select.urgent { background:#FEE2E2; color:#991B1B; border-color:#FCA5A5; }
+  .task-priority-select.mid { background:#FEF3C7; color:#92400E; border-color:#FCD34D; }
+  .task-priority-select.done { background:#D1FAE5; color:#065F46; border-color:#86EFAC; }
   .task-status-cell { display:flex; justify-content:center; min-width:86px; }
   .task-inline-input { width:100%; min-width:0; height:34px; margin:0; padding:5px 7px; border:1px solid transparent; border-radius:7px; background:transparent; color:inherit; text-align:center; font-size:.78rem; font-weight:850; }
   .task-inline-input:hover, .task-inline-input:focus { border-color:var(--border); background:var(--input-bg); outline:none; }
@@ -422,6 +426,7 @@
   .task-density-compact [data-task-evidence],
   .task-density-compact [data-task-health-badges] { display:none !important; }
   .task-density-compact .task-priority-cell .badge { min-height:20px; padding:2px 7px; font-size:.68rem; }
+  .task-density-compact .task-priority-select { width:70px; min-width:70px; height:28px; font-size:.68rem; }
   .task-density-compact .task-inline-input { height:28px; padding:3px 5px; font-size:.72rem; }
   .task-density-compact .task-due-days { display:none; }
   .task-density-compact .task-status-select,
@@ -1135,6 +1140,8 @@ const STRINGS = {
     nextTask: 'Next',
     delete: 'Delete',
     confirmDelete: 'Delete this item?',
+    confirmBulkDeleteTasks: 'Delete selected tasks?',
+    andMoreTasks: 'More tasks:',
     noTasksYet: 'No tasks yet.',
     noMatchingTasks: 'No tasks match the current filters.',
     overdue: 'Overdue',
@@ -1523,6 +1530,8 @@ const STRINGS = {
     nextTask: '\u4e0b\u4e00\u500b',
     delete: '\u522a\u9664',
     confirmDelete: '\u78ba\u5b9a\u8981\u522a\u9664\u9019\u500b\u9805\u76ee\uff1f',
+    confirmBulkDeleteTasks: '\u78ba\u5b9a\u8981\u522a\u9664\u5df2\u9078\u4efb\u52d9\uff1f',
+    andMoreTasks: '\u9084\u6709\u4efb\u52d9\uff1a',
     noTasksYet: '\u5c1a\u672a\u6709\u4efb\u52d9\u3002',
     noMatchingTasks: '\u76ee\u524d\u6c92\u6709\u7b26\u5408\u7be9\u9078\u7684\u4efb\u52d9\u3002',
     overdue: '\u903e\u671f',
@@ -3391,7 +3400,11 @@ function renderTaskTable(tasks = [], members = [], options = {}) {
                   <input class="task-inline-input task-due-input" data-task-due="${task.id}" type="date" value="${escapeHtml(task.due || '')}" aria-label="${escapeHtml(t('due'))}">
                   ${due.days !== null ? `<div class="task-due-days">(${due.days}d)</div>` : ''}
                 </td>` : ''}
-                ${visibleColumns.has('priority') ? `<td class="task-priority-cell"><span class="badge ${task.priority === 'High' ? 'urgent' : task.priority === 'Low' ? 'done' : 'mid'}">${escapeHtml(labelFor(task.priority || 'Medium'))}</span></td>` : ''}
+                ${visibleColumns.has('priority') ? `<td class="task-priority-cell">
+                  <select class="task-priority-select ${task.priority === 'High' ? 'urgent' : task.priority === 'Low' ? 'done' : 'mid'}" data-task-priority="${task.id}" aria-label="${escapeHtml(t('priority'))}">
+                    ${['High', 'Medium', 'Low'].map(priority => `<option value="${priority}" ${task.priority === priority ? 'selected' : ''}>${escapeHtml(labelFor(priority))}</option>`).join('')}
+                  </select>
+                </td>` : ''}
                 ${visibleColumns.has('category') ? `<td class="task-category-cell">
                   <select class="task-category-select" data-task-category="${task.id}" aria-label="${escapeHtml(t('category'))}">
                     ${categoryOptions.map(category => `<option value="${escapeHtml(category)}" ${selectedCategory === category ? 'selected' : ''}>${escapeHtml(labelFor(category))}</option>`).join('')}
@@ -7675,6 +7688,14 @@ function confirmDelete(label = t('item')) {
   return window.confirm(`${t('confirmDelete')} ${label}`);
 }
 
+function confirmBulkDeleteSelectedTasks() {
+  const selected = (appState.data.tasks || []).filter(task => selectedTaskIds.has(Number(task.id)));
+  if (!selected.length) return false;
+  const names = selected.slice(0, 12).map((task, index) => `${index + 1}. ${task.name || task.title || t('task')}`);
+  const more = selected.length > names.length ? `\n${t('andMoreTasks')} ${selected.length - names.length}` : '';
+  return window.confirm(`${t('confirmBulkDeleteTasks')} ${selected.length}\n\n${names.join('\n')}${more}`);
+}
+
 function updateTaskFiltersFromControl(target) {
   const updates = [
     ['search', '[data-task-search]'],
@@ -8704,7 +8725,7 @@ appRoot?.addEventListener('click', (event) => {
   }
   if (event.target.closest('[data-task-bulk-delete]')) {
     const count = selectedTaskIds.size;
-    if (!count || !confirmDelete(`${count} ${t('tasks')}`)) return;
+    if (!count || !confirmBulkDeleteSelectedTasks()) return;
     const message = actionMessage(t('deleted'), `${count} ${t('tasks')}`);
     captureUndo(message);
     if (deleteSelectedTasks()) persistAndRender(message, { keepUndo: true });
@@ -9473,6 +9494,15 @@ appRoot?.addEventListener('change', (event) => {
     const message = actionMessage(t('saved'), `${count} ${t('tasks')} -> ${labelFor(bulkCategory.value)}`);
     captureUndo(message);
     if (applyTaskBulkUpdate({ category: bulkCategory.value })) persistAndRender(message, { keepUndo: true });
+    return;
+  }
+  const taskPriority = event.target.closest('[data-task-priority]');
+  if (taskPriority) {
+    const task = appState.data.tasks.find(row => Number(row.id) === Number(taskPriority.dataset.taskPriority));
+    if (task && String(task.priority || 'Medium') === taskPriority.value) return;
+    const message = actionMessage(t('saved'), task ? `${task.name || t('task')} -> ${labelFor(taskPriority.value)}` : labelFor(taskPriority.value));
+    captureUndo(message);
+    if (updateTask(appState, taskPriority.dataset.taskPriority, { priority: taskPriority.value })) persistAndRender(message, { keepUndo: true });
     return;
   }
   const taskCategory = event.target.closest('[data-task-category]');

@@ -487,7 +487,11 @@ export function renderTaskTable(tasks = [], members = [], options = {}) {
                   <input class="task-inline-input task-due-input" data-task-due="${task.id}" type="date" value="${escapeHtml(task.due || '')}" aria-label="${escapeHtml(t('due'))}">
                   ${due.days !== null ? `<div class="task-due-days">(${due.days}d)</div>` : ''}
                 </td>` : ''}
-                ${visibleColumns.has('priority') ? `<td class="task-priority-cell"><span class="badge ${task.priority === 'High' ? 'urgent' : task.priority === 'Low' ? 'done' : 'mid'}">${escapeHtml(labelFor(task.priority || 'Medium'))}</span></td>` : ''}
+                ${visibleColumns.has('priority') ? `<td class="task-priority-cell">
+                  <select class="task-priority-select ${task.priority === 'High' ? 'urgent' : task.priority === 'Low' ? 'done' : 'mid'}" data-task-priority="${task.id}" aria-label="${escapeHtml(t('priority'))}">
+                    ${['High', 'Medium', 'Low'].map(priority => `<option value="${priority}" ${task.priority === priority ? 'selected' : ''}>${escapeHtml(labelFor(priority))}</option>`).join('')}
+                  </select>
+                </td>` : ''}
                 ${visibleColumns.has('category') ? `<td class="task-category-cell">
                   <select class="task-category-select" data-task-category="${task.id}" aria-label="${escapeHtml(t('category'))}">
                     ${categoryOptions.map(category => `<option value="${escapeHtml(category)}" ${selectedCategory === category ? 'selected' : ''}>${escapeHtml(labelFor(category))}</option>`).join('')}
