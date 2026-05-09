@@ -550,11 +550,7 @@ export function renderSettingsHub(container, options = {}) {
           <button class="btn btn-sm btn-primary" type="button" data-action="run-v16-smoke">${escapeHtml(t('smokeTest'))}</button>
           <button class="btn btn-sm" type="button" data-settings-scroll="settings-db-section">${escapeHtml(t('dbRead'))}</button>
           <button class="btn btn-sm" type="button" data-settings-scroll="settings-schema-section">${escapeHtml(t('schema'))}</button>
-          <button class="btn btn-sm" type="button" data-settings-scroll="settings-sync-section">${escapeHtml(t('syncPreview'))}</button>
-          <button class="btn btn-sm" type="button" data-settings-scroll="settings-write-section">${escapeHtml(t('writeSync'))}</button>
           <button class="btn btn-sm" type="button" data-settings-scroll="settings-audit-section">${escapeHtml(t('audit'))}</button>
-          <button class="btn btn-sm" type="button" data-settings-scroll="settings-rollback-section">${escapeHtml(t('rollback'))}</button>
-          <button class="btn btn-sm" type="button" data-settings-scroll="settings-migration-section">${escapeHtml(t('v15Import'))}</button>
           <button class="btn btn-sm" type="button" data-settings-scroll="settings-pack-section">${escapeHtml(t('settingsPack'))}</button>
           <button class="btn btn-sm" type="button" data-settings-scroll="settings-data-safety">${escapeHtml(t('dataSafety'))}</button>
           <button class="btn btn-sm" type="button" data-settings-scroll="settings-health-section">System / QA</button>
@@ -586,10 +582,6 @@ export function renderSettingsHub(container, options = {}) {
               <div class="dashboard-safety-save" data-settings-save-state>${escapeHtml(t('lastSaved'))}: ${escapeHtml(savedAtLabel)}</div>
             </div>
             <div class="dashboard-safety-actions">
-              <div class="dashboard-action-group dashboard-action-group-primary" data-settings-safety-primary-actions>
-                <button class="btn btn-sm btn-primary" type="button" data-action="export-v16-backup">${escapeHtml(t('exportV16Backup'))}</button>
-                <button class="btn btn-sm" type="button" data-action="choose-v16-backup">${escapeHtml(t('restoreV16Backup'))}</button>
-              </div>
               <div class="dashboard-action-group" data-settings-safety-report-actions>
                 <button class="btn btn-sm" type="button" data-action="export-handoff-report">${escapeHtml(t('exportHandoffReport'))}</button>
                 <button class="btn btn-sm" type="button" data-action="export-safety-report">${escapeHtml(t('exportSafetyReport'))}</button>
@@ -624,7 +616,6 @@ export function renderSettingsHub(container, options = {}) {
               `).join('')}
             </div>` : `<div style="font-size:.76rem;color:var(--muted);font-weight:850">${escapeHtml(t('noRecentActions'))}</div>`}
           </div>
-          <input type="file" accept="application/json,.json" style="display:none" data-v16-backup-file>
         </div>
         <div id="settings-release-readiness" style="border:1px solid var(--border);border-left:5px solid ${readiness.ready ? 'var(--green)' : 'var(--orange)'};border-radius:8px;background:var(--input-bg);padding:10px;margin-top:10px">
           <div style="display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px">
@@ -852,7 +843,7 @@ export function renderSettingsHub(container, options = {}) {
         ` : `<div style="font-size:.82rem;color:var(--muted);font-weight:800">${escapeHtml(t('noSchemaProbe'))}</div>`}
       </div>
 
-      <div id="settings-sync-section" class="card">
+      <div id="settings-sync-section" class="card" style="display:none">
         <div style="display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px">
           <div>
             <h2 style="margin-bottom:4px">${escapeHtml(t('supabaseSyncPreview'))}</h2>
@@ -897,7 +888,7 @@ export function renderSettingsHub(container, options = {}) {
         ` : `<div style="font-size:.82rem;color:var(--muted);font-weight:800">${escapeHtml(t('noPreviewYet'))}</div>`}
       </div>
 
-      <div id="settings-write-section" class="card">
+      <div id="settings-write-section" class="card" style="display:none">
         <div style="display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px">
           <div>
             <h2 style="margin-bottom:4px">${escapeHtml(t('guardedWriteSync'))}</h2>
@@ -972,7 +963,7 @@ export function renderSettingsHub(container, options = {}) {
         ` : `<div style="font-size:.82rem;color:var(--muted);font-weight:800">${escapeHtml(t('noAuditEntries'))}</div>`}
       </div>
 
-      <div id="settings-rollback-section" class="card">
+      <div id="settings-rollback-section" class="card" style="display:none">
         <div style="display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px">
           <div>
             <h2 style="margin-bottom:4px">${escapeHtml(t('rollbackFromBackup'))}</h2>
@@ -1012,7 +1003,7 @@ export function renderSettingsHub(container, options = {}) {
         </div>
       </div>
 
-      <div id="settings-migration-section" class="card">
+      <div id="settings-migration-section" class="card" style="display:none">
         <div style="display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px">
           <div>
             <h2 style="margin-bottom:4px">${escapeHtml(t('v15BackupImport'))}</h2>

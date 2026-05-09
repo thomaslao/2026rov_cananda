@@ -799,7 +799,7 @@ const STRINGS = {
     gantt: 'Gantt',
     float: 'Float',
     settings: 'Settings',
-    dashboardSummary: 'v16 is now a standalone local-first build. v15 remains untouched.',
+    dashboardSummary: 'v16 now uses Supabase as the primary data source.',
     actionSummary: 'Action Summary',
     taskStatusDistribution: 'Task Status Distribution',
     taskBurndown: 'Task Burndown',
@@ -906,11 +906,11 @@ const STRINGS = {
     healthIssues: 'Health issues',
     dataHealth: 'Data Health',
     dataSafety: 'Data Safety',
-    dataSafetyHint: 'Back up or restore this browser data before major edits. Supabase is not touched.',
+    dataSafetyHint: 'Operational reports and recent UI actions. Working data is stored in Supabase.',
     lastSaved: 'Last saved',
     notSavedYet: 'Not saved yet',
     recentActions: 'Recent actions',
-    noRecentActions: 'No recent local actions.',
+    noRecentActions: 'No recent actions.',
     undoSnapshot: 'Undo snapshot',
     available: 'Available',
     notAvailable: 'Not available',
@@ -1088,15 +1088,15 @@ const STRINGS = {
     overview: 'Overview',
     overviewHint: 'Start with red cards, then export a pack when the setup is ready.',
     releaseReadiness: 'v16 Release Readiness',
-    releaseReadinessHint: 'Quick handoff checklist based on the current local session.',
+    releaseReadinessHint: 'Quick handoff checklist based on the current Supabase-backed session.',
     exportHandoffReport: 'Export Handoff Report',
     healthy: 'Healthy',
     check: 'Check',
     dataStatus: 'Data Status',
-    supabaseReadOnly: 'v15 Supabase Read-Only',
-    supabaseReadOnlyHint: 'Loads the v15 production Supabase database into v16 local state without writing to Supabase.',
-    loadFromSupabase: 'Load v15 Supabase DB',
-    notLoadedYet: 'Not loaded yet. This reads the v15 production database only.',
+    supabaseReadOnly: 'Supabase Live Data',
+    supabaseReadOnlyHint: 'Loads the live Supabase database. v16 CRUD changes write back to Supabase directly.',
+    loadFromSupabase: 'Reload Supabase DB',
+    notLoadedYet: 'Not loaded yet. v16 reads and writes the live Supabase database.',
     supabaseSchemaProbe: 'Supabase Schema Probe',
     schemaProbeHint: 'Read-only column probe using select(column).limit(1). No data writes.',
     probeSchema: 'Probe Schema',
@@ -1104,17 +1104,17 @@ const STRINGS = {
     existing: 'Existing',
     missingBlocked: 'Missing / blocked',
     supabaseSyncPreview: 'Supabase Sync Preview',
-    syncPreviewHint: 'Dry-run only. It compares v16 local state with the last read-only DB load and performs no writes.',
+    syncPreviewHint: 'Deprecated. v16 now writes CRUD changes directly to Supabase.',
     buildPreview: 'Build Preview',
     noPreviewYet: 'No preview yet. Load Supabase read-only first, then build preview.',
     guardedWriteSync: 'Guarded Write Sync',
-    guardedWriteHint: 'Manual create/update only. Deletes are disabled. Payloads are filtered through a schema whitelist before writing.',
+    guardedWriteHint: 'Deprecated. Normal v16 CRUD now writes directly to Supabase, including deletes.',
     confirmation: 'Confirmation',
     executeGuardedWriteSync: 'Execute Guarded Write Sync',
     noWriteSyncYet: 'No write sync executed yet.',
     postWriteVerification: 'Post-write verification',
     writeAuditLog: 'Write Audit Log',
-    writeAuditHint: 'Recent guarded write attempts saved locally. Latest 20 entries are kept.',
+    writeAuditHint: 'Recent Supabase write attempts. Latest 20 entries are kept in this browser for diagnostics.',
     noAuditEntries: 'No guarded write audit entries yet.',
     rollbackFromBackup: 'Rollback From v16 Backup',
     rollbackHint: 'Restore v16 local state from a rov_v16_local_backup JSON. This does not write to Supabase.',
@@ -1459,10 +1459,10 @@ const STRINGS = {
     healthy: '\u6b63\u5e38',
     check: '\u9700\u6aa2\u67e5',
     dataStatus: '\u8cc7\u6599\u72c0\u614b',
-    supabaseReadOnly: 'v15 Supabase \u53ea\u8b80',
-    supabaseReadOnlyHint: '\u5c07 v15 production Supabase database \u8b80\u5165 v16 \u672c\u6a5f\u72c0\u614b\uff0c\u4e0d\u5beb\u5165 Supabase\u3002',
-    loadFromSupabase: '\u8b80\u5165 v15 Supabase DB',
-    notLoadedYet: '\u5c1a\u672a\u8b80\u53d6\u3002\u6b64\u64cd\u4f5c\u53ea\u8b80 v15 production database\u3002',
+    supabaseReadOnly: 'Supabase \u7dda\u4e0a\u8cc7\u6599',
+    supabaseReadOnlyHint: '\u8b80\u53d6\u7dda\u4e0a Supabase database\u3002v16 CRUD \u8b8a\u66f4\u6703\u76f4\u63a5\u5beb\u56de Supabase\u3002',
+    loadFromSupabase: '\u91cd\u65b0\u8b80\u53d6 Supabase DB',
+    notLoadedYet: '\u5c1a\u672a\u8b80\u53d6\u3002v16 \u6703\u8b80\u5beb\u7dda\u4e0a Supabase database\u3002',
     supabaseSchemaProbe: 'Supabase \u6b04\u4f4d\u63a2\u6e2c',
     schemaProbeHint: '\u4f7f\u7528 select(column).limit(1) \u9032\u884c\u53ea\u8b80\u6b04\u4f4d\u63a2\u6e2c\uff0c\u4e0d\u5beb\u5165\u8cc7\u6599\u3002',
     probeSchema: '\u63a2\u6e2c\u6b04\u4f4d',
@@ -1470,11 +1470,11 @@ const STRINGS = {
     existing: '\u5b58\u5728',
     missingBlocked: '\u7f3a\u5c11 / \u88ab\u963b\u64cb',
     supabaseSyncPreview: 'Supabase \u540c\u6b65\u9810\u89bd',
-    syncPreviewHint: '\u50c5 dry-run\u3002\u6bd4\u8f03 v16 \u672c\u6a5f\u72c0\u614b\u8207\u6700\u5f8c\u4e00\u6b21\u53ea\u8b80 DB \u8cc7\u6599\uff0c\u4e0d\u5beb\u5165\u3002',
+    syncPreviewHint: '\u5df2\u53d6\u6d88\u3002v16 \u73fe\u5728\u6703\u5c07 CRUD \u8b8a\u66f4\u76f4\u63a5\u5beb\u5165 Supabase\u3002',
     buildPreview: '\u5efa\u7acb\u9810\u89bd',
     noPreviewYet: '\u5c1a\u672a\u6709\u9810\u89bd\u3002\u8acb\u5148\u53ea\u8b80\u8f09\u5165 Supabase\uff0c\u518d\u5efa\u7acb\u9810\u89bd\u3002',
     guardedWriteSync: '\u53d7\u4fdd\u8b77\u5beb\u5165\u540c\u6b65',
-    guardedWriteHint: '\u50c5\u624b\u52d5 create/update\u3002\u522a\u9664\u5df2\u7981\u7528\uff0cpayload \u6703\u5148\u7d93\u904e schema \u767d\u540d\u55ae\u904e\u6ffe\u3002',
+    guardedWriteHint: '\u5df2\u53d6\u6d88\u3002v16 \u4e00\u822c CRUD \u73fe\u5728\u76f4\u63a5\u5beb\u5165 Supabase\uff0c\u5305\u62ec\u522a\u9664\u3002',
     confirmation: '\u78ba\u8a8d\u5b57\u4e32',
     executeGuardedWriteSync: '\u57f7\u884c\u53d7\u4fdd\u8b77\u5beb\u5165\u540c\u6b65',
     noWriteSyncYet: '\u5c1a\u672a\u57f7\u884c\u5beb\u5165\u540c\u6b65\u3002',
@@ -5536,11 +5536,7 @@ function renderSettingsHub(container, options = {}) {
           <button class="btn btn-sm btn-primary" type="button" data-action="run-v16-smoke">${escapeHtml(t('smokeTest'))}</button>
           <button class="btn btn-sm" type="button" data-settings-scroll="settings-db-section">${escapeHtml(t('dbRead'))}</button>
           <button class="btn btn-sm" type="button" data-settings-scroll="settings-schema-section">${escapeHtml(t('schema'))}</button>
-          <button class="btn btn-sm" type="button" data-settings-scroll="settings-sync-section">${escapeHtml(t('syncPreview'))}</button>
-          <button class="btn btn-sm" type="button" data-settings-scroll="settings-write-section">${escapeHtml(t('writeSync'))}</button>
           <button class="btn btn-sm" type="button" data-settings-scroll="settings-audit-section">${escapeHtml(t('audit'))}</button>
-          <button class="btn btn-sm" type="button" data-settings-scroll="settings-rollback-section">${escapeHtml(t('rollback'))}</button>
-          <button class="btn btn-sm" type="button" data-settings-scroll="settings-migration-section">${escapeHtml(t('v15Import'))}</button>
           <button class="btn btn-sm" type="button" data-settings-scroll="settings-pack-section">${escapeHtml(t('settingsPack'))}</button>
           <button class="btn btn-sm" type="button" data-settings-scroll="settings-data-safety">${escapeHtml(t('dataSafety'))}</button>
           <button class="btn btn-sm" type="button" data-settings-scroll="settings-health-section">System / QA</button>
@@ -5572,10 +5568,6 @@ function renderSettingsHub(container, options = {}) {
               <div class="dashboard-safety-save" data-settings-save-state>${escapeHtml(t('lastSaved'))}: ${escapeHtml(savedAtLabel)}</div>
             </div>
             <div class="dashboard-safety-actions">
-              <div class="dashboard-action-group dashboard-action-group-primary" data-settings-safety-primary-actions>
-                <button class="btn btn-sm btn-primary" type="button" data-action="export-v16-backup">${escapeHtml(t('exportV16Backup'))}</button>
-                <button class="btn btn-sm" type="button" data-action="choose-v16-backup">${escapeHtml(t('restoreV16Backup'))}</button>
-              </div>
               <div class="dashboard-action-group" data-settings-safety-report-actions>
                 <button class="btn btn-sm" type="button" data-action="export-handoff-report">${escapeHtml(t('exportHandoffReport'))}</button>
                 <button class="btn btn-sm" type="button" data-action="export-safety-report">${escapeHtml(t('exportSafetyReport'))}</button>
@@ -5610,7 +5602,6 @@ function renderSettingsHub(container, options = {}) {
               `).join('')}
             </div>` : `<div style="font-size:.76rem;color:var(--muted);font-weight:850">${escapeHtml(t('noRecentActions'))}</div>`}
           </div>
-          <input type="file" accept="application/json,.json" style="display:none" data-v16-backup-file>
         </div>
         <div id="settings-release-readiness" style="border:1px solid var(--border);border-left:5px solid ${readiness.ready ? 'var(--green)' : 'var(--orange)'};border-radius:8px;background:var(--input-bg);padding:10px;margin-top:10px">
           <div style="display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px">
@@ -5838,7 +5829,7 @@ function renderSettingsHub(container, options = {}) {
         ` : `<div style="font-size:.82rem;color:var(--muted);font-weight:800">${escapeHtml(t('noSchemaProbe'))}</div>`}
       </div>
 
-      <div id="settings-sync-section" class="card">
+      <div id="settings-sync-section" class="card" style="display:none">
         <div style="display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px">
           <div>
             <h2 style="margin-bottom:4px">${escapeHtml(t('supabaseSyncPreview'))}</h2>
@@ -5883,7 +5874,7 @@ function renderSettingsHub(container, options = {}) {
         ` : `<div style="font-size:.82rem;color:var(--muted);font-weight:800">${escapeHtml(t('noPreviewYet'))}</div>`}
       </div>
 
-      <div id="settings-write-section" class="card">
+      <div id="settings-write-section" class="card" style="display:none">
         <div style="display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px">
           <div>
             <h2 style="margin-bottom:4px">${escapeHtml(t('guardedWriteSync'))}</h2>
@@ -5958,7 +5949,7 @@ function renderSettingsHub(container, options = {}) {
         ` : `<div style="font-size:.82rem;color:var(--muted);font-weight:800">${escapeHtml(t('noAuditEntries'))}</div>`}
       </div>
 
-      <div id="settings-rollback-section" class="card">
+      <div id="settings-rollback-section" class="card" style="display:none">
         <div style="display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px">
           <div>
             <h2 style="margin-bottom:4px">${escapeHtml(t('rollbackFromBackup'))}</h2>
@@ -5998,7 +5989,7 @@ function renderSettingsHub(container, options = {}) {
         </div>
       </div>
 
-      <div id="settings-migration-section" class="card">
+      <div id="settings-migration-section" class="card" style="display:none">
         <div style="display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px">
           <div>
             <h2 style="margin-bottom:4px">${escapeHtml(t('v15BackupImport'))}</h2>
