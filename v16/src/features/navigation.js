@@ -23,9 +23,13 @@ export const V16_PAGES = [
   { id: 'settings', labelKey: 'settings' },
 ];
 
-export function renderNavigation(currentPage, syncStatus = null) {
+export function renderNavigation(currentPage, syncStatus = null, visiblePageIds = null) {
   const locale = getLocale();
   const nextLocale = locale === 'zh' ? 'en' : 'zh';
+  const visible = new Set(Array.isArray(visiblePageIds) && visiblePageIds.length
+    ? [...visiblePageIds, 'dashboard', 'settings']
+    : V16_PAGES.map(page => page.id));
+  const pages = V16_PAGES.filter(page => visible.has(page.id));
   const status = syncStatus || { state: 'idle', label: 'Supabase', detail: '' };
   const statusClass = status.state === 'error'
     ? 'error'
@@ -44,7 +48,7 @@ export function renderNavigation(currentPage, syncStatus = null) {
           </span>
         </div>
         <div style="display:flex;gap:6px;flex-wrap:wrap">
-          ${V16_PAGES.map(page => `
+          ${pages.map(page => `
             <button class="btn btn-sm ${page.id === currentPage ? 'btn-primary' : ''}" type="button" data-page="${page.id}">${t(page.labelKey)}</button>
           `).join('')}
           <button class="btn btn-sm btn-primary" type="button" data-locale-toggle data-next-locale="${nextLocale}" title="${locale === 'zh' ? 'Switch to English' : 'Switch to Chinese'}">ZH / EN</button>

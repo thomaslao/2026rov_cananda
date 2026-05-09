@@ -477,6 +477,9 @@ export function scrollSettingsSection(id, root = document) {
 export function renderSettingsHub(container, options = {}) {
   if (!container) return;
   const { state, smokeHistory = [], migrationSummary = null, dbStatus = null, syncPreview = null, writeResult = null, postWritePreview = null, schemaStatus = null, writeAuditLog = [], rollbackSummary = null, diagnosticsSummary = null, appSavedAt = '', undoAvailable = false, actionLog = [] } = options;
+  const pageFeatures = options.pageFeatures || {};
+  const pageFeaturePages = pageFeatures.pages || [];
+  const visiblePageIds = new Set(pageFeatures.visiblePageIds || []);
   const stats = getSettingsCenterStats(state, smokeHistory, migrationSummary, dbStatus, syncPreview, writeResult, postWritePreview, schemaStatus, writeAuditLog, rollbackSummary, diagnosticsSummary);
   const systemOk = stats.latestSmoke ? stats.failedSmoke === 0 : false;
   const readiness = buildReleaseReadiness(stats);
@@ -537,8 +540,31 @@ export function renderSettingsHub(container, options = {}) {
           <button class="btn btn-sm" type="button" data-settings-scroll="settings-schema-section">${escapeHtml(t('schema'))}</button>
           <button class="btn btn-sm" type="button" data-settings-scroll="settings-audit-section">${escapeHtml(t('audit'))}</button>
           <button class="btn btn-sm" type="button" data-settings-scroll="settings-pack-section">${escapeHtml(t('settingsPack'))}</button>
+          <button class="btn btn-sm" type="button" data-settings-scroll="settings-page-features">${escapeHtml(t('pageFeatures'))}</button>
           <button class="btn btn-sm" type="button" data-settings-scroll="settings-data-safety">${escapeHtml(t('dataSafety'))}</button>
           <button class="btn btn-sm" type="button" data-settings-scroll="settings-health-section">System / QA</button>
+        </div>
+      </div>
+
+      <div id="settings-page-features" class="card">
+        <div class="card-header">
+          <div>
+            <h2 class="card-header-title">${escapeHtml(t('pageFeatures'))}</h2>
+            <div style="font-size:.82rem;color:var(--muted);font-weight:800">${escapeHtml(t('pageFeaturesHint'))}</div>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px">
+          ${pageFeaturePages.map((page) => {
+            const locked = page.id === 'dashboard' || page.id === 'settings';
+            const checked = locked || visiblePageIds.has(page.id);
+            return `
+              <label style="display:flex;align-items:center;gap:8px;border:1px solid var(--border);border-radius:8px;background:var(--input-bg);padding:9px;font-weight:900;color:var(--navy)">
+                <input type="checkbox" data-page-feature="${escapeHtml(page.id)}" ${checked ? 'checked' : ''} ${locked ? 'disabled' : ''}>
+                <span>${escapeHtml(t(page.labelKey))}</span>
+                ${locked ? `<span class="badge done">${escapeHtml(t('alwaysOn'))}</span>` : ''}
+              </label>
+            `;
+          }).join('')}
         </div>
       </div>
 

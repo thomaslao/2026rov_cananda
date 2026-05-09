@@ -28,7 +28,7 @@ import {
   updateKnowledgeItem,
   updateNotes,
 } from './features/intel.js';
-import { renderNavigation, showPage } from './features/navigation.js';
+import { renderNavigation, showPage, V16_PAGES } from './features/navigation.js';
 import { addMember, createMemberFromForm, deleteMember, normalizeMemberFilters, renderMembersPage, updateMember } from './features/members.js';
 import {
   addChecklistItem,
@@ -71,6 +71,8 @@ const UNDO_STORAGE_KEY = 'rov_v16_last_undo';
 const ACTION_LOG_STORAGE_KEY = 'rov_v16_action_log';
 const PENDING_LOCAL_SYNC_KEY = 'rov_v16_pending_local_sync';
 const SYNCED_DATA_SIGNATURE_KEY = 'rov_v16_synced_data_signature';
+const PAGE_FEATURES_STORAGE_KEY = 'rov_v16_page_features';
+const DEFAULT_VISIBLE_PAGE_IDS = ['dashboard', 'prep', 'tasks', 'members', 'intel', 'competition', 'settings'];
 const ACTION_LOG_LIMIT = 8;
 const UNDO_BAR_AUTO_CLEAR_MS = 5000;
 const SUPABASE_REFRESH_INTERVAL_MS = 5000;
@@ -107,6 +109,7 @@ let toastTimer = null;
 let undoState = loadUndoState();
 let undoClearTimer = null;
 let actionLog = loadActionLog();
+let visiblePageIds = loadVisiblePageIds();
 let syncStatus = {
   state: hasPendingLocalSync() ? 'pending' : 'idle',
   label: hasPendingLocalSync() ? 'Supabase pending' : 'Supabase ready',
@@ -148,6 +151,37 @@ const prepFilters = {
   search: '',
   status: '',
 };
+
+function normalizeVisiblePageIds(ids = []) {
+  const valid = new Set(V16_PAGES.map(page => page.id));
+  const cleaned = [...new Set((Array.isArray(ids) ? ids : []).filter(id => valid.has(id)))];
+  return [...new Set(['dashboard', ...cleaned, 'settings'])];
+}
+
+function loadVisiblePageIds(storage = localStorage) {
+  try {
+    const saved = JSON.parse(storage.getItem(PAGE_FEATURES_STORAGE_KEY) || 'null');
+    return normalizeVisiblePageIds(saved || DEFAULT_VISIBLE_PAGE_IDS);
+  } catch (error) {
+    return normalizeVisiblePageIds(DEFAULT_VISIBLE_PAGE_IDS);
+  }
+}
+
+function saveVisiblePageIds(storage = localStorage) {
+  visiblePageIds = normalizeVisiblePageIds(visiblePageIds);
+  storage.setItem(PAGE_FEATURES_STORAGE_KEY, JSON.stringify(visiblePageIds));
+}
+
+function setPageFeature(pageId, enabled) {
+  if (['dashboard', 'settings'].includes(pageId)) return false;
+  const set = new Set(visiblePageIds);
+  if (enabled) set.add(pageId);
+  else set.delete(pageId);
+  visiblePageIds = normalizeVisiblePageIds([...set]);
+  if (!visiblePageIds.includes(appState.currentPage)) appState.currentPage = 'dashboard';
+  saveVisiblePageIds();
+  return true;
+}
 
 function clearEditingOutsidePage(page) {
   if (page !== 'tasks') editingTaskId = null;
@@ -1487,7 +1521,8 @@ function renderCurrentPage() {
 
 function renderAppShell() {
   if (!appRoot) throw new Error('App root #app was not found.');
-  appRoot.innerHTML = `${renderNavigation(appState.currentPage, syncStatus)}${renderToast()}${renderUndoBar()}${renderCurrentPage()}`;
+  if (!visiblePageIds.includes(appState.currentPage)) appState.currentPage = 'dashboard';
+  appRoot.innerHTML = `${renderNavigation(appState.currentPage, syncStatus, visiblePageIds)}${renderToast()}${renderUndoBar()}${renderCurrentPage()}`;
   scheduleUndoAutoClear();
   if (appState.currentPage === 'settings') {
     renderSettingsHub(document.getElementById('settings-host'), {
@@ -1505,6 +1540,10 @@ function renderAppShell() {
       appSavedAt: appState.savedAt,
       undoAvailable: Boolean(undoState),
       actionLog,
+      pageFeatures: {
+        pages: V16_PAGES,
+        visiblePageIds,
+      },
     });
     renderSmokeTestPanel(getSmokePanel(), getSmokeTestLog()[0], getSmokeTestLog());
   }
@@ -1600,6 +1639,7 @@ function runAndRenderSmokeTest() {
 }
 
 function setPage(page) {
+  if (!visiblePageIds.includes(page) && page !== 'settings') page = 'dashboard';
   showPage(appState, page);
   clearEditingOutsidePage(appState.currentPage);
   saveAppState(appState);
@@ -1743,6 +1783,13 @@ appRoot?.addEventListener('click', (event) => {
   }
   if (event.target.closest('[data-intel-clear-focus]')) {
     clearIntelFocus();
+    renderAppShell();
+    return;
+  }
+  const pageFeature = event.target.closest('[data-page-feature]');
+  if (pageFeature) {
+    setPageFeature(pageFeature.dataset.pageFeature, pageFeature.checked);
+    showToast(t('saved'));
     renderAppShell();
     return;
   }

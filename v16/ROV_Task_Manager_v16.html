@@ -965,6 +965,9 @@ const STRINGS = {
     rollback: 'Rollback',
     v15Import: 'Live Import',
     settingsPack: 'Settings Pack',
+    pageFeatures: 'Page Features',
+    pageFeaturesHint: 'Choose which pages appear in the top navigation. Dashboard and Settings stay on.',
+    alwaysOn: 'Always on',
     taskCategoryManager: 'Task Category Management',
     taskCategoryManagerHint: 'These categories feed the task add/edit category dropdown.',
     addTaskCategoryPlaceholder: 'Add custom task category',
@@ -1317,6 +1320,9 @@ const STRINGS = {
     rollback: '\u56de\u5fa9',
     v15Import: '\u7dda\u4e0a\u532f\u5165',
     settingsPack: '\u8a2d\u5b9a\u5305',
+    pageFeatures: '\u9801\u9762\u529f\u80fd',
+    pageFeaturesHint: '\u9078\u64c7\u9802\u90e8\u5c0e\u822a\u5217\u8981\u986f\u793a\u7684\u9801\u9762\u3002\u7e3d\u89bd\u8207\u8a2d\u7f6e\u6703\u4fdd\u6301\u958b\u555f\u3002',
+    alwaysOn: '\u5e38\u958b',
     taskCategoryManager: '\u4efb\u52d9\u985e\u5225\u7ba1\u7406',
     taskCategoryManagerHint: '\u9019\u4e9b\u985e\u5225\u6703\u76f4\u63a5\u5957\u7528\u5230\u4efb\u52d9\u65b0\u589e\u8207\u7de8\u8f2f\u7684\u985e\u5225\u4e0b\u62c9\u9078\u55ae\u3002',
     addTaskCategoryPlaceholder: '\u65b0\u589e\u81ea\u8a02\u4efb\u52d9\u985e\u5225',
@@ -3432,9 +3438,13 @@ const V16_PAGES = [
   { id: 'settings', labelKey: 'settings' },
 ];
 
-function renderNavigation(currentPage, syncStatus = null) {
+function renderNavigation(currentPage, syncStatus = null, visiblePageIds = null) {
   const locale = getLocale();
   const nextLocale = locale === 'zh' ? 'en' : 'zh';
+  const visible = new Set(Array.isArray(visiblePageIds) && visiblePageIds.length
+    ? [...visiblePageIds, 'dashboard', 'settings']
+    : V16_PAGES.map(page => page.id));
+  const pages = V16_PAGES.filter(page => visible.has(page.id));
   const status = syncStatus || { state: 'idle', label: 'Supabase', detail: '' };
   const statusClass = status.state === 'error'
     ? 'error'
@@ -3453,7 +3463,7 @@ function renderNavigation(currentPage, syncStatus = null) {
           </span>
         </div>
         <div style="display:flex;gap:6px;flex-wrap:wrap">
-          ${V16_PAGES.map(page => `
+          ${pages.map(page => `
             <button class="btn btn-sm ${page.id === currentPage ? 'btn-primary' : ''}" type="button" data-page="${page.id}">${t(page.labelKey)}</button>
           `).join('')}
           <button class="btn btn-sm btn-primary" type="button" data-locale-toggle data-next-locale="${nextLocale}" title="${locale === 'zh' ? 'Switch to English' : 'Switch to Chinese'}">ZH / EN</button>
@@ -5423,6 +5433,9 @@ function scrollSettingsSection(id, root = document) {
 function renderSettingsHub(container, options = {}) {
   if (!container) return;
   const { state, smokeHistory = [], migrationSummary = null, dbStatus = null, syncPreview = null, writeResult = null, postWritePreview = null, schemaStatus = null, writeAuditLog = [], rollbackSummary = null, diagnosticsSummary = null, appSavedAt = '', undoAvailable = false, actionLog = [] } = options;
+  const pageFeatures = options.pageFeatures || {};
+  const pageFeaturePages = pageFeatures.pages || [];
+  const visiblePageIds = new Set(pageFeatures.visiblePageIds || []);
   const stats = getSettingsCenterStats(state, smokeHistory, migrationSummary, dbStatus, syncPreview, writeResult, postWritePreview, schemaStatus, writeAuditLog, rollbackSummary, diagnosticsSummary);
   const systemOk = stats.latestSmoke ? stats.failedSmoke === 0 : false;
   const readiness = buildReleaseReadiness(stats);
@@ -5483,8 +5496,31 @@ function renderSettingsHub(container, options = {}) {
           <button class="btn btn-sm" type="button" data-settings-scroll="settings-schema-section">${escapeHtml(t('schema'))}</button>
           <button class="btn btn-sm" type="button" data-settings-scroll="settings-audit-section">${escapeHtml(t('audit'))}</button>
           <button class="btn btn-sm" type="button" data-settings-scroll="settings-pack-section">${escapeHtml(t('settingsPack'))}</button>
+          <button class="btn btn-sm" type="button" data-settings-scroll="settings-page-features">${escapeHtml(t('pageFeatures'))}</button>
           <button class="btn btn-sm" type="button" data-settings-scroll="settings-data-safety">${escapeHtml(t('dataSafety'))}</button>
           <button class="btn btn-sm" type="button" data-settings-scroll="settings-health-section">System / QA</button>
+        </div>
+      </div>
+
+      <div id="settings-page-features" class="card">
+        <div class="card-header">
+          <div>
+            <h2 class="card-header-title">${escapeHtml(t('pageFeatures'))}</h2>
+            <div style="font-size:.82rem;color:var(--muted);font-weight:800">${escapeHtml(t('pageFeaturesHint'))}</div>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px">
+          ${pageFeaturePages.map((page) => {
+            const locked = page.id === 'dashboard' || page.id === 'settings';
+            const checked = locked || visiblePageIds.has(page.id);
+            return `
+              <label style="display:flex;align-items:center;gap:8px;border:1px solid var(--border);border-radius:8px;background:var(--input-bg);padding:9px;font-weight:900;color:var(--navy)">
+                <input type="checkbox" data-page-feature="${escapeHtml(page.id)}" ${checked ? 'checked' : ''} ${locked ? 'disabled' : ''}>
+                <span>${escapeHtml(t(page.labelKey))}</span>
+                ${locked ? `<span class="badge done">${escapeHtml(t('alwaysOn'))}</span>` : ''}
+              </label>
+            `;
+          }).join('')}
         </div>
       </div>
 
@@ -6373,7 +6409,7 @@ const { buildSupabaseSyncPreview, buildWriteAuditEntry, executeGuardedSupabaseWr
 const { addMissionEvent, clearMissionEvents, createMissionRun, deleteMissionRun, exportMissionRunsCsv, getRunDraftFromRun, getRunPayloadFromDom, normalizeRunFilters, renderCompetitionCenter, setCompetitionFlowStep, updateMissionRun } = __src_features_competition_js;
 const { getDataHealthIssues, getSmokeTestLog, renderSmokeTestPanel, saveSmokeTestResult } = __src_features_health_js;
 const { addKnowledgeItem, createKnowledgeItemFromForm, deleteKnowledgeItem, getNextKnowledgeStatus, normalizeKnowledgeFilters, renderIntelPage, updateKnowledgeStatus, updateKnowledgeItem, updateNotes } = __src_features_intel_js;
-const { renderNavigation, showPage } = __src_features_navigation_js;
+const { renderNavigation, showPage, V16_PAGES } = __src_features_navigation_js;
 const { addMember, createMemberFromForm, deleteMember, normalizeMemberFilters, renderMembersPage, updateMember } = __src_features_members_js;
 const { addChecklistItem, addGearItem, deleteChecklistItem, deleteGearItem, getGearPayloadFromDom, normalizePrepFilters, renderPrepCenter, toggleChecklistItem, toggleGearItem, updateChecklistItem, updateGearItem } = __src_features_prep_js;
 const { addMasterDataValue, deleteMasterDataValue, ensureDefaultTaskCategories, exportHandoffReport, exportSettingsPack, importSettingsPackPayload, loadMasterData, renderSettingsHub, scrollSettingsSection } = __src_features_settings_js;
@@ -6385,6 +6421,8 @@ const UNDO_STORAGE_KEY = 'rov_v16_last_undo';
 const ACTION_LOG_STORAGE_KEY = 'rov_v16_action_log';
 const PENDING_LOCAL_SYNC_KEY = 'rov_v16_pending_local_sync';
 const SYNCED_DATA_SIGNATURE_KEY = 'rov_v16_synced_data_signature';
+const PAGE_FEATURES_STORAGE_KEY = 'rov_v16_page_features';
+const DEFAULT_VISIBLE_PAGE_IDS = ['dashboard', 'prep', 'tasks', 'members', 'intel', 'competition', 'settings'];
 const ACTION_LOG_LIMIT = 8;
 const UNDO_BAR_AUTO_CLEAR_MS = 5000;
 const SUPABASE_REFRESH_INTERVAL_MS = 5000;
@@ -6421,6 +6459,7 @@ let toastTimer = null;
 let undoState = loadUndoState();
 let undoClearTimer = null;
 let actionLog = loadActionLog();
+let visiblePageIds = loadVisiblePageIds();
 let syncStatus = {
   state: hasPendingLocalSync() ? 'pending' : 'idle',
   label: hasPendingLocalSync() ? 'Supabase pending' : 'Supabase ready',
@@ -6462,6 +6501,37 @@ const prepFilters = {
   search: '',
   status: '',
 };
+
+function normalizeVisiblePageIds(ids = []) {
+  const valid = new Set(V16_PAGES.map(page => page.id));
+  const cleaned = [...new Set((Array.isArray(ids) ? ids : []).filter(id => valid.has(id)))];
+  return [...new Set(['dashboard', ...cleaned, 'settings'])];
+}
+
+function loadVisiblePageIds(storage = localStorage) {
+  try {
+    const saved = JSON.parse(storage.getItem(PAGE_FEATURES_STORAGE_KEY) || 'null');
+    return normalizeVisiblePageIds(saved || DEFAULT_VISIBLE_PAGE_IDS);
+  } catch (error) {
+    return normalizeVisiblePageIds(DEFAULT_VISIBLE_PAGE_IDS);
+  }
+}
+
+function saveVisiblePageIds(storage = localStorage) {
+  visiblePageIds = normalizeVisiblePageIds(visiblePageIds);
+  storage.setItem(PAGE_FEATURES_STORAGE_KEY, JSON.stringify(visiblePageIds));
+}
+
+function setPageFeature(pageId, enabled) {
+  if (['dashboard', 'settings'].includes(pageId)) return false;
+  const set = new Set(visiblePageIds);
+  if (enabled) set.add(pageId);
+  else set.delete(pageId);
+  visiblePageIds = normalizeVisiblePageIds([...set]);
+  if (!visiblePageIds.includes(appState.currentPage)) appState.currentPage = 'dashboard';
+  saveVisiblePageIds();
+  return true;
+}
 
 function clearEditingOutsidePage(page) {
   if (page !== 'tasks') editingTaskId = null;
@@ -7801,7 +7871,8 @@ function renderCurrentPage() {
 
 function renderAppShell() {
   if (!appRoot) throw new Error('App root #app was not found.');
-  appRoot.innerHTML = `${renderNavigation(appState.currentPage, syncStatus)}${renderToast()}${renderUndoBar()}${renderCurrentPage()}`;
+  if (!visiblePageIds.includes(appState.currentPage)) appState.currentPage = 'dashboard';
+  appRoot.innerHTML = `${renderNavigation(appState.currentPage, syncStatus, visiblePageIds)}${renderToast()}${renderUndoBar()}${renderCurrentPage()}`;
   scheduleUndoAutoClear();
   if (appState.currentPage === 'settings') {
     renderSettingsHub(document.getElementById('settings-host'), {
@@ -7819,6 +7890,10 @@ function renderAppShell() {
       appSavedAt: appState.savedAt,
       undoAvailable: Boolean(undoState),
       actionLog,
+      pageFeatures: {
+        pages: V16_PAGES,
+        visiblePageIds,
+      },
     });
     renderSmokeTestPanel(getSmokePanel(), getSmokeTestLog()[0], getSmokeTestLog());
   }
@@ -7914,6 +7989,7 @@ function runAndRenderSmokeTest() {
 }
 
 function setPage(page) {
+  if (!visiblePageIds.includes(page) && page !== 'settings') page = 'dashboard';
   showPage(appState, page);
   clearEditingOutsidePage(appState.currentPage);
   saveAppState(appState);
@@ -8057,6 +8133,13 @@ appRoot?.addEventListener('click', (event) => {
   }
   if (event.target.closest('[data-intel-clear-focus]')) {
     clearIntelFocus();
+    renderAppShell();
+    return;
+  }
+  const pageFeature = event.target.closest('[data-page-feature]');
+  if (pageFeature) {
+    setPageFeature(pageFeature.dataset.pageFeature, pageFeature.checked);
+    showToast(t('saved'));
     renderAppShell();
     return;
   }
