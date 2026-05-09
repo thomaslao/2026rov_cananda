@@ -8975,35 +8975,29 @@ appRoot?.addEventListener('change', (event) => {
   const backupInput = event.target.closest('[data-v15-backup-file]');
   const v16BackupInput = event.target.closest('[data-v16-backup-file]');
   const diagnosticsInput = event.target.closest('[data-diagnostics-file]');
-  const file = input?.files?.[0] || backupInput?.files?.[0] || v16BackupInput?.files?.[0] || diagnosticsInput?.files?.[0];
+  if (backupInput || v16BackupInput) {
+    showToast('Deprecated: backup imports are disabled. Use live Supabase data.', 'error');
+    if (backupInput) backupInput.value = '';
+    if (v16BackupInput) v16BackupInput.value = '';
+    return;
+  }
+  const file = input?.files?.[0] || diagnosticsInput?.files?.[0];
   if (!file) return;
   const reader = new FileReader();
   reader.onload = () => {
     try {
       const payload = JSON.parse(String(reader.result || '{}'));
-      if (backupInput) {
-        captureUndo();
-        lastMigrationSummary = importV15BackupPayload(appState, payload);
-      } else if (v16BackupInput) {
-        if (!window.confirm(t('confirmRestoreV16Backup'))) return;
-        captureUndo();
-        downloadLocalBackup(appState);
-        lastRollbackSummary = restoreLocalBackupPayload(appState, payload);
-        lastSyncPreview = null;
-        lastPostWritePreview = null;
-      } else if (diagnosticsInput) {
+      if (diagnosticsInput) {
         lastDiagnosticsSummary = parseDiagnosticsPayload(payload);
       } else {
         captureUndo();
         importSettingsPackPayload(appState, payload);
       }
-      persistAndRender(v16BackupInput ? t('restored') : t('imported'), { keepUndo: Boolean(backupInput || v16BackupInput || input) });
+      persistAndRender(t('imported'), { keepUndo: Boolean(input) });
     } catch (error) {
       alert(`Import failed: ${error.message || error}`);
     } finally {
       if (input) input.value = '';
-      if (backupInput) backupInput.value = '';
-      if (v16BackupInput) v16BackupInput.value = '';
       if (diagnosticsInput) diagnosticsInput.value = '';
     }
   };
