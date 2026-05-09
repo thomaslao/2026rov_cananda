@@ -610,13 +610,12 @@ export function renderTasksPage(state, options = {}) {
     ['done', t('doneTasks'), false],
   ];
   return `
-    <section id="page-tasks" class="page active task-density-${escapeHtml(taskDensity)}" style="display:grid;gap:12px">
+    <section id="page-tasks" class="page active task-density-${escapeHtml(taskDensity)}" style="display:grid;gap:8px">
       <div class="page-topbar">
         <div>
           <h1 style="margin:0;color:var(--navy)">${escapeHtml(t('tasks'))}</h1>
           <div class="page-top-summary">${escapeHtml(t('taskSummary'))}</div>
         </div>
-        <div class="page-top-summary">${escapeHtml(t('openTasks'))} ${stats.open} | ${escapeHtml(t('overdue'))} ${stats.overdue} | ${escapeHtml(t('blocked'))} ${stats.blocked} | ${escapeHtml(t('visible'))} ${visibleTasks.length}/${tasks.length}</div>
       </div>
       <div class="modal-bg ${taskModalOpen ? 'open' : ''}" data-task-modal-bg>
         <div class="modal wide task-modal" role="dialog" aria-modal="true" aria-labelledby="task-modal-title" data-task-modal>
@@ -628,7 +627,7 @@ export function renderTasksPage(state, options = {}) {
           ${editingTask ? `<div style="font-size:.78rem;color:var(--muted);font-weight:800;margin-top:8px">${escapeHtml(t('editingTask'))}: ${escapeHtml(editingTask.name)}</div>` : ''}
         </div>
       </div>
-      <div class="card">
+      <div class="card task-control-card">
         <div class="task-quick-tabs" data-task-quick-tabs>
           ${quickTabs.map(([value, label, disabled]) => `
             <button class="task-quick-tab ${activeQuickTab === value ? 'active' : ''}" type="button" data-task-quick-tab="${escapeHtml(value)}" ${disabled ? 'disabled' : ''}><span>${escapeHtml(label)}</span><strong>${escapeHtml(quickTabCounts[value] ?? 0)}</strong></button>
@@ -722,6 +721,9 @@ export function renderTasksPage(state, options = {}) {
               <label><input type="checkbox" data-task-column-toggle="${escapeHtml(column)}" ${visibleColumns.has(column) ? 'checked' : ''}> ${escapeHtml(label)}</label>
             `).join('')}
           </div>
+          <div data-task-active-filters class="task-active-filters">
+            ${activeFilterChips.length ? `<strong style="font-size:.76rem;color:var(--muted)">${escapeHtml(t('activeFilters'))}</strong>${activeFilterChips.map(chip => `<button class="badge mid" type="button" data-task-remove-filter="${escapeHtml(chip.key)}" title="${escapeHtml(t('removeFilter'))}" style="cursor:pointer">${escapeHtml(chip.label)}: ${escapeHtml(chip.value)} x</button>`).join('')}` : `<span style="font-size:.76rem;color:var(--muted);font-weight:800">${escapeHtml(t('noActiveFilters'))}</span>`}
+          </div>
         </div>
         <div class="task-bulk-toolbar ${selectedCount ? 'active' : ''}" data-task-bulk-toolbar>
           <div class="task-bulk-count">${escapeHtml(t('selectedTasks'))}: ${selectedCount}</div>
@@ -743,9 +745,6 @@ export function renderTasksPage(state, options = {}) {
           </select>
           <button class="btn btn-danger task-bulk-delete" type="button" data-task-bulk-delete ${selectedCount ? '' : 'disabled'}>${escapeHtml(t('deleteSelected'))}</button>
           <button class="btn task-bulk-clear" type="button" data-task-bulk-clear ${selectedCount ? '' : 'disabled'}>${escapeHtml(t('clearSelection'))}</button>
-        </div>
-        <div data-task-active-filters style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:10px;min-height:24px">
-          ${activeFilterChips.length ? `<strong style="font-size:.76rem;color:var(--muted)">${escapeHtml(t('activeFilters'))}</strong>${activeFilterChips.map(chip => `<button class="badge mid" type="button" data-task-remove-filter="${escapeHtml(chip.key)}" title="${escapeHtml(t('removeFilter'))}" style="cursor:pointer">${escapeHtml(chip.label)}: ${escapeHtml(chip.value)} x</button>`).join('')}` : `<span style="font-size:.76rem;color:var(--muted);font-weight:800">${escapeHtml(t('noActiveFilters'))}</span>`}
         </div>
         ${renderTaskTable(visibleTasks, state.data.members || [], { totalCount: tasks.length, filters, categories, selectedTaskIds, visibleColumns: [...visibleColumns], taskDensity })}
       </div>

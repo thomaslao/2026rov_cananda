@@ -107,6 +107,7 @@ let editingRunId = null;
 let runDraft = null;
 let editingGearId = null;
 let editingChecklist = null;
+let addingPrepItem = null;
 let editingIntelId = null;
 let editingStrategyId = null;
 let prepFocus = null;
@@ -1637,7 +1638,7 @@ function renderDashboard() {
 }
 
 function renderCurrentPage() {
-  if (appState.currentPage === 'prep') return renderPrepCenter(appState, { editingGearId, editingChecklist, prepFocus, filters: prepFilters, activeTab: prepActiveTab });
+  if (appState.currentPage === 'prep') return renderPrepCenter(appState, { editingGearId, editingChecklist, addingPrepItem, prepFocus, filters: prepFilters, activeTab: prepActiveTab });
   if (appState.currentPage === 'tasks') {
     pruneSelectedTaskIds();
     return renderTasksPage(appState, { editingTaskId, addingTask, viewingTaskId, filters: taskFilters, myOwner: myTaskOwner, selectedTaskIds: [...selectedTaskIds], visibleColumns: visibleTaskColumns, taskDensity });
@@ -1685,6 +1686,7 @@ function renderAppShell() {
 }
 
 function openPrepEdit(kind, listName, id) {
+  addingPrepItem = null;
   if (kind === 'gear') {
     editingGearId = id;
     editingChecklist = null;
@@ -1844,6 +1846,7 @@ startSupabaseRealtimeRefresh();
 appRoot?.addEventListener('click', (event) => {
   const prepEditTarget = event.target.closest('[data-prep-edit]');
   if (prepEditTarget) {
+    addingPrepItem = null;
     if (prepEditTarget.dataset.prepEdit === 'gear') {
       editingGearId = prepEditTarget.dataset.prepId;
       editingChecklist = null;
@@ -1986,6 +1989,19 @@ appRoot?.addEventListener('click', (event) => {
   const prepTabTarget = event.target.closest('[data-prep-tab]');
   if (prepTabTarget) {
     prepActiveTab = prepTabTarget.dataset.prepTab || 'checklist';
+    addingPrepItem = null;
+    editingChecklist = null;
+    editingGearId = null;
+    renderAppShell();
+    return;
+  }
+  const prepOpenAddTarget = event.target.closest('[data-prep-open-add]');
+  if (prepOpenAddTarget) {
+    const addTarget = prepOpenAddTarget.dataset.prepOpenAdd || prepActiveTab || 'checklist';
+    prepActiveTab = ['checklist', 'prediveChecklist', 'gearItems'].includes(addTarget) ? addTarget : 'checklist';
+    addingPrepItem = prepActiveTab;
+    editingChecklist = null;
+    editingGearId = null;
     renderAppShell();
     return;
   }
@@ -2388,15 +2404,21 @@ appRoot?.addEventListener('click', (event) => {
   const addChecklistTarget = event.target.closest('[data-checklist-add]');
   if (addChecklistTarget) {
     const listName = addChecklistTarget.dataset.checklistAdd;
-    const input = document.querySelector(`[data-checklist-input="${listName}"]`);
-    const label = input?.value || t('checklist');
+    const root = addChecklistTarget.closest('[data-checklist-add-form]') || addChecklistTarget.closest('[data-prep-modal]') || document;
+    const input = root.querySelector(`[data-checklist-input="${listName}"]`);
+    const label = String(input?.value || '').trim();
+    if (!label) return;
     const message = actionMessage(t('saved'), label);
     captureUndo(message);
-    if (addChecklistItem(appState, listName, input?.value)) persistAndRender(message, { keepUndo: true });
+    if (addChecklistItem(appState, listName, label)) {
+      addingPrepItem = null;
+      persistAndRender(message, { keepUndo: true });
+    }
     return;
   }
   const editChecklistTarget = event.target.closest('[data-checklist-edit]');
   if (editChecklistTarget) {
+    addingPrepItem = null;
     editingChecklist = {
       listName: editChecklistTarget.dataset.checklistEdit,
       id: editChecklistTarget.dataset.checkId,
@@ -2407,12 +2429,14 @@ appRoot?.addEventListener('click', (event) => {
   }
   if (event.target.closest('[data-checklist-cancel-edit]')) {
     editingChecklist = null;
+    addingPrepItem = null;
     renderAppShell();
     return;
   }
   if (event.target.closest('[data-prep-cancel-edit]')) {
     editingChecklist = null;
     editingGearId = null;
+    addingPrepItem = null;
     renderAppShell();
     return;
   }
@@ -2462,14 +2486,21 @@ appRoot?.addEventListener('click', (event) => {
     return;
   }
   if (event.target.closest('[data-gear-add]')) {
-    const payload = getGearPayloadFromDom();
+    const addGearTarget = event.target.closest('[data-gear-add]');
+    const root = addGearTarget.closest('[data-gear-add-form]') || addGearTarget.closest('[data-prep-modal]') || document;
+    const payload = getGearPayloadFromDom(root);
+    if (!String(payload.name || '').trim()) return;
     const message = actionMessage(t('saved'), payload.name || t('gearItems'));
     captureUndo(message);
-    if (addGearItem(appState, payload)) persistAndRender(message, { keepUndo: true });
+    if (addGearItem(appState, payload)) {
+      addingPrepItem = null;
+      persistAndRender(message, { keepUndo: true });
+    }
     return;
   }
   const editGearTarget = event.target.closest('[data-gear-edit]');
   if (editGearTarget) {
+    addingPrepItem = null;
     editingGearId = editGearTarget.dataset.gearEdit;
     prepActiveTab = 'gearItems';
     renderAppShell();
@@ -2477,6 +2508,7 @@ appRoot?.addEventListener('click', (event) => {
   }
   if (event.target.closest('[data-gear-cancel-edit]')) {
     editingGearId = null;
+    addingPrepItem = null;
     renderAppShell();
     return;
   }
@@ -2569,6 +2601,7 @@ appRoot?.addEventListener('click', (event) => {
   if (prepModalBg && !event.target.closest('[data-prep-modal]')) {
     editingChecklist = null;
     editingGearId = null;
+    addingPrepItem = null;
     renderAppShell();
     return;
   }
@@ -2865,7 +2898,7 @@ appRoot?.addEventListener('change', (event) => {
 });
 
 appRoot?.addEventListener('keydown', (event) => {
-  if (event.key === 'Escape' && (editingTaskId || addingTask || viewingTaskId || editingMemberId || editingRunId || editingGearId || editingChecklist || editingIntelId || editingStrategyId)) {
+  if (event.key === 'Escape' && (editingTaskId || addingTask || viewingTaskId || editingMemberId || editingRunId || editingGearId || editingChecklist || addingPrepItem || editingIntelId || editingStrategyId)) {
     editingTaskId = null;
     addingTask = false;
     viewingTaskId = null;
@@ -2873,6 +2906,7 @@ appRoot?.addEventListener('keydown', (event) => {
     editingRunId = null;
     editingGearId = null;
     editingChecklist = null;
+    addingPrepItem = null;
     editingIntelId = null;
     editingStrategyId = null;
     renderAppShell();
@@ -2909,11 +2943,16 @@ appRoot?.addEventListener('keydown', (event) => {
       captureUndo(message);
       if (updateGearItem(appState, editId, payload)) {
         editingGearId = null;
+        addingPrepItem = null;
         persistAndRender(message, { keepUndo: true });
       }
     } else {
+      if (!String(payload.name || '').trim()) return;
       captureUndo(message);
-      if (addGearItem(appState, payload)) persistAndRender(message, { keepUndo: true });
+      if (addGearItem(appState, payload)) {
+        addingPrepItem = null;
+        persistAndRender(message, { keepUndo: true });
+      }
     }
     return;
   }
@@ -2926,11 +2965,17 @@ appRoot?.addEventListener('keydown', (event) => {
       captureUndo(message);
       if (updateChecklistItem(appState, editListName, editId, checklistInput.value)) {
         editingChecklist = null;
+        addingPrepItem = null;
         persistAndRender(message, { keepUndo: true });
       }
     } else {
+      const label = String(checklistInput.value || '').trim();
+      if (!label) return;
       captureUndo(message);
-      if (addChecklistItem(appState, checklistInput.dataset.checklistInput, checklistInput.value)) persistAndRender(message, { keepUndo: true });
+      if (addChecklistItem(appState, checklistInput.dataset.checklistInput, label)) {
+        addingPrepItem = null;
+        persistAndRender(message, { keepUndo: true });
+      }
     }
     return;
   }

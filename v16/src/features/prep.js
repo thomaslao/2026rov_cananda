@@ -177,10 +177,15 @@ export function renderChecklist(listName, items = [], options = {}) {
           </div>
         </div>
       `; }).join('') || `<div style="color:var(--muted);font-weight:900">${escapeHtml(totalCount ? t('noMatchingItems') : t('noItemsYet'))}</div>`}
-      <div class="prep-entry-row">
-        <label>${escapeHtml(t('newChecklistItem'))}<input data-checklist-input="${listName}" value="" placeholder="${escapeHtml(t('newChecklistItem'))}"></label>
-        <button class="btn btn-primary" type="button" data-checklist-add="${listName}">${escapeHtml(t('addItem'))}</button>
-      </div>
+    </div>`;
+}
+
+function renderChecklistAddForm(listName) {
+  return `
+    <div class="prep-entry-row" data-checklist-add-form="${escapeHtml(listName)}">
+      <label>${escapeHtml(t('newChecklistItem'))}<input data-checklist-input="${escapeHtml(listName)}" value="" placeholder="${escapeHtml(t('newChecklistItem'))}" autofocus></label>
+      <button class="btn btn-primary" type="button" data-checklist-add="${escapeHtml(listName)}">${escapeHtml(t('addItem'))}</button>
+      <button class="btn" type="button" data-prep-cancel-edit>${escapeHtml(t('cancelEdit'))}</button>
     </div>`;
 }
 
@@ -214,14 +219,20 @@ export function renderGearItems(items = [], categories = [], options = {}) {
           </div>
         </div>
       `).join('') || `<div style="color:var(--muted);font-weight:900">${escapeHtml(totalCount ? t('noMatchingItems') : t('noGearYet'))}</div>`}
-      <div class="prep-gear-entry-row">
-        <label>${escapeHtml(t('gearName'))}<input data-gear-name value="" placeholder="${escapeHtml(t('gearName'))}"></label>
-        <label>${escapeHtml(t('category'))}<input data-gear-category list="gear-category-list" value="" placeholder="${escapeHtml(t('category'))}"></label>
-        <label>${escapeHtml(t('qty'))}<input data-gear-qty type="number" min="1" value="1"></label>
-        <button class="btn btn-primary" type="button" data-gear-add>${escapeHtml(t('addItem'))}</button>
-      </div>
       <datalist id="gear-category-list">${categories.map(category => `<option value="${escapeHtml(category)}"></option>`).join('')}</datalist>
     </div>`;
+}
+
+function renderGearAddForm(categories = []) {
+  return `
+    <div class="prep-gear-entry-row" data-gear-add-form>
+      <label>${escapeHtml(t('gearName'))}<input data-gear-name value="" placeholder="${escapeHtml(t('gearName'))}" autofocus></label>
+      <label>${escapeHtml(t('category'))}<input data-gear-category list="gear-category-list-modal" value="" placeholder="${escapeHtml(t('category'))}"></label>
+      <label>${escapeHtml(t('qty'))}<input data-gear-qty type="number" min="1" value="1"></label>
+      <button class="btn btn-primary" type="button" data-gear-add>${escapeHtml(t('addItem'))}</button>
+      <button class="btn" type="button" data-prep-cancel-edit>${escapeHtml(t('cancelEdit'))}</button>
+    </div>
+    <datalist id="gear-category-list-modal">${categories.map(category => `<option value="${escapeHtml(category)}"></option>`).join('')}</datalist>`;
 }
 
 function renderGearEditForm(editingGear, categories = []) {
@@ -255,6 +266,25 @@ export function renderPrepCenter(state, options = {}) {
     : null;
   const editingGear = state.data.gearItems.find(item => Number(item.id) === Number(options.editingGearId));
   const activeTab = ['checklist', 'prediveChecklist', 'gearItems'].includes(options.activeTab) ? options.activeTab : 'checklist';
+  const addingPrepItem = ['checklist', 'prediveChecklist', 'gearItems'].includes(options.addingPrepItem) ? options.addingPrepItem : null;
+  const prepAddLabels = {
+    checklist: t('buildChecklist'),
+    prediveChecklist: t('preDiveChecklist'),
+    gearItems: t('gearItems'),
+  };
+  const isPrepModalOpen = Boolean(editingChecklistItem || editingGear || addingPrepItem);
+  const prepModalTitle = editingGear
+    ? t('editingGear')
+    : editingChecklistItem
+      ? t('editingChecklistItem')
+      : `${t('addItem')} - ${prepAddLabels[addingPrepItem || activeTab] || t('prepCenter')}`;
+  const prepModalBody = editingGear
+    ? renderGearEditForm(editingGear, gearCategories)
+    : editingChecklistItem
+      ? renderChecklistEditForm(options.editingChecklist?.listName, editingChecklistItem)
+      : addingPrepItem === 'gearItems'
+        ? renderGearAddForm(gearCategories)
+        : renderChecklistAddForm(addingPrepItem || activeTab);
   const prepTabs = [
     ['checklist', t('buildChecklist'), visibleChecklist.length, state.data.checklist.length],
     ['prediveChecklist', t('preDiveChecklist'), visiblePredive.length, state.data.prediveChecklist.length],
@@ -324,16 +354,19 @@ export function renderPrepCenter(state, options = {}) {
             </button>
           `).join('')}
         </div>
+        <div class="prep-tab-tools">
+          <button class="btn btn-primary btn-sm" type="button" data-prep-open-add="${escapeHtml(activeTab)}">${escapeHtml(t('addItem'))}</button>
+        </div>
         <div class="prep-tab-panel">${activePanel}</div>
       </div>
 
-      <div class="modal-bg ${editingChecklistItem || editingGear ? 'open' : ''}" data-prep-modal-bg>
+      <div class="modal-bg ${isPrepModalOpen ? 'open' : ''}" data-prep-modal-bg>
         <div class="modal wide prep-modal" role="dialog" aria-modal="true" aria-labelledby="prep-modal-title" data-prep-modal>
           <div class="prep-modal-head">
-            <h3 id="prep-modal-title">${escapeHtml(editingGear ? t('editingGear') : t('editingChecklistItem'))}</h3>
+            <h3 id="prep-modal-title">${escapeHtml(prepModalTitle)}</h3>
             <button class="btn btn-sm" type="button" data-prep-cancel-edit>${escapeHtml(t('cancelEdit'))}</button>
           </div>
-          ${editingGear ? renderGearEditForm(editingGear, gearCategories) : renderChecklistEditForm(options.editingChecklist?.listName, editingChecklistItem)}
+          ${prepModalBody}
         </div>
       </div>
     </section>`;

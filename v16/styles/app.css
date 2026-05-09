@@ -246,6 +246,8 @@
   .prep-tab-button:hover { background:var(--table-hover); }
   .prep-tab-button.active { background:var(--blue); color:#fff; border-color:var(--blue); }
   .prep-tab-button.active strong { background:rgba(255,255,255,.22); color:#fff; }
+  .prep-tab-tools { display:flex; justify-content:flex-end; margin:-2px 0 7px; }
+  .prep-tab-tools .btn { min-height:30px; height:30px; padding:4px 12px; font-size:.78rem; font-weight:900; }
   .prep-tab-panel { min-width:0; }
   .prep-tab-scroll { max-height:calc(100vh - 345px); min-height:220px; overflow:auto; padding-right:2px; }
   .prep-modal { width:min(720px, 95vw); }

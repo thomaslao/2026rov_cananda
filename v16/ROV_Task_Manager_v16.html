@@ -253,6 +253,8 @@
   .prep-tab-button:hover { background:var(--table-hover); }
   .prep-tab-button.active { background:var(--blue); color:#fff; border-color:var(--blue); }
   .prep-tab-button.active strong { background:rgba(255,255,255,.22); color:#fff; }
+  .prep-tab-tools { display:flex; justify-content:flex-end; margin:-2px 0 7px; }
+  .prep-tab-tools .btn { min-height:30px; height:30px; padding:4px 12px; font-size:.78rem; font-weight:900; }
   .prep-tab-panel { min-width:0; }
   .prep-tab-scroll { max-height:calc(100vh - 345px); min-height:220px; overflow:auto; padding-right:2px; }
   .prep-modal { width:min(720px, 95vw); }
@@ -5338,10 +5340,15 @@ function renderChecklist(listName, items = [], options = {}) {
           </div>
         </div>
       `; }).join('') || `<div style="color:var(--muted);font-weight:900">${escapeHtml(totalCount ? t('noMatchingItems') : t('noItemsYet'))}</div>`}
-      <div class="prep-entry-row">
-        <label>${escapeHtml(t('newChecklistItem'))}<input data-checklist-input="${listName}" value="" placeholder="${escapeHtml(t('newChecklistItem'))}"></label>
-        <button class="btn btn-primary" type="button" data-checklist-add="${listName}">${escapeHtml(t('addItem'))}</button>
-      </div>
+    </div>`;
+}
+
+function renderChecklistAddForm(listName) {
+  return `
+    <div class="prep-entry-row" data-checklist-add-form="${escapeHtml(listName)}">
+      <label>${escapeHtml(t('newChecklistItem'))}<input data-checklist-input="${escapeHtml(listName)}" value="" placeholder="${escapeHtml(t('newChecklistItem'))}" autofocus></label>
+      <button class="btn btn-primary" type="button" data-checklist-add="${escapeHtml(listName)}">${escapeHtml(t('addItem'))}</button>
+      <button class="btn" type="button" data-prep-cancel-edit>${escapeHtml(t('cancelEdit'))}</button>
     </div>`;
 }
 
@@ -5375,14 +5382,20 @@ function renderGearItems(items = [], categories = [], options = {}) {
           </div>
         </div>
       `).join('') || `<div style="color:var(--muted);font-weight:900">${escapeHtml(totalCount ? t('noMatchingItems') : t('noGearYet'))}</div>`}
-      <div class="prep-gear-entry-row">
-        <label>${escapeHtml(t('gearName'))}<input data-gear-name value="" placeholder="${escapeHtml(t('gearName'))}"></label>
-        <label>${escapeHtml(t('category'))}<input data-gear-category list="gear-category-list" value="" placeholder="${escapeHtml(t('category'))}"></label>
-        <label>${escapeHtml(t('qty'))}<input data-gear-qty type="number" min="1" value="1"></label>
-        <button class="btn btn-primary" type="button" data-gear-add>${escapeHtml(t('addItem'))}</button>
-      </div>
       <datalist id="gear-category-list">${categories.map(category => `<option value="${escapeHtml(category)}"></option>`).join('')}</datalist>
     </div>`;
+}
+
+function renderGearAddForm(categories = []) {
+  return `
+    <div class="prep-gear-entry-row" data-gear-add-form>
+      <label>${escapeHtml(t('gearName'))}<input data-gear-name value="" placeholder="${escapeHtml(t('gearName'))}" autofocus></label>
+      <label>${escapeHtml(t('category'))}<input data-gear-category list="gear-category-list-modal" value="" placeholder="${escapeHtml(t('category'))}"></label>
+      <label>${escapeHtml(t('qty'))}<input data-gear-qty type="number" min="1" value="1"></label>
+      <button class="btn btn-primary" type="button" data-gear-add>${escapeHtml(t('addItem'))}</button>
+      <button class="btn" type="button" data-prep-cancel-edit>${escapeHtml(t('cancelEdit'))}</button>
+    </div>
+    <datalist id="gear-category-list-modal">${categories.map(category => `<option value="${escapeHtml(category)}"></option>`).join('')}</datalist>`;
 }
 
 function renderGearEditForm(editingGear, categories = []) {
@@ -5416,6 +5429,25 @@ function renderPrepCenter(state, options = {}) {
     : null;
   const editingGear = state.data.gearItems.find(item => Number(item.id) === Number(options.editingGearId));
   const activeTab = ['checklist', 'prediveChecklist', 'gearItems'].includes(options.activeTab) ? options.activeTab : 'checklist';
+  const addingPrepItem = ['checklist', 'prediveChecklist', 'gearItems'].includes(options.addingPrepItem) ? options.addingPrepItem : null;
+  const prepAddLabels = {
+    checklist: t('buildChecklist'),
+    prediveChecklist: t('preDiveChecklist'),
+    gearItems: t('gearItems'),
+  };
+  const isPrepModalOpen = Boolean(editingChecklistItem || editingGear || addingPrepItem);
+  const prepModalTitle = editingGear
+    ? t('editingGear')
+    : editingChecklistItem
+      ? t('editingChecklistItem')
+      : `${t('addItem')} - ${prepAddLabels[addingPrepItem || activeTab] || t('prepCenter')}`;
+  const prepModalBody = editingGear
+    ? renderGearEditForm(editingGear, gearCategories)
+    : editingChecklistItem
+      ? renderChecklistEditForm(options.editingChecklist?.listName, editingChecklistItem)
+      : addingPrepItem === 'gearItems'
+        ? renderGearAddForm(gearCategories)
+        : renderChecklistAddForm(addingPrepItem || activeTab);
   const prepTabs = [
     ['checklist', t('buildChecklist'), visibleChecklist.length, state.data.checklist.length],
     ['prediveChecklist', t('preDiveChecklist'), visiblePredive.length, state.data.prediveChecklist.length],
@@ -5485,16 +5517,19 @@ function renderPrepCenter(state, options = {}) {
             </button>
           `).join('')}
         </div>
+        <div class="prep-tab-tools">
+          <button class="btn btn-primary btn-sm" type="button" data-prep-open-add="${escapeHtml(activeTab)}">${escapeHtml(t('addItem'))}</button>
+        </div>
         <div class="prep-tab-panel">${activePanel}</div>
       </div>
 
-      <div class="modal-bg ${editingChecklistItem || editingGear ? 'open' : ''}" data-prep-modal-bg>
+      <div class="modal-bg ${isPrepModalOpen ? 'open' : ''}" data-prep-modal-bg>
         <div class="modal wide prep-modal" role="dialog" aria-modal="true" aria-labelledby="prep-modal-title" data-prep-modal>
           <div class="prep-modal-head">
-            <h3 id="prep-modal-title">${escapeHtml(editingGear ? t('editingGear') : t('editingChecklistItem'))}</h3>
+            <h3 id="prep-modal-title">${escapeHtml(prepModalTitle)}</h3>
             <button class="btn btn-sm" type="button" data-prep-cancel-edit>${escapeHtml(t('cancelEdit'))}</button>
           </div>
-          ${editingGear ? renderGearEditForm(editingGear, gearCategories) : renderChecklistEditForm(options.editingChecklist?.listName, editingChecklistItem)}
+          ${prepModalBody}
         </div>
       </div>
     </section>`;
@@ -7006,6 +7041,7 @@ let editingRunId = null;
 let runDraft = null;
 let editingGearId = null;
 let editingChecklist = null;
+let addingPrepItem = null;
 let editingIntelId = null;
 let editingStrategyId = null;
 let prepFocus = null;
@@ -8536,7 +8572,7 @@ function renderDashboard() {
 }
 
 function renderCurrentPage() {
-  if (appState.currentPage === 'prep') return renderPrepCenter(appState, { editingGearId, editingChecklist, prepFocus, filters: prepFilters, activeTab: prepActiveTab });
+  if (appState.currentPage === 'prep') return renderPrepCenter(appState, { editingGearId, editingChecklist, addingPrepItem, prepFocus, filters: prepFilters, activeTab: prepActiveTab });
   if (appState.currentPage === 'tasks') {
     pruneSelectedTaskIds();
     return renderTasksPage(appState, { editingTaskId, addingTask, viewingTaskId, filters: taskFilters, myOwner: myTaskOwner, selectedTaskIds: [...selectedTaskIds], visibleColumns: visibleTaskColumns, taskDensity });
@@ -8584,6 +8620,7 @@ function renderAppShell() {
 }
 
 function openPrepEdit(kind, listName, id) {
+  addingPrepItem = null;
   if (kind === 'gear') {
     editingGearId = id;
     editingChecklist = null;
@@ -8743,6 +8780,7 @@ startSupabaseRealtimeRefresh();
 appRoot?.addEventListener('click', (event) => {
   const prepEditTarget = event.target.closest('[data-prep-edit]');
   if (prepEditTarget) {
+    addingPrepItem = null;
     if (prepEditTarget.dataset.prepEdit === 'gear') {
       editingGearId = prepEditTarget.dataset.prepId;
       editingChecklist = null;
@@ -8885,6 +8923,19 @@ appRoot?.addEventListener('click', (event) => {
   const prepTabTarget = event.target.closest('[data-prep-tab]');
   if (prepTabTarget) {
     prepActiveTab = prepTabTarget.dataset.prepTab || 'checklist';
+    addingPrepItem = null;
+    editingChecklist = null;
+    editingGearId = null;
+    renderAppShell();
+    return;
+  }
+  const prepOpenAddTarget = event.target.closest('[data-prep-open-add]');
+  if (prepOpenAddTarget) {
+    const addTarget = prepOpenAddTarget.dataset.prepOpenAdd || prepActiveTab || 'checklist';
+    prepActiveTab = ['checklist', 'prediveChecklist', 'gearItems'].includes(addTarget) ? addTarget : 'checklist';
+    addingPrepItem = prepActiveTab;
+    editingChecklist = null;
+    editingGearId = null;
     renderAppShell();
     return;
   }
@@ -9287,15 +9338,21 @@ appRoot?.addEventListener('click', (event) => {
   const addChecklistTarget = event.target.closest('[data-checklist-add]');
   if (addChecklistTarget) {
     const listName = addChecklistTarget.dataset.checklistAdd;
-    const input = document.querySelector(`[data-checklist-input="${listName}"]`);
-    const label = input?.value || t('checklist');
+    const root = addChecklistTarget.closest('[data-checklist-add-form]') || addChecklistTarget.closest('[data-prep-modal]') || document;
+    const input = root.querySelector(`[data-checklist-input="${listName}"]`);
+    const label = String(input?.value || '').trim();
+    if (!label) return;
     const message = actionMessage(t('saved'), label);
     captureUndo(message);
-    if (addChecklistItem(appState, listName, input?.value)) persistAndRender(message, { keepUndo: true });
+    if (addChecklistItem(appState, listName, label)) {
+      addingPrepItem = null;
+      persistAndRender(message, { keepUndo: true });
+    }
     return;
   }
   const editChecklistTarget = event.target.closest('[data-checklist-edit]');
   if (editChecklistTarget) {
+    addingPrepItem = null;
     editingChecklist = {
       listName: editChecklistTarget.dataset.checklistEdit,
       id: editChecklistTarget.dataset.checkId,
@@ -9306,12 +9363,14 @@ appRoot?.addEventListener('click', (event) => {
   }
   if (event.target.closest('[data-checklist-cancel-edit]')) {
     editingChecklist = null;
+    addingPrepItem = null;
     renderAppShell();
     return;
   }
   if (event.target.closest('[data-prep-cancel-edit]')) {
     editingChecklist = null;
     editingGearId = null;
+    addingPrepItem = null;
     renderAppShell();
     return;
   }
@@ -9361,14 +9420,21 @@ appRoot?.addEventListener('click', (event) => {
     return;
   }
   if (event.target.closest('[data-gear-add]')) {
-    const payload = getGearPayloadFromDom();
+    const addGearTarget = event.target.closest('[data-gear-add]');
+    const root = addGearTarget.closest('[data-gear-add-form]') || addGearTarget.closest('[data-prep-modal]') || document;
+    const payload = getGearPayloadFromDom(root);
+    if (!String(payload.name || '').trim()) return;
     const message = actionMessage(t('saved'), payload.name || t('gearItems'));
     captureUndo(message);
-    if (addGearItem(appState, payload)) persistAndRender(message, { keepUndo: true });
+    if (addGearItem(appState, payload)) {
+      addingPrepItem = null;
+      persistAndRender(message, { keepUndo: true });
+    }
     return;
   }
   const editGearTarget = event.target.closest('[data-gear-edit]');
   if (editGearTarget) {
+    addingPrepItem = null;
     editingGearId = editGearTarget.dataset.gearEdit;
     prepActiveTab = 'gearItems';
     renderAppShell();
@@ -9376,6 +9442,7 @@ appRoot?.addEventListener('click', (event) => {
   }
   if (event.target.closest('[data-gear-cancel-edit]')) {
     editingGearId = null;
+    addingPrepItem = null;
     renderAppShell();
     return;
   }
@@ -9468,6 +9535,7 @@ appRoot?.addEventListener('click', (event) => {
   if (prepModalBg && !event.target.closest('[data-prep-modal]')) {
     editingChecklist = null;
     editingGearId = null;
+    addingPrepItem = null;
     renderAppShell();
     return;
   }
@@ -9764,7 +9832,7 @@ appRoot?.addEventListener('change', (event) => {
 });
 
 appRoot?.addEventListener('keydown', (event) => {
-  if (event.key === 'Escape' && (editingTaskId || addingTask || viewingTaskId || editingMemberId || editingRunId || editingGearId || editingChecklist || editingIntelId || editingStrategyId)) {
+  if (event.key === 'Escape' && (editingTaskId || addingTask || viewingTaskId || editingMemberId || editingRunId || editingGearId || editingChecklist || addingPrepItem || editingIntelId || editingStrategyId)) {
     editingTaskId = null;
     addingTask = false;
     viewingTaskId = null;
@@ -9772,6 +9840,7 @@ appRoot?.addEventListener('keydown', (event) => {
     editingRunId = null;
     editingGearId = null;
     editingChecklist = null;
+    addingPrepItem = null;
     editingIntelId = null;
     editingStrategyId = null;
     renderAppShell();
@@ -9808,11 +9877,16 @@ appRoot?.addEventListener('keydown', (event) => {
       captureUndo(message);
       if (updateGearItem(appState, editId, payload)) {
         editingGearId = null;
+        addingPrepItem = null;
         persistAndRender(message, { keepUndo: true });
       }
     } else {
+      if (!String(payload.name || '').trim()) return;
       captureUndo(message);
-      if (addGearItem(appState, payload)) persistAndRender(message, { keepUndo: true });
+      if (addGearItem(appState, payload)) {
+        addingPrepItem = null;
+        persistAndRender(message, { keepUndo: true });
+      }
     }
     return;
   }
@@ -9825,11 +9899,17 @@ appRoot?.addEventListener('keydown', (event) => {
       captureUndo(message);
       if (updateChecklistItem(appState, editListName, editId, checklistInput.value)) {
         editingChecklist = null;
+        addingPrepItem = null;
         persistAndRender(message, { keepUndo: true });
       }
     } else {
+      const label = String(checklistInput.value || '').trim();
+      if (!label) return;
       captureUndo(message);
-      if (addChecklistItem(appState, checklistInput.dataset.checklistInput, checklistInput.value)) persistAndRender(message, { keepUndo: true });
+      if (addChecklistItem(appState, checklistInput.dataset.checklistInput, label)) {
+        addingPrepItem = null;
+        persistAndRender(message, { keepUndo: true });
+      }
     }
     return;
   }
