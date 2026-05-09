@@ -331,6 +331,8 @@
   .task-name-cell strong { display:block; max-height:42px; overflow:hidden; }
   .task-name-button { width:100%; max-height:42px; padding:0; border:0; background:transparent; color:var(--navy); font:inherit; font-weight:900; text-align:left; overflow:hidden; overflow-wrap:anywhere; cursor:pointer; }
   .task-name-button:hover, .task-name-button:focus-visible { color:var(--blue); text-decoration:underline; outline:none; }
+  .task-search-mark { background:#FFF3A3; color:var(--navy); border-radius:4px; padding:0 2px; font-weight:900; }
+  .task-search-snippet { margin-top:4px; color:var(--muted); font-size:.72rem; font-weight:850; line-height:1.25; max-height:34px; overflow:hidden; }
   .task-updated-at { margin-top:3px; color:var(--muted); font-size:.7rem; font-weight:900; line-height:1.15; }
   .task-col-owner, .task-owner-cell { width:128px; white-space:nowrap; word-break:keep-all; text-align:center; }
   .task-col-due, .task-due-cell { width:134px; white-space:nowrap; word-break:keep-all; text-align:center; }

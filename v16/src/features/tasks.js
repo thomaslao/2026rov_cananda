@@ -21,6 +21,19 @@ function formatTaskUpdatedAt(value = '') {
   return date.toLocaleString(undefined, { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
 }
 
+function highlightText(value = '', query = '') {
+  const text = String(value || '');
+  const needle = clean(query);
+  if (!needle) return escapeHtml(text);
+  const lower = text.toLowerCase();
+  const match = lower.indexOf(needle.toLowerCase());
+  if (match < 0) return escapeHtml(text);
+  const before = text.slice(0, match);
+  const hit = text.slice(match, match + needle.length);
+  const after = text.slice(match + needle.length);
+  return `${escapeHtml(before)}<mark class="task-search-mark">${escapeHtml(hit)}</mark>${highlightText(after, query)}`;
+}
+
 function normalizeEvidence(items = []) {
   return (Array.isArray(items) ? items : [])
     .map((item, index) => ({
@@ -418,6 +431,7 @@ export function renderTaskTable(tasks = [], members = [], options = {}) {
   }
   const memberNames = new Set(members.map(member => clean(member.name)).filter(Boolean));
   const filters = normalizeTaskFilters(options.filters);
+  const searchQuery = filters.search || '';
   const selectedTaskIds = new Set((options.selectedTaskIds || []).map(id => Number(id)));
   const allVisibleSelected = tasks.length > 0 && tasks.every(task => selectedTaskIds.has(Number(task.id)));
   const sortColumns = {
@@ -457,13 +471,14 @@ export function renderTaskTable(tasks = [], members = [], options = {}) {
               <tr${rowClasses ? ` class="${rowClasses}"` : ''}>
                 <td class="task-select-cell"><input type="checkbox" data-task-select="${task.id}" ${selected ? 'checked' : ''} aria-label="${escapeHtml(`${t('selectTask')} ${task.name}`)}"></td>
                 <td class="task-name-cell">
-                  <button class="task-name-button" type="button" data-task-view="${task.id}">${escapeHtml(task.name)}</button>
+                  <button class="task-name-button" type="button" data-task-view="${task.id}">${highlightText(task.name, searchQuery)}</button>
                   ${taskUpdatedAt(task) ? `<div class="task-updated-at">${escapeHtml(t('updated'))}: ${escapeHtml(formatTaskUpdatedAt(taskUpdatedAt(task)))}</div>` : ''}
                   ${task.blocked ? `<div style="font-size:.76rem;color:var(--muted)">${escapeHtml(t('blocked'))}</div>` : ''}
                   ${healthBadges.length ? `<div data-task-health-badges style="display:flex;gap:4px;flex-wrap:wrap;margin-top:4px">${healthBadges.map(label => `<span class="badge mid">${escapeHtml(label)}</span>`).join('')}</div>` : ''}
+                  ${searchQuery && clean(task.notes).toLowerCase().includes(searchQuery.toLowerCase()) ? `<div class="task-search-snippet">${highlightText(task.notes, searchQuery)}</div>` : ''}
                   ${renderTaskEvidence(task.evidence)}
                 </td>
-                <td class="task-owner-cell">${escapeHtml(task.owner || labelFor('Unassigned'))}</td>
+                <td class="task-owner-cell">${highlightText(task.owner || labelFor('Unassigned'), searchQuery)}</td>
                 <td class="task-due-cell" style="color:${late ? 'var(--red)' : 'var(--text)'}">${escapeHtml(task.due || '-')} ${due.days !== null ? `(${due.days}d)` : ''}</td>
                 <td class="task-priority-cell"><span class="badge ${task.priority === 'High' ? 'urgent' : task.priority === 'Low' ? 'done' : 'mid'}">${escapeHtml(labelFor(task.priority || 'Medium'))}</span></td>
                 <td class="task-category-cell">

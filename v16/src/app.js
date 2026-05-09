@@ -1045,7 +1045,7 @@ function updatePrepFiltersFromControl(target) {
 }
 
 function applyTaskFilterPreset(target) {
-  const preset = target.closest('[data-task-search-preset], [data-task-health-preset], [data-task-evidence-preset], [data-task-priority-preset], [data-task-status-preset], [data-task-owner-preset], [data-task-category-preset]');
+  const preset = target.closest('[data-task-search-preset], [data-task-health-preset], [data-task-evidence-preset], [data-task-priority-preset], [data-task-status-preset], [data-task-owner-preset], [data-task-category-preset], [data-task-sort-preset]');
   if (!preset) return false;
   Object.assign(taskFilters, {
     search: preset.dataset.taskSearchPreset || '',
@@ -1055,7 +1055,7 @@ function applyTaskFilterPreset(target) {
     category: preset.dataset.taskCategoryPreset || '',
     health: preset.dataset.taskHealthPreset || '',
     evidence: preset.dataset.taskEvidencePreset || '',
-    sort: taskFilters.sort || 'due-asc',
+    sort: preset.dataset.taskSortPreset || taskFilters.sort || 'due-asc',
   });
   return true;
 }
@@ -1074,7 +1074,7 @@ function applyDashboardStatTarget(target) {
       category: stat.dataset.taskCategoryPreset || '',
       health: stat.dataset.taskHealthPreset || '',
       evidence: stat.dataset.taskEvidencePreset || '',
-      sort: taskFilters.sort || 'due-asc',
+      sort: stat.dataset.taskSortPreset || taskFilters.sort || 'due-asc',
     });
   }
   showPage(appState, page || appState.currentPage);
@@ -1215,6 +1215,17 @@ function getTaskChartDate(task, keys = []) {
   if (Number.isNaN(date.getTime())) return null;
   date.setHours(0, 0, 0, 0);
   return date;
+}
+
+function getDashboardTaskUpdatedAt(task = {}) {
+  return String(task.updatedAt || task.updated_at || task.modifiedAt || task.modified_at || task.createdAt || task.created_at || '').trim();
+}
+
+function formatDashboardTaskUpdatedAt(value = '') {
+  if (!value) return '';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return String(value);
+  return date.toLocaleString(undefined, { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
 }
 
 function formatShortChartDate(date) {
@@ -1433,6 +1444,10 @@ function renderDashboard() {
     })
     .sort((a, b) => String(a.due || '9999-12-31').localeCompare(String(b.due || '9999-12-31')) || String(a.name || '').localeCompare(String(b.name || ''), 'en'))
     .slice(0, 6);
+  const recentUpdatedTasks = [...data.tasks]
+    .filter(task => getDashboardTaskUpdatedAt(task))
+    .sort((a, b) => getDashboardTaskUpdatedAt(b).localeCompare(getDashboardTaskUpdatedAt(a)))
+    .slice(0, 5);
   return `
     <section id="page-dashboard" class="page active" style="display:grid;gap:12px">
       <div class="page-topbar">
@@ -1564,6 +1579,24 @@ function renderDashboard() {
                 </div>
               </div>`;
           }).join('') : `<div style="color:var(--green);font-weight:900">${escapeHtml(t('noWeekFocus'))}</div>`}
+        </div>
+      </div>
+      <div class="card" data-dashboard-recent-updated-tasks>
+        <div style="display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap">
+          <h2 style="margin:0">${escapeHtml(t('recentUpdatedTasks'))}</h2>
+          <button class="btn btn-sm" type="button" data-page="tasks" data-task-sort-preset="updated-desc">${escapeHtml(t('tasks'))}</button>
+        </div>
+        <div style="display:grid;gap:6px;margin-top:10px">
+          ${recentUpdatedTasks.length ? recentUpdatedTasks.map(task => `
+            <div style="display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;border:1px solid var(--border);border-radius:8px;background:var(--input-bg);padding:8px">
+              <div>
+                <strong style="color:var(--navy)">${escapeHtml(task.name || t('task'))}</strong>
+                <div style="font-size:.76rem;color:var(--muted);font-weight:850">${escapeHtml(t('updated'))}: ${escapeHtml(formatDashboardTaskUpdatedAt(getDashboardTaskUpdatedAt(task)))}</div>
+                <div style="font-size:.76rem;color:var(--muted);font-weight:800">${escapeHtml(task.owner || labelFor('Unassigned'))} | ${escapeHtml(task.due || '-')} | ${escapeHtml(labelFor(task.status || 'Open'))}</div>
+              </div>
+              <button class="btn btn-sm" type="button" data-page="tasks" data-dashboard-recent-task-action data-task-search-preset="${escapeHtml(task.name || '')}" data-task-sort-preset="updated-desc">${escapeHtml(t('open'))}</button>
+            </div>
+          `).join('') : `<div style="color:var(--muted);font-weight:900">${escapeHtml(t('noRecentUpdatedTasks'))}</div>`}
         </div>
       </div>
       <div class="card" data-dashboard-member-workload>
