@@ -5254,9 +5254,9 @@ function renderChecklist(listName, items = [], options = {}) {
 function renderChecklistEditForm(listName, editingItem) {
   if (!editingItem) return '';
   return `
-    <div class="prep-entry-row">
+    <div class="prep-entry-row" data-checklist-edit-form="${escapeHtml(listName)}" data-check-id="${escapeHtml(editingItem.id)}">
       <label>${escapeHtml(t('newChecklistItem'))}<input data-checklist-input="${listName}" value="${escapeHtml(editingItem.label || '')}" placeholder="${escapeHtml(t('newChecklistItem'))}"></label>
-      <button class="btn btn-primary" type="button" data-checklist-update="${listName}">${escapeHtml(t('updateChecklistItem'))}</button>
+      <button class="btn btn-primary" type="button" data-checklist-update="${listName}" data-check-id="${escapeHtml(editingItem.id)}">${escapeHtml(t('updateChecklistItem'))}</button>
       <button class="btn" type="button" data-checklist-cancel-edit>${escapeHtml(t('cancelEdit'))}</button>
     </div>
     <div style="font-size:.78rem;color:var(--muted);font-weight:800;margin-top:8px">${escapeHtml(t('editingChecklistItem'))}: ${escapeHtml(editingItem.label)}</div>`;
@@ -5291,11 +5291,11 @@ function renderGearItems(items = [], categories = [], options = {}) {
 function renderGearEditForm(editingGear, categories = []) {
   if (!editingGear) return '';
   return `
-    <div class="prep-gear-entry-row">
+    <div class="prep-gear-entry-row" data-gear-edit-form="${escapeHtml(editingGear.id)}">
       <label>${escapeHtml(t('gearName'))}<input data-gear-name value="${escapeHtml(editingGear.name || '')}" placeholder="${escapeHtml(t('gearName'))}"></label>
       <label>${escapeHtml(t('category'))}<input data-gear-category list="gear-category-list-modal" value="${escapeHtml(editingGear.category || '')}" placeholder="${escapeHtml(t('category'))}"></label>
       <label>${escapeHtml(t('qty'))}<input data-gear-qty type="number" min="1" value="${escapeHtml(editingGear.qty || 1)}"></label>
-      <button class="btn btn-primary" type="button" data-gear-update>${escapeHtml(t('updateGear'))}</button>
+      <button class="btn btn-primary" type="button" data-gear-update="${escapeHtml(editingGear.id)}">${escapeHtml(t('updateGear'))}</button>
       <button class="btn" type="button" data-gear-cancel-edit>${escapeHtml(t('cancelEdit'))}</button>
     </div>
     <div style="font-size:.78rem;color:var(--muted);font-weight:800;margin-top:8px">${escapeHtml(t('editingGear'))}: ${escapeHtml(editingGear.name)}</div>
@@ -8323,81 +8323,6 @@ function renderDashboard() {
         `).join('')}
       </div>
       ${renderTaskCharts(data.tasks || [])}
-      <div class="card" data-dashboard-action-summary>
-        <h2>${escapeHtml(t('actionSummary'))}</h2>
-        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px">
-          <div style="border:1px solid var(--border);border-radius:8px;background:var(--input-bg);padding:9px">
-            <strong style="color:var(--navy)">${escapeHtml(t('prepReadiness'))}</strong>
-            <div style="font-size:.82rem;color:var(--muted);font-weight:800;margin-top:5px">${escapeHtml(t('checklist'))}: ${checklistDone}/${data.checklist.length}</div>
-            <div style="font-size:.82rem;color:var(--muted);font-weight:800">${escapeHtml(t('preDive'))}: ${prediveDone}/${data.prediveChecklist.length}</div>
-            <div style="font-size:.82rem;color:var(--muted);font-weight:800">${escapeHtml(t('gearItems'))}: ${gearPacked}/${data.gearItems.length}</div>
-            <div data-dashboard-prep-gaps style="display:grid;gap:5px;margin-top:8px">
-              ${prepGaps.length ? prepGaps.map(gap => `
-                <div style="display:grid;grid-template-columns:auto 1fr auto;gap:6px;align-items:center;font-size:.76rem;font-weight:850;color:var(--text)">
-                  <span class="badge mid">${escapeHtml(gap.label)}</span>
-                  <span>${escapeHtml(gap.title || '-')}</span>
-                  <button class="btn btn-sm" type="button" data-page="prep" data-dashboard-prep-gap-action data-prep-focus-section="${escapeHtml(gap.section)}" data-prep-focus-query="${escapeHtml(gap.query || '')}">${escapeHtml(t('open'))}</button>
-                </div>
-              `).join('') : `<div style="color:var(--green);font-weight:900;font-size:.8rem">${escapeHtml(t('prepReady'))}</div>`}
-            </div>
-            <button class="btn btn-sm" type="button" data-page="prep" style="margin-top:8px">${escapeHtml(t('prep'))}</button>
-          </div>
-          <div style="border:1px solid var(--border);border-radius:8px;background:var(--input-bg);padding:9px">
-            <strong style="color:var(--navy)">${escapeHtml(t('intelReadiness'))}</strong>
-            <div style="font-size:.82rem;color:var(--muted);font-weight:800;margin-top:5px">${escapeHtml(t('intel'))}: ${readyIntel}/${data.intel.length}</div>
-            <div style="font-size:.82rem;color:var(--muted);font-weight:800">${escapeHtml(t('strategy'))}: ${readyStrategy}/${data.strategy.length}</div>
-            <div data-dashboard-intel-gaps style="display:grid;gap:5px;margin-top:8px">
-              ${intelGaps.length ? intelGaps.map(gap => `
-                <div style="display:grid;grid-template-columns:auto 1fr auto auto;gap:6px;align-items:center;font-size:.76rem;font-weight:850;color:var(--text)">
-                  <span class="badge mid">${escapeHtml(gap.label)}</span>
-                  <span>${escapeHtml(gap.title || '-')}</span>
-                  <span style="color:var(--muted)">${escapeHtml(gap.status)}</span>
-                  <button class="btn btn-sm" type="button" data-page="intel" data-dashboard-intel-gap-action data-intel-focus-list="${escapeHtml(gap.listName)}" data-intel-focus-query="${escapeHtml(gap.query || '')}">${escapeHtml(t('open'))}</button>
-                </div>
-              `).join('') : `<div style="color:var(--green);font-weight:900;font-size:.8rem">${escapeHtml(t('intelReady'))}</div>`}
-            </div>
-            <button class="btn btn-sm" type="button" data-page="intel" style="margin-top:8px">${escapeHtml(t('openIntel'))}</button>
-          </div>
-          <div style="border:1px solid var(--border);border-radius:8px;background:var(--input-bg);padding:9px">
-            <strong style="color:var(--navy)">${escapeHtml(t('latestRun'))}</strong>
-            <div style="font-size:.82rem;color:var(--muted);font-weight:800;margin-top:5px">${latestRun ? `${escapeHtml(t('score'))}: ${escapeHtml(latestRun.score)} | ${escapeHtml(t('note'))}: ${escapeHtml(latestRun.note || '-')}` : escapeHtml(t('noMissionRunsYet'))}</div>
-            <div data-dashboard-run-summary style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:8px">
-              ${runSummary ? [
-                [t('bestScore'), runSummary.best],
-                [t('avgScore'), runSummary.average],
-                [t('missionRuns'), runSummary.count],
-              ].map(([label, value]) => `
-                <div style="border:1px solid var(--border);border-radius:8px;background:var(--white);padding:6px">
-                  <div style="font-size:.68rem;color:var(--muted);font-weight:900">${escapeHtml(label)}</div>
-                  <div style="font-size:1rem;color:var(--navy);font-weight:900">${escapeHtml(value)}</div>
-                </div>
-              `).join('') : ''}
-            </div>
-            <button class="btn btn-sm" type="button" data-page="competition" ${latestRun ? `data-dashboard-latest-run-action data-run-edit-preset="${escapeHtml(latestRun.id)}"` : ''} style="margin-top:8px">${escapeHtml(t('missionRun'))}</button>
-          </div>
-        </div>
-        <div style="display:grid;gap:6px;margin-top:10px">
-          ${actionItems.length ? actionItems.map(item => {
-            const task = item.task || {};
-            const isLate = task.due && task.due < today;
-            const accent = task.blocked || isLate || item.level === 'urgent' ? 'var(--red)' : task.priority === 'High' ? 'var(--orange)' : 'var(--blue)';
-            return `
-              <div style="display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;border:1px solid var(--border);border-left:4px solid ${accent};border-radius:8px;background:var(--input-bg);padding:8px">
-                <div>
-                  <strong style="color:var(--navy)">${escapeHtml(task.name || t('task'))}</strong>
-                  <div style="font-size:.78rem;color:var(--muted);font-weight:800">${escapeHtml(task.owner || labelFor('Unassigned'))} | ${escapeHtml(task.due || '-')} | ${escapeHtml(labelFor(task.category || 'General'))}</div>
-                </div>
-                <div style="display:flex;gap:5px;justify-content:flex-end;flex-wrap:wrap">
-                  <span class="badge ${item.level === 'urgent' ? 'urgent' : 'mid'}">${escapeHtml(item.label)}</span>
-                  ${task.blocked && item.label !== t('blocked') ? `<span class="badge urgent">${escapeHtml(t('blocked'))}</span>` : ''}
-                  ${isLate && item.label !== t('overdue') ? `<span class="badge urgent">${escapeHtml(t('overdue'))}</span>` : ''}
-                  <span class="badge ${task.priority === 'High' ? 'mid' : task.priority === 'Low' ? 'done' : ''}">${escapeHtml(labelFor(task.priority || 'Medium'))}</span>
-                  <button class="btn btn-sm" type="button" data-page="tasks" data-dashboard-action-task-action data-task-search-preset="${escapeHtml(task.name || '')}">${escapeHtml(t('open'))}</button>
-                </div>
-              </div>`;
-          }).join('') : `<div style="color:var(--green);font-weight:900">${escapeHtml(t('noActionItems'))}</div>`}
-        </div>
-      </div>
       <div class="card" data-dashboard-week-focus>
         <div style="display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap">
           <div>
@@ -9215,11 +9140,12 @@ appRoot?.addEventListener('click', (event) => {
   const updateChecklistTarget = event.target.closest('[data-checklist-update]');
   if (updateChecklistTarget) {
     const listName = updateChecklistTarget.dataset.checklistUpdate;
-    const root = updateChecklistTarget.closest('[data-prep-modal]') || document;
+    const root = updateChecklistTarget.closest('[data-checklist-edit-form]') || updateChecklistTarget.closest('[data-prep-modal]') || document;
     const input = root.querySelector(`[data-checklist-input="${listName}"]`);
+    const id = updateChecklistTarget.dataset.checkId || editingChecklist?.id;
     const message = actionMessage(t('saved'), input?.value || t('checklist'));
     captureUndo(message);
-    if (updateChecklistItem(appState, listName, editingChecklist?.id, input?.value)) {
+    if (updateChecklistItem(appState, listName, id, input?.value)) {
       editingChecklist = null;
       persistAndRender(message, { keepUndo: true });
     }
@@ -9274,12 +9200,14 @@ appRoot?.addEventListener('click', (event) => {
     renderAppShell();
     return;
   }
-  if (event.target.closest('[data-gear-update]')) {
-    const root = event.target.closest('[data-prep-modal]') || document;
+  const updateGearTarget = event.target.closest('[data-gear-update]');
+  if (updateGearTarget) {
+    const root = updateGearTarget.closest('[data-gear-edit-form]') || updateGearTarget.closest('[data-prep-modal]') || document;
     const payload = getGearPayloadFromDom(root);
+    const id = updateGearTarget.dataset.gearUpdate || editingGearId;
     const message = actionMessage(t('saved'), payload.name || t('gearItems'));
     captureUndo(message);
-    if (updateGearItem(appState, editingGearId, payload)) {
+    if (updateGearItem(appState, id, payload)) {
       editingGearId = null;
       persistAndRender(message, { keepUndo: true });
     }
@@ -9692,12 +9620,14 @@ appRoot?.addEventListener('keydown', (event) => {
   if (!input && !checklistInput && !gearInput) return;
   event.preventDefault();
   if (gearInput) {
-    const root = gearInput.closest('[data-prep-modal]') || document;
+    const root = gearInput.closest('[data-gear-edit-form]') || gearInput.closest('[data-prep-modal]') || document;
     const payload = getGearPayloadFromDom(root);
     const message = actionMessage(t('saved'), payload.name || t('gearItems'));
-    if (editingGearId) {
+    const editForm = gearInput.closest('[data-gear-edit-form]');
+    const editId = editForm?.dataset.gearEditForm || editingGearId;
+    if (editId) {
       captureUndo(message);
-      if (updateGearItem(appState, editingGearId, payload)) {
+      if (updateGearItem(appState, editId, payload)) {
         editingGearId = null;
         persistAndRender(message, { keepUndo: true });
       }
@@ -9709,9 +9639,12 @@ appRoot?.addEventListener('keydown', (event) => {
   }
   if (checklistInput) {
     const message = actionMessage(t('saved'), checklistInput.value || t('checklist'));
-    if (editingChecklist?.listName === checklistInput.dataset.checklistInput) {
+    const editForm = checklistInput.closest('[data-checklist-edit-form]');
+    const editListName = editForm?.dataset.checklistEditForm || editingChecklist?.listName;
+    const editId = editForm?.dataset.checkId || editingChecklist?.id;
+    if (editListName === checklistInput.dataset.checklistInput && editId) {
       captureUndo(message);
-      if (updateChecklistItem(appState, editingChecklist.listName, editingChecklist.id, checklistInput.value)) {
+      if (updateChecklistItem(appState, editListName, editId, checklistInput.value)) {
         editingChecklist = null;
         persistAndRender(message, { keepUndo: true });
       }

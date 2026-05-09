@@ -169,9 +169,9 @@ export function renderChecklist(listName, items = [], options = {}) {
 function renderChecklistEditForm(listName, editingItem) {
   if (!editingItem) return '';
   return `
-    <div class="prep-entry-row">
+    <div class="prep-entry-row" data-checklist-edit-form="${escapeHtml(listName)}" data-check-id="${escapeHtml(editingItem.id)}">
       <label>${escapeHtml(t('newChecklistItem'))}<input data-checklist-input="${listName}" value="${escapeHtml(editingItem.label || '')}" placeholder="${escapeHtml(t('newChecklistItem'))}"></label>
-      <button class="btn btn-primary" type="button" data-checklist-update="${listName}">${escapeHtml(t('updateChecklistItem'))}</button>
+      <button class="btn btn-primary" type="button" data-checklist-update="${listName}" data-check-id="${escapeHtml(editingItem.id)}">${escapeHtml(t('updateChecklistItem'))}</button>
       <button class="btn" type="button" data-checklist-cancel-edit>${escapeHtml(t('cancelEdit'))}</button>
     </div>
     <div style="font-size:.78rem;color:var(--muted);font-weight:800;margin-top:8px">${escapeHtml(t('editingChecklistItem'))}: ${escapeHtml(editingItem.label)}</div>`;
@@ -206,11 +206,11 @@ export function renderGearItems(items = [], categories = [], options = {}) {
 function renderGearEditForm(editingGear, categories = []) {
   if (!editingGear) return '';
   return `
-    <div class="prep-gear-entry-row">
+    <div class="prep-gear-entry-row" data-gear-edit-form="${escapeHtml(editingGear.id)}">
       <label>${escapeHtml(t('gearName'))}<input data-gear-name value="${escapeHtml(editingGear.name || '')}" placeholder="${escapeHtml(t('gearName'))}"></label>
       <label>${escapeHtml(t('category'))}<input data-gear-category list="gear-category-list-modal" value="${escapeHtml(editingGear.category || '')}" placeholder="${escapeHtml(t('category'))}"></label>
       <label>${escapeHtml(t('qty'))}<input data-gear-qty type="number" min="1" value="${escapeHtml(editingGear.qty || 1)}"></label>
-      <button class="btn btn-primary" type="button" data-gear-update>${escapeHtml(t('updateGear'))}</button>
+      <button class="btn btn-primary" type="button" data-gear-update="${escapeHtml(editingGear.id)}">${escapeHtml(t('updateGear'))}</button>
       <button class="btn" type="button" data-gear-cancel-edit>${escapeHtml(t('cancelEdit'))}</button>
     </div>
     <div style="font-size:.78rem;color:var(--muted);font-weight:800;margin-top:8px">${escapeHtml(t('editingGear'))}: ${escapeHtml(editingGear.name)}</div>
