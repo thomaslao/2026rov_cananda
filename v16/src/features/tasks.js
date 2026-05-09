@@ -130,6 +130,14 @@ function normalizeTaskFilters(filters = {}) {
 function taskMatchesHealthFilter(task, health = '', memberNames = new Set()) {
   if (!health) return true;
   const owner = clean(task.owner);
+  if (health === 'this-week') {
+    if (task.status === 'Done' || !task.due) return false;
+    const today = todayDateString();
+    const weekEnd = new Date();
+    weekEnd.setDate(weekEnd.getDate() + 7);
+    const weekEndText = weekEnd.toISOString().slice(0, 10);
+    return task.due >= today && task.due <= weekEndText;
+  }
   if (health === 'blocked') return task.status !== 'Done' && Boolean(task.blocked);
   if (health === 'overdue') return task.status !== 'Done' && isOverdue(task.due);
   if (health === 'unassigned') return task.status !== 'Done' && (!owner || owner === 'Unassigned');
@@ -277,6 +285,7 @@ export function exportTasksCsv(tasks = [], documentRef = document) {
 
 function getActiveFilterChips(filters = {}) {
   const healthLabels = {
+    'this-week': t('thisWeek'),
     blocked: t('blocked'),
     overdue: t('overdue'),
     unassigned: t('unassignedTasks'),
@@ -292,6 +301,19 @@ function getActiveFilterChips(filters = {}) {
     filters.evidence ? { key: 'evidence', label: t('evidence'), value: filters.evidence === 'with' ? t('withEvidence') : t('withoutEvidence') } : null,
     filters.health ? { key: 'health', label: t('dataHealth'), value: healthLabels[filters.health] || filters.health } : null,
   ].filter(Boolean);
+}
+
+function getActiveTaskQuickTab(filters = {}, myOwner = '') {
+  const hasOnlySort = !filters.search && !filters.owner && !filters.status && !filters.priority && !filters.category && !filters.health && !filters.evidence;
+  if (hasOnlySort) return 'all';
+  if (myOwner && filters.owner === myOwner && !filters.search && !filters.status && !filters.priority && !filters.category && !filters.health && !filters.evidence) return 'mine';
+  if (filters.health === 'this-week' && !filters.search && !filters.owner && !filters.status && !filters.priority && !filters.category && !filters.evidence) return 'this-week';
+  if (filters.health === 'overdue' && !filters.search && !filters.owner && !filters.status && !filters.priority && !filters.category && !filters.evidence) return 'overdue';
+  if (filters.health === 'blocked' && !filters.search && !filters.owner && !filters.status && !filters.priority && !filters.category && !filters.evidence) return 'blocked';
+  if (filters.priority === 'High' && !filters.search && !filters.owner && !filters.status && !filters.category && !filters.health && !filters.evidence) return 'high';
+  if (filters.status === 'active' && !filters.search && !filters.owner && !filters.priority && !filters.category && !filters.health && !filters.evidence) return 'active';
+  if (filters.status === 'Done' && !filters.search && !filters.owner && !filters.priority && !filters.category && !filters.health && !filters.evidence) return 'done';
+  return '';
 }
 
 export function renderTaskTable(tasks = [], members = [], options = {}) {
@@ -389,7 +411,7 @@ function renderTaskForm(editingTask = null, context = {}) {
       <label data-task-evidence-url>${escapeHtml(t('evidenceUrl'))}<input name="evidenceUrl" type="url" placeholder="https://..."></label>
       <label style="grid-column:1/-1">${escapeHtml(t('evidenceNote'))}<textarea name="evidenceNote" rows="2" placeholder="${escapeHtml(t('evidenceNote'))}"></textarea></label>
       <button class="btn btn-primary" type="submit">${escapeHtml(editingTask ? t('updateTask') : t('addTask'))}</button>
-      ${editingTask ? `<button class="btn" type="button" data-task-cancel-edit>${escapeHtml(t('cancelEdit'))}</button>` : `<button class="btn" type="reset">${escapeHtml(t('cancelEdit'))}</button>`}
+      <button class="btn" type="button" data-task-cancel-edit>${escapeHtml(t('cancelEdit'))}</button>
     </form>
     <datalist id="task-owner-list" data-task-owner-list>${ownerSuggestions.map(owner => `<option value="${escapeHtml(owner)}"></option>`).join('')}</datalist>
     ${editingTask && existingEvidence.length ? `<div data-task-evidence style="display:flex;gap:5px;flex-wrap:wrap;align-items:center;margin-top:8px"><strong style="font-size:.78rem;color:var(--muted)">${escapeHtml(t('existingEvidence'))}</strong>${existingEvidence.map(item => item.url ? `<a class="badge mid" href="${escapeHtml(item.url)}" target="_blank" rel="noreferrer">${escapeHtml(item.label || t('evidence'))}</a>` : `<span class="badge mid">${escapeHtml(item.label || t('evidence'))}</span>`).join('')}</div>` : ''}`;
@@ -398,15 +420,28 @@ function renderTaskForm(editingTask = null, context = {}) {
 export function renderTasksPage(state, options = {}) {
   const tasks = state.data.tasks || [];
   const editingTask = tasks.find(task => task.id === Number(options.editingTaskId));
+  const taskModalOpen = Boolean(editingTask || options.addingTask);
   const stats = getTaskStats(tasks);
   const master = state.data.masterData || {};
   const filters = normalizeTaskFilters(options.filters);
+  const myOwner = String(options.myOwner || '');
   const owners = unique(tasks.map(task => task.owner));
   const ownerSuggestions = unique([...(state.data.members || []).map(member => member.name), ...tasks.map(task => task.owner)]);
   const categories = master.taskTypes?.length ? master.taskTypes : ['General'];
   const healthSummary = getTaskHealthSummary(tasks, state.data.members || []);
   const visibleTasks = getVisibleTasks(tasks, state.data.members || [], filters);
   const activeFilterChips = getActiveFilterChips(filters);
+  const activeQuickTab = getActiveTaskQuickTab(filters, myOwner);
+  const quickTabs = [
+    ['all', t('allTasks'), false],
+    ['mine', t('myTasks'), !myOwner],
+    ['this-week', t('thisWeek'), false],
+    ['overdue', t('overdue'), false],
+    ['blocked', t('blocked'), false],
+    ['high', t('highPriority'), false],
+    ['active', t('openTasks'), false],
+    ['done', t('doneTasks'), false],
+  ];
   return `
     <section id="page-tasks" class="page active" style="display:grid;gap:12px">
       <div class="page-topbar">
@@ -416,12 +451,22 @@ export function renderTasksPage(state, options = {}) {
         </div>
         <div class="page-top-summary">${escapeHtml(t('openTasks'))} ${stats.open} | ${escapeHtml(t('overdue'))} ${stats.overdue} | ${escapeHtml(t('blocked'))} ${stats.blocked} | ${escapeHtml(t('visible'))} ${visibleTasks.length}/${tasks.length}</div>
       </div>
-      <div class="card" id="${editingTask ? 'task-edit-form' : 'task-add-form'}">
-        <h2 style="margin:0 0 10px;color:var(--navy);font-size:1rem">${escapeHtml(editingTask ? t('editingTask') : t('addTask'))}</h2>
-        ${renderTaskForm(editingTask || null, { master, ownerSuggestions })}
-        ${editingTask ? `<div style="font-size:.78rem;color:var(--muted);font-weight:800;margin-top:8px">${escapeHtml(t('editingTask'))}: ${escapeHtml(editingTask.name)}</div>` : ''}
+      <div class="modal-bg ${taskModalOpen ? 'open' : ''}" data-task-modal-bg>
+        <div class="modal wide task-modal" role="dialog" aria-modal="true" aria-labelledby="task-modal-title" data-task-modal>
+          <div class="task-modal-head">
+            <h3 id="task-modal-title">${escapeHtml(editingTask ? t('editingTask') : t('addTask'))}</h3>
+            <button class="btn btn-sm" type="button" data-task-cancel-edit>${escapeHtml(t('cancelEdit'))}</button>
+          </div>
+          ${taskModalOpen ? renderTaskForm(editingTask || null, { master, ownerSuggestions }) : ''}
+          ${editingTask ? `<div style="font-size:.78rem;color:var(--muted);font-weight:800;margin-top:8px">${escapeHtml(t('editingTask'))}: ${escapeHtml(editingTask.name)}</div>` : ''}
+        </div>
       </div>
       <div class="card">
+        <div class="task-quick-tabs" data-task-quick-tabs>
+          ${quickTabs.map(([value, label, disabled]) => `
+            <button class="task-quick-tab ${activeQuickTab === value ? 'active' : ''}" type="button" data-task-quick-tab="${escapeHtml(value)}" ${disabled ? 'disabled' : ''}>${escapeHtml(label)}</button>
+          `).join('')}
+        </div>
         <div class="task-summary-row" data-task-evidence-summary data-task-health-summary>
           ${[
             [t('withEvidence'), stats.withEvidence, 'with', 'var(--green)'],
@@ -465,6 +510,7 @@ export function renderTasksPage(state, options = {}) {
           ].map(([value, label]) => `<option value="${escapeHtml(value)}" ${filters.evidence === value ? 'selected' : ''}>${escapeHtml(label)}</option>`).join('')}</select></label>
           <label>${escapeHtml(t('dataHealth'))}<select data-task-health-filter>${[
             ['', t('allHealth')],
+            ['this-week', t('thisWeek')],
             ['blocked', t('blocked')],
             ['overdue', t('overdue')],
             ['unassigned', t('unassignedTasks')],
@@ -481,8 +527,15 @@ export function renderTasksPage(state, options = {}) {
           ].map(([value, label]) => `<option value="${value}" ${filters.sort === value ? 'selected' : ''}>${escapeHtml(label)}</option>`).join('')}</select></label>
         </div>
         <div class="task-toolbar-actions" data-task-toolbar-actions>
+          <div class="task-toolbar-search task-toolbar-owner">
+            <label><span class="task-toolbar-label">${escapeHtml(t('myOwner'))}</span><select data-my-task-owner>
+              <option value="">${escapeHtml(t('chooseOwner'))}</option>
+              ${ownerSuggestions.map(owner => `<option value="${escapeHtml(owner)}" ${myOwner === owner ? 'selected' : ''}>${escapeHtml(owner)}</option>`).join('')}
+            </select></label>
+            <button class="btn btn-primary task-toolbar-btn" type="button" data-my-tasks ${myOwner ? '' : 'disabled'}>${escapeHtml(t('myTasks'))}</button>
+          </div>
           <button class="btn task-toolbar-btn task-toolbar-clear" type="button" data-task-clear-filters>${escapeHtml(t('clearFilters'))}</button>
-          <a class="btn btn-primary task-toolbar-btn" href="#task-add-form">${escapeHtml(t('addTask'))}</a>
+          <button class="btn btn-primary task-toolbar-btn" type="button" data-task-open-add>${escapeHtml(t('addTask'))}</button>
           <button class="btn btn-primary task-toolbar-btn" type="button" data-action="export-tasks-csv">${escapeHtml(t('exportTasksCsv'))}</button>
           <div class="task-toolbar-search">
             <label><span class="sr-only">${escapeHtml(t('search'))}</span><input data-task-search value="${escapeHtml(filters.search)}" placeholder="${escapeHtml(t('searchTasks'))}"></label>

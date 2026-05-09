@@ -309,6 +309,11 @@
   .btn-success { background: var(--green); color: #fff; }
   .btn-sm { padding: 3px 9px; font-size: .78rem; }
   .task-summary-row { position:relative; z-index:1; display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); gap:8px; margin-bottom:10px; }
+  .task-quick-tabs { position:relative; z-index:2; display:grid; grid-template-columns:repeat(8,minmax(0,1fr)); gap:8px; align-items:center; margin-bottom:10px; }
+  .task-quick-tab { width:100%; min-width:0; min-height:38px; padding:7px 8px; border:1px solid var(--border); border-radius:999px; background:var(--input-bg); color:var(--navy); font-size:.82rem; font-weight:900; cursor:pointer; line-height:1.1; text-align:center; display:flex; align-items:center; justify-content:center; white-space:normal; overflow-wrap:anywhere; }
+  .task-quick-tab:hover { background:var(--table-hover); }
+  .task-quick-tab.active { background:var(--blue); color:#fff; border-color:var(--blue); }
+  .task-quick-tab:disabled { opacity:.55; cursor:not-allowed; }
   .task-summary-card { min-height:76px; text-align:left; border:1px solid var(--task-summary-active, var(--border)); border-left:4px solid var(--task-summary-accent, var(--green)); border-radius:8px; background:var(--task-summary-bg, var(--input-bg)); padding:8px; cursor:pointer; color:var(--text); display:flex; flex-direction:column; justify-content:center; min-width:0; }
   .task-summary-card:hover { background:var(--table-hover); }
   .task-summary-label { font-size:.73rem; color:var(--muted); font-weight:900; line-height:1.2; overflow-wrap:anywhere; }
@@ -335,12 +340,15 @@
   .task-filter-bar { position:relative; z-index:1; display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:8px; align-items:end; margin-bottom:8px; }
   .task-filter-bar label { min-width:0; }
   .task-filter-bar select { width:100%; min-width:0; }
-  .task-toolbar-actions { position:relative; z-index:2; display:grid; grid-template-columns:repeat(4,minmax(170px,1fr)); gap:10px; align-items:stretch; margin-bottom:10px; }
-  .task-toolbar-btn { min-height:42px; padding:8px 14px; font-size:.88rem; font-weight:900; border-radius:8px; white-space:normal; }
-  .task-toolbar-search { min-height:42px; margin:0; padding:0; display:grid; grid-template-columns:minmax(0,1fr) auto; gap:6px; align-items:stretch; min-width:0; }
-  .task-toolbar-search label { margin:0; min-width:0; }
-  .task-toolbar-search input { height:42px; min-height:42px; margin:0; border-radius:8px; font-size:.88rem; font-weight:800; line-height:1.2; }
-  .task-search-submit { min-height:42px; padding:8px 14px; border-radius:8px; font-size:.88rem; font-weight:900; white-space:nowrap; }
+  .task-toolbar-actions { position:relative; z-index:2; display:grid; grid-template-columns:minmax(230px,1.15fr) minmax(130px,.75fr) minmax(150px,.9fr) minmax(170px,1fr) minmax(260px,1.25fr); gap:10px; align-items:stretch; margin-bottom:10px; }
+  .task-toolbar-actions > * { min-height:60px; }
+  .task-toolbar-btn { min-height:60px; height:60px; padding:8px 14px; font-size:.88rem; font-weight:900; border-radius:8px; white-space:normal; display:flex; align-items:center; justify-content:center; text-align:center; line-height:1.2; }
+  .task-toolbar-search { min-height:60px; margin:0; padding:0; display:grid; grid-template-columns:minmax(0,1fr) auto; gap:6px; align-items:stretch; min-width:0; }
+  .task-toolbar-search label { margin:0; min-width:0; height:60px; display:flex; flex-direction:column; justify-content:center; gap:4px; }
+  .task-toolbar-label { display:block; line-height:1; font-size:.76rem; font-weight:900; color:var(--navy); }
+  .task-toolbar-owner select { width:100%; height:34px; min-height:34px; margin:0; border-radius:8px; font-size:.88rem; font-weight:800; line-height:1.2; }
+  .task-toolbar-search input { height:60px; min-height:60px; margin:0; border-radius:8px; font-size:.88rem; font-weight:800; line-height:1.2; }
+  .task-search-submit { min-height:60px; height:60px; padding:8px 14px; border-radius:8px; font-size:.88rem; font-weight:900; white-space:nowrap; display:flex; align-items:center; justify-content:center; text-align:center; }
   .task-toolbar-clear { background:#FFF3CD; color:#7A4B00; border:1px solid rgba(245,158,11,.45); box-shadow:inset 0 0 0 1px rgba(255,255,255,.55); }
   .task-toolbar-clear:hover { background:#FDE68A; opacity:1; }
   .task-category-manager { border:1px solid var(--border); border-left:5px solid var(--blue); border-radius:8px; background:var(--input-bg); padding:10px; margin-bottom:10px; }
@@ -443,6 +451,9 @@
            box-shadow: 0 8px 40px rgba(0,0,0,.2); }
   .modal.wide { width: 620px; }
   .modal h3 { font-size: 1.1rem; color: var(--navy); margin-bottom: 14px; }
+  .task-modal { width: min(760px, 95vw); }
+  .task-modal-head { display:flex; gap:10px; align-items:center; justify-content:space-between; margin-bottom:14px; }
+  .task-modal-head h3 { margin:0; }
   .form-row { margin-bottom: 12px; }
   .form-row label { display: block; font-size: .82rem; font-weight: 600; margin-bottom: 4px; }
   .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 16px; }
@@ -508,6 +519,7 @@
     .chart-grid { grid-template-columns: 1fr; }
     .dashboard-chart-grid { grid-template-columns: 1fr; }
     .task-status-counts { grid-template-columns:repeat(2,minmax(0,1fr)); }
+    .task-quick-tabs { grid-template-columns:repeat(2,minmax(0,1fr)); }
     .task-summary-row { grid-template-columns:repeat(2,minmax(0,1fr)); }
     .task-filter-bar { grid-template-columns:1fr; }
     .task-toolbar-actions { grid-template-columns:1fr; }
@@ -524,6 +536,9 @@
     .quick-score-field { grid-template-columns:1fr; gap:4px; }
     .mode-subnav { top:auto; position:static; padding:8px 12px; }
     .mode-tab { flex:1 1 calc(50% - 8px); min-height:42px; padding:8px 10px; }
+  }
+  @media (min-width:601px) and (max-width:900px) {
+    .task-quick-tabs { grid-template-columns:repeat(4,minmax(0,1fr)); }
   }
 
   /* ── NAV BADGE (逾期角標) ── */
@@ -877,6 +892,11 @@ const STRINGS = {
     searchRuns: 'Search runs',
     searchPrep: 'Search prep',
     allOwners: 'All owners',
+    allTasks: 'All',
+    myOwner: 'My owner',
+    chooseOwner: 'Choose owner',
+    myTasks: 'My tasks',
+    thisWeek: 'This week',
     allStatuses: 'All statuses',
     nextStatus: 'Next status',
     allPriorities: 'All priorities',
@@ -987,6 +1007,8 @@ const STRINGS = {
     priority: 'Priority',
     status: 'Status',
     category: 'Category',
+    highPriority: 'High priority',
+    doneTasks: 'Done',
     blocked: 'Blocked',
     evidence: 'Evidence',
     evidenceLabel: 'Evidence title',
@@ -1232,6 +1254,11 @@ const STRINGS = {
     searchRuns: '\u641c\u5c0b\u8a18\u9304',
     searchPrep: '\u641c\u5c0b\u5099\u6230',
     allOwners: '\u5168\u90e8\u8ca0\u8cac\u4eba',
+    allTasks: '\u5168\u90e8',
+    myOwner: '\u6211\u7684\u8ca0\u8cac\u4eba',
+    chooseOwner: '\u9078\u64c7\u8ca0\u8cac\u4eba',
+    myTasks: '\u6211\u7684\u4efb\u52d9',
+    thisWeek: '\u672c\u9031',
     allStatuses: '\u5168\u90e8\u72c0\u614b',
     nextStatus: '\u4e0b\u4e00\u72c0\u614b',
     allPriorities: '\u5168\u90e8\u512a\u5148\u7d1a',
@@ -1342,6 +1369,8 @@ const STRINGS = {
     priority: '\u512a\u5148\u7d1a',
     status: '\u72c0\u614b',
     category: '\u5206\u985e',
+    highPriority: '\u9ad8\u512a\u5148',
+    doneTasks: '\u5df2\u5b8c\u6210',
     blocked: '\u963b\u585e',
     evidence: '\u8b49\u64da',
     evidenceLabel: '\u8b49\u64da\u540d\u7a31',
@@ -2867,6 +2896,14 @@ function normalizeTaskFilters(filters = {}) {
 function taskMatchesHealthFilter(task, health = '', memberNames = new Set()) {
   if (!health) return true;
   const owner = clean(task.owner);
+  if (health === 'this-week') {
+    if (task.status === 'Done' || !task.due) return false;
+    const today = todayDateString();
+    const weekEnd = new Date();
+    weekEnd.setDate(weekEnd.getDate() + 7);
+    const weekEndText = weekEnd.toISOString().slice(0, 10);
+    return task.due >= today && task.due <= weekEndText;
+  }
   if (health === 'blocked') return task.status !== 'Done' && Boolean(task.blocked);
   if (health === 'overdue') return task.status !== 'Done' && isOverdue(task.due);
   if (health === 'unassigned') return task.status !== 'Done' && (!owner || owner === 'Unassigned');
@@ -3014,6 +3051,7 @@ function exportTasksCsv(tasks = [], documentRef = document) {
 
 function getActiveFilterChips(filters = {}) {
   const healthLabels = {
+    'this-week': t('thisWeek'),
     blocked: t('blocked'),
     overdue: t('overdue'),
     unassigned: t('unassignedTasks'),
@@ -3029,6 +3067,19 @@ function getActiveFilterChips(filters = {}) {
     filters.evidence ? { key: 'evidence', label: t('evidence'), value: filters.evidence === 'with' ? t('withEvidence') : t('withoutEvidence') } : null,
     filters.health ? { key: 'health', label: t('dataHealth'), value: healthLabels[filters.health] || filters.health } : null,
   ].filter(Boolean);
+}
+
+function getActiveTaskQuickTab(filters = {}, myOwner = '') {
+  const hasOnlySort = !filters.search && !filters.owner && !filters.status && !filters.priority && !filters.category && !filters.health && !filters.evidence;
+  if (hasOnlySort) return 'all';
+  if (myOwner && filters.owner === myOwner && !filters.search && !filters.status && !filters.priority && !filters.category && !filters.health && !filters.evidence) return 'mine';
+  if (filters.health === 'this-week' && !filters.search && !filters.owner && !filters.status && !filters.priority && !filters.category && !filters.evidence) return 'this-week';
+  if (filters.health === 'overdue' && !filters.search && !filters.owner && !filters.status && !filters.priority && !filters.category && !filters.evidence) return 'overdue';
+  if (filters.health === 'blocked' && !filters.search && !filters.owner && !filters.status && !filters.priority && !filters.category && !filters.evidence) return 'blocked';
+  if (filters.priority === 'High' && !filters.search && !filters.owner && !filters.status && !filters.category && !filters.health && !filters.evidence) return 'high';
+  if (filters.status === 'active' && !filters.search && !filters.owner && !filters.priority && !filters.category && !filters.health && !filters.evidence) return 'active';
+  if (filters.status === 'Done' && !filters.search && !filters.owner && !filters.priority && !filters.category && !filters.health && !filters.evidence) return 'done';
+  return '';
 }
 
 function renderTaskTable(tasks = [], members = [], options = {}) {
@@ -3126,7 +3177,7 @@ function renderTaskForm(editingTask = null, context = {}) {
       <label data-task-evidence-url>${escapeHtml(t('evidenceUrl'))}<input name="evidenceUrl" type="url" placeholder="https://..."></label>
       <label style="grid-column:1/-1">${escapeHtml(t('evidenceNote'))}<textarea name="evidenceNote" rows="2" placeholder="${escapeHtml(t('evidenceNote'))}"></textarea></label>
       <button class="btn btn-primary" type="submit">${escapeHtml(editingTask ? t('updateTask') : t('addTask'))}</button>
-      ${editingTask ? `<button class="btn" type="button" data-task-cancel-edit>${escapeHtml(t('cancelEdit'))}</button>` : `<button class="btn" type="reset">${escapeHtml(t('cancelEdit'))}</button>`}
+      <button class="btn" type="button" data-task-cancel-edit>${escapeHtml(t('cancelEdit'))}</button>
     </form>
     <datalist id="task-owner-list" data-task-owner-list>${ownerSuggestions.map(owner => `<option value="${escapeHtml(owner)}"></option>`).join('')}</datalist>
     ${editingTask && existingEvidence.length ? `<div data-task-evidence style="display:flex;gap:5px;flex-wrap:wrap;align-items:center;margin-top:8px"><strong style="font-size:.78rem;color:var(--muted)">${escapeHtml(t('existingEvidence'))}</strong>${existingEvidence.map(item => item.url ? `<a class="badge mid" href="${escapeHtml(item.url)}" target="_blank" rel="noreferrer">${escapeHtml(item.label || t('evidence'))}</a>` : `<span class="badge mid">${escapeHtml(item.label || t('evidence'))}</span>`).join('')}</div>` : ''}`;
@@ -3135,15 +3186,28 @@ function renderTaskForm(editingTask = null, context = {}) {
 function renderTasksPage(state, options = {}) {
   const tasks = state.data.tasks || [];
   const editingTask = tasks.find(task => task.id === Number(options.editingTaskId));
+  const taskModalOpen = Boolean(editingTask || options.addingTask);
   const stats = getTaskStats(tasks);
   const master = state.data.masterData || {};
   const filters = normalizeTaskFilters(options.filters);
+  const myOwner = String(options.myOwner || '');
   const owners = unique(tasks.map(task => task.owner));
   const ownerSuggestions = unique([...(state.data.members || []).map(member => member.name), ...tasks.map(task => task.owner)]);
   const categories = master.taskTypes?.length ? master.taskTypes : ['General'];
   const healthSummary = getTaskHealthSummary(tasks, state.data.members || []);
   const visibleTasks = getVisibleTasks(tasks, state.data.members || [], filters);
   const activeFilterChips = getActiveFilterChips(filters);
+  const activeQuickTab = getActiveTaskQuickTab(filters, myOwner);
+  const quickTabs = [
+    ['all', t('allTasks'), false],
+    ['mine', t('myTasks'), !myOwner],
+    ['this-week', t('thisWeek'), false],
+    ['overdue', t('overdue'), false],
+    ['blocked', t('blocked'), false],
+    ['high', t('highPriority'), false],
+    ['active', t('openTasks'), false],
+    ['done', t('doneTasks'), false],
+  ];
   return `
     <section id="page-tasks" class="page active" style="display:grid;gap:12px">
       <div class="page-topbar">
@@ -3153,12 +3217,22 @@ function renderTasksPage(state, options = {}) {
         </div>
         <div class="page-top-summary">${escapeHtml(t('openTasks'))} ${stats.open} | ${escapeHtml(t('overdue'))} ${stats.overdue} | ${escapeHtml(t('blocked'))} ${stats.blocked} | ${escapeHtml(t('visible'))} ${visibleTasks.length}/${tasks.length}</div>
       </div>
-      <div class="card" id="${editingTask ? 'task-edit-form' : 'task-add-form'}">
-        <h2 style="margin:0 0 10px;color:var(--navy);font-size:1rem">${escapeHtml(editingTask ? t('editingTask') : t('addTask'))}</h2>
-        ${renderTaskForm(editingTask || null, { master, ownerSuggestions })}
-        ${editingTask ? `<div style="font-size:.78rem;color:var(--muted);font-weight:800;margin-top:8px">${escapeHtml(t('editingTask'))}: ${escapeHtml(editingTask.name)}</div>` : ''}
+      <div class="modal-bg ${taskModalOpen ? 'open' : ''}" data-task-modal-bg>
+        <div class="modal wide task-modal" role="dialog" aria-modal="true" aria-labelledby="task-modal-title" data-task-modal>
+          <div class="task-modal-head">
+            <h3 id="task-modal-title">${escapeHtml(editingTask ? t('editingTask') : t('addTask'))}</h3>
+            <button class="btn btn-sm" type="button" data-task-cancel-edit>${escapeHtml(t('cancelEdit'))}</button>
+          </div>
+          ${taskModalOpen ? renderTaskForm(editingTask || null, { master, ownerSuggestions }) : ''}
+          ${editingTask ? `<div style="font-size:.78rem;color:var(--muted);font-weight:800;margin-top:8px">${escapeHtml(t('editingTask'))}: ${escapeHtml(editingTask.name)}</div>` : ''}
+        </div>
       </div>
       <div class="card">
+        <div class="task-quick-tabs" data-task-quick-tabs>
+          ${quickTabs.map(([value, label, disabled]) => `
+            <button class="task-quick-tab ${activeQuickTab === value ? 'active' : ''}" type="button" data-task-quick-tab="${escapeHtml(value)}" ${disabled ? 'disabled' : ''}>${escapeHtml(label)}</button>
+          `).join('')}
+        </div>
         <div class="task-summary-row" data-task-evidence-summary data-task-health-summary>
           ${[
             [t('withEvidence'), stats.withEvidence, 'with', 'var(--green)'],
@@ -3202,6 +3276,7 @@ function renderTasksPage(state, options = {}) {
           ].map(([value, label]) => `<option value="${escapeHtml(value)}" ${filters.evidence === value ? 'selected' : ''}>${escapeHtml(label)}</option>`).join('')}</select></label>
           <label>${escapeHtml(t('dataHealth'))}<select data-task-health-filter>${[
             ['', t('allHealth')],
+            ['this-week', t('thisWeek')],
             ['blocked', t('blocked')],
             ['overdue', t('overdue')],
             ['unassigned', t('unassignedTasks')],
@@ -3218,8 +3293,15 @@ function renderTasksPage(state, options = {}) {
           ].map(([value, label]) => `<option value="${value}" ${filters.sort === value ? 'selected' : ''}>${escapeHtml(label)}</option>`).join('')}</select></label>
         </div>
         <div class="task-toolbar-actions" data-task-toolbar-actions>
+          <div class="task-toolbar-search task-toolbar-owner">
+            <label><span class="task-toolbar-label">${escapeHtml(t('myOwner'))}</span><select data-my-task-owner>
+              <option value="">${escapeHtml(t('chooseOwner'))}</option>
+              ${ownerSuggestions.map(owner => `<option value="${escapeHtml(owner)}" ${myOwner === owner ? 'selected' : ''}>${escapeHtml(owner)}</option>`).join('')}
+            </select></label>
+            <button class="btn btn-primary task-toolbar-btn" type="button" data-my-tasks ${myOwner ? '' : 'disabled'}>${escapeHtml(t('myTasks'))}</button>
+          </div>
           <button class="btn task-toolbar-btn task-toolbar-clear" type="button" data-task-clear-filters>${escapeHtml(t('clearFilters'))}</button>
-          <a class="btn btn-primary task-toolbar-btn" href="#task-add-form">${escapeHtml(t('addTask'))}</a>
+          <button class="btn btn-primary task-toolbar-btn" type="button" data-task-open-add>${escapeHtml(t('addTask'))}</button>
           <button class="btn btn-primary task-toolbar-btn" type="button" data-action="export-tasks-csv">${escapeHtml(t('exportTasksCsv'))}</button>
           <div class="task-toolbar-search">
             <label><span class="sr-only">${escapeHtml(t('search'))}</span><input data-task-search value="${escapeHtml(filters.search)}" placeholder="${escapeHtml(t('searchTasks'))}"></label>
@@ -6422,6 +6504,7 @@ const ACTION_LOG_STORAGE_KEY = 'rov_v16_action_log';
 const PENDING_LOCAL_SYNC_KEY = 'rov_v16_pending_local_sync';
 const SYNCED_DATA_SIGNATURE_KEY = 'rov_v16_synced_data_signature';
 const PAGE_FEATURES_STORAGE_KEY = 'rov_v16_page_features';
+const MY_TASK_OWNER_STORAGE_KEY = 'rov_v16_my_task_owner';
 const DEFAULT_VISIBLE_PAGE_IDS = ['dashboard', 'prep', 'tasks', 'members', 'intel', 'competition', 'settings'];
 const ACTION_LOG_LIMIT = 8;
 const UNDO_BAR_AUTO_CLEAR_MS = 5000;
@@ -6445,6 +6528,7 @@ let autoRefreshInFlight = false;
 let supabaseRealtimeChannel = null;
 let initialSupabaseLoadStarted = false;
 let editingTaskId = null;
+let addingTask = false;
 let editingMemberId = null;
 let editingRunId = null;
 let runDraft = null;
@@ -6460,6 +6544,7 @@ let undoState = loadUndoState();
 let undoClearTimer = null;
 let actionLog = loadActionLog();
 let visiblePageIds = loadVisiblePageIds();
+let myTaskOwner = loadMyTaskOwner();
 let syncStatus = {
   state: hasPendingLocalSync() ? 'pending' : 'idle',
   label: hasPendingLocalSync() ? 'Supabase pending' : 'Supabase ready',
@@ -6533,8 +6618,60 @@ function setPageFeature(pageId, enabled) {
   return true;
 }
 
+function loadMyTaskOwner(storage = localStorage) {
+  return String(storage.getItem(MY_TASK_OWNER_STORAGE_KEY) || '');
+}
+
+function saveMyTaskOwner(value, storage = localStorage) {
+  myTaskOwner = String(value || '').trim();
+  if (myTaskOwner) storage.setItem(MY_TASK_OWNER_STORAGE_KEY, myTaskOwner);
+  else storage.removeItem(MY_TASK_OWNER_STORAGE_KEY);
+  return myTaskOwner;
+}
+
+function applyMyTasksFilter() {
+  if (!myTaskOwner) return false;
+  Object.assign(taskFilters, {
+    search: '',
+    owner: myTaskOwner,
+    health: '',
+    evidence: '',
+    sort: taskFilters.sort || 'due-asc',
+  });
+  return true;
+}
+
+function applyTaskQuickTab(tab = '') {
+  const base = {
+    search: '',
+    owner: '',
+    status: '',
+    priority: '',
+    category: '',
+    health: '',
+    evidence: '',
+    sort: taskFilters.sort || 'due-asc',
+  };
+  if (tab === 'mine') {
+    if (!myTaskOwner) return false;
+    Object.assign(taskFilters, base, { owner: myTaskOwner });
+    return true;
+  }
+  if (tab === 'this-week') Object.assign(taskFilters, base, { health: 'this-week' });
+  else if (tab === 'overdue') Object.assign(taskFilters, base, { health: 'overdue' });
+  else if (tab === 'blocked') Object.assign(taskFilters, base, { health: 'blocked' });
+  else if (tab === 'high') Object.assign(taskFilters, base, { priority: 'High' });
+  else if (tab === 'active') Object.assign(taskFilters, base, { status: 'active' });
+  else if (tab === 'done') Object.assign(taskFilters, base, { status: 'Done' });
+  else Object.assign(taskFilters, base);
+  return true;
+}
+
 function clearEditingOutsidePage(page) {
-  if (page !== 'tasks') editingTaskId = null;
+  if (page !== 'tasks') {
+    editingTaskId = null;
+    addingTask = false;
+  }
   if (page !== 'members') editingMemberId = null;
   if (page !== 'competition') editingRunId = null;
   if (page !== 'prep') {
@@ -7856,7 +7993,7 @@ function renderDashboard() {
 
 function renderCurrentPage() {
   if (appState.currentPage === 'prep') return renderPrepCenter(appState, { editingGearId, editingChecklist, prepFocus, filters: prepFilters });
-  if (appState.currentPage === 'tasks') return renderTasksPage(appState, { editingTaskId, filters: taskFilters });
+  if (appState.currentPage === 'tasks') return renderTasksPage(appState, { editingTaskId, addingTask, filters: taskFilters, myOwner: myTaskOwner });
   if (appState.currentPage === 'members') return renderMembersPage(appState, { editingMemberId, filters: memberFilters });
   if (appState.currentPage === 'intel') return renderIntelPage(appState, { editingIntelId, editingStrategyId, intelFocus, filters: intelFilters });
   if (appState.currentPage === 'presentation') return renderPresentationPage(appState);
@@ -8084,6 +8221,11 @@ appRoot?.addEventListener('click', (event) => {
     renderAppShell();
     return;
   }
+  const taskQuickTab = event.target.closest('[data-task-quick-tab]');
+  if (taskQuickTab) {
+    if (applyTaskQuickTab(taskQuickTab.dataset.taskQuickTab || '')) renderAppShell();
+    return;
+  }
   const evidenceShortcut = event.target.closest('[data-task-evidence-shortcut]');
   if (evidenceShortcut) {
     applyTaskEvidenceShortcut(evidenceShortcut.dataset.taskEvidenceShortcut || '');
@@ -8104,6 +8246,14 @@ appRoot?.addEventListener('click', (event) => {
   if (event.target.closest('[data-task-clear-filters]')) {
     clearTaskFilters();
     renderAppShell();
+    return;
+  }
+  const myTasksButton = event.target.closest('[data-my-tasks]');
+  if (myTasksButton) {
+    if (applyMyTasksFilter()) {
+      showToast(actionMessage(t('myTasks'), myTaskOwner));
+      renderAppShell();
+    }
     return;
   }
   if (event.target.closest('[data-member-clear-filters]')) {
@@ -8322,14 +8472,29 @@ appRoot?.addEventListener('click', (event) => {
     if (deleteTask(appState, deleteTaskTarget.dataset.taskDelete)) persistAndRender(actionMessage(t('deleted'), label), { keepUndo: true });
     return;
   }
+  if (event.target.closest('[data-task-open-add]')) {
+    editingTaskId = null;
+    addingTask = true;
+    renderAppShell();
+    return;
+  }
   const editTaskTarget = event.target.closest('[data-task-edit]');
   if (editTaskTarget) {
     editingTaskId = editTaskTarget.dataset.taskEdit;
+    addingTask = false;
     renderAppShell();
     return;
   }
   if (event.target.closest('[data-task-cancel-edit]')) {
     editingTaskId = null;
+    addingTask = false;
+    renderAppShell();
+    return;
+  }
+  const taskModalBg = event.target.closest('[data-task-modal-bg]');
+  if (taskModalBg && !event.target.closest('[data-task-modal]')) {
+    editingTaskId = null;
+    addingTask = false;
     renderAppShell();
     return;
   }
@@ -8685,6 +8850,7 @@ appRoot?.addEventListener('submit', (event) => {
     }
   } else {
     addTask(appState, task);
+    addingTask = false;
   }
   persistTaskAndConfirmSupabase(message);
 });
@@ -8793,7 +8959,13 @@ appRoot?.addEventListener('change', (event) => {
     || event.target.closest('[data-task-health-filter]')
     || event.target.closest('[data-task-evidence-filter]')
     || event.target.closest('[data-task-sort]')
+    || event.target.closest('[data-my-task-owner]')
   ) {
+    if (event.target.closest('[data-my-task-owner]')) {
+      saveMyTaskOwner(event.target.value || '');
+      renderAppShell();
+      return;
+    }
     updateTaskFiltersFromControl(event.target);
     renderAppShell();
     return;
@@ -8851,8 +9023,9 @@ appRoot?.addEventListener('change', (event) => {
 });
 
 appRoot?.addEventListener('keydown', (event) => {
-  if (event.key === 'Escape' && (editingTaskId || editingMemberId || editingRunId || editingGearId || editingChecklist || editingIntelId || editingStrategyId)) {
+  if (event.key === 'Escape' && (editingTaskId || addingTask || editingMemberId || editingRunId || editingGearId || editingChecklist || editingIntelId || editingStrategyId)) {
     editingTaskId = null;
+    addingTask = false;
     editingMemberId = null;
     editingRunId = null;
     editingGearId = null;

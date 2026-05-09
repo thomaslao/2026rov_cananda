@@ -72,6 +72,7 @@ const ACTION_LOG_STORAGE_KEY = 'rov_v16_action_log';
 const PENDING_LOCAL_SYNC_KEY = 'rov_v16_pending_local_sync';
 const SYNCED_DATA_SIGNATURE_KEY = 'rov_v16_synced_data_signature';
 const PAGE_FEATURES_STORAGE_KEY = 'rov_v16_page_features';
+const MY_TASK_OWNER_STORAGE_KEY = 'rov_v16_my_task_owner';
 const DEFAULT_VISIBLE_PAGE_IDS = ['dashboard', 'prep', 'tasks', 'members', 'intel', 'competition', 'settings'];
 const ACTION_LOG_LIMIT = 8;
 const UNDO_BAR_AUTO_CLEAR_MS = 5000;
@@ -95,6 +96,7 @@ let autoRefreshInFlight = false;
 let supabaseRealtimeChannel = null;
 let initialSupabaseLoadStarted = false;
 let editingTaskId = null;
+let addingTask = false;
 let editingMemberId = null;
 let editingRunId = null;
 let runDraft = null;
@@ -110,6 +112,7 @@ let undoState = loadUndoState();
 let undoClearTimer = null;
 let actionLog = loadActionLog();
 let visiblePageIds = loadVisiblePageIds();
+let myTaskOwner = loadMyTaskOwner();
 let syncStatus = {
   state: hasPendingLocalSync() ? 'pending' : 'idle',
   label: hasPendingLocalSync() ? 'Supabase pending' : 'Supabase ready',
@@ -183,8 +186,60 @@ function setPageFeature(pageId, enabled) {
   return true;
 }
 
+function loadMyTaskOwner(storage = localStorage) {
+  return String(storage.getItem(MY_TASK_OWNER_STORAGE_KEY) || '');
+}
+
+function saveMyTaskOwner(value, storage = localStorage) {
+  myTaskOwner = String(value || '').trim();
+  if (myTaskOwner) storage.setItem(MY_TASK_OWNER_STORAGE_KEY, myTaskOwner);
+  else storage.removeItem(MY_TASK_OWNER_STORAGE_KEY);
+  return myTaskOwner;
+}
+
+function applyMyTasksFilter() {
+  if (!myTaskOwner) return false;
+  Object.assign(taskFilters, {
+    search: '',
+    owner: myTaskOwner,
+    health: '',
+    evidence: '',
+    sort: taskFilters.sort || 'due-asc',
+  });
+  return true;
+}
+
+function applyTaskQuickTab(tab = '') {
+  const base = {
+    search: '',
+    owner: '',
+    status: '',
+    priority: '',
+    category: '',
+    health: '',
+    evidence: '',
+    sort: taskFilters.sort || 'due-asc',
+  };
+  if (tab === 'mine') {
+    if (!myTaskOwner) return false;
+    Object.assign(taskFilters, base, { owner: myTaskOwner });
+    return true;
+  }
+  if (tab === 'this-week') Object.assign(taskFilters, base, { health: 'this-week' });
+  else if (tab === 'overdue') Object.assign(taskFilters, base, { health: 'overdue' });
+  else if (tab === 'blocked') Object.assign(taskFilters, base, { health: 'blocked' });
+  else if (tab === 'high') Object.assign(taskFilters, base, { priority: 'High' });
+  else if (tab === 'active') Object.assign(taskFilters, base, { status: 'active' });
+  else if (tab === 'done') Object.assign(taskFilters, base, { status: 'Done' });
+  else Object.assign(taskFilters, base);
+  return true;
+}
+
 function clearEditingOutsidePage(page) {
-  if (page !== 'tasks') editingTaskId = null;
+  if (page !== 'tasks') {
+    editingTaskId = null;
+    addingTask = false;
+  }
   if (page !== 'members') editingMemberId = null;
   if (page !== 'competition') editingRunId = null;
   if (page !== 'prep') {
@@ -1506,7 +1561,7 @@ function renderDashboard() {
 
 function renderCurrentPage() {
   if (appState.currentPage === 'prep') return renderPrepCenter(appState, { editingGearId, editingChecklist, prepFocus, filters: prepFilters });
-  if (appState.currentPage === 'tasks') return renderTasksPage(appState, { editingTaskId, filters: taskFilters });
+  if (appState.currentPage === 'tasks') return renderTasksPage(appState, { editingTaskId, addingTask, filters: taskFilters, myOwner: myTaskOwner });
   if (appState.currentPage === 'members') return renderMembersPage(appState, { editingMemberId, filters: memberFilters });
   if (appState.currentPage === 'intel') return renderIntelPage(appState, { editingIntelId, editingStrategyId, intelFocus, filters: intelFilters });
   if (appState.currentPage === 'presentation') return renderPresentationPage(appState);
@@ -1734,6 +1789,11 @@ appRoot?.addEventListener('click', (event) => {
     renderAppShell();
     return;
   }
+  const taskQuickTab = event.target.closest('[data-task-quick-tab]');
+  if (taskQuickTab) {
+    if (applyTaskQuickTab(taskQuickTab.dataset.taskQuickTab || '')) renderAppShell();
+    return;
+  }
   const evidenceShortcut = event.target.closest('[data-task-evidence-shortcut]');
   if (evidenceShortcut) {
     applyTaskEvidenceShortcut(evidenceShortcut.dataset.taskEvidenceShortcut || '');
@@ -1754,6 +1814,14 @@ appRoot?.addEventListener('click', (event) => {
   if (event.target.closest('[data-task-clear-filters]')) {
     clearTaskFilters();
     renderAppShell();
+    return;
+  }
+  const myTasksButton = event.target.closest('[data-my-tasks]');
+  if (myTasksButton) {
+    if (applyMyTasksFilter()) {
+      showToast(actionMessage(t('myTasks'), myTaskOwner));
+      renderAppShell();
+    }
     return;
   }
   if (event.target.closest('[data-member-clear-filters]')) {
@@ -1972,14 +2040,29 @@ appRoot?.addEventListener('click', (event) => {
     if (deleteTask(appState, deleteTaskTarget.dataset.taskDelete)) persistAndRender(actionMessage(t('deleted'), label), { keepUndo: true });
     return;
   }
+  if (event.target.closest('[data-task-open-add]')) {
+    editingTaskId = null;
+    addingTask = true;
+    renderAppShell();
+    return;
+  }
   const editTaskTarget = event.target.closest('[data-task-edit]');
   if (editTaskTarget) {
     editingTaskId = editTaskTarget.dataset.taskEdit;
+    addingTask = false;
     renderAppShell();
     return;
   }
   if (event.target.closest('[data-task-cancel-edit]')) {
     editingTaskId = null;
+    addingTask = false;
+    renderAppShell();
+    return;
+  }
+  const taskModalBg = event.target.closest('[data-task-modal-bg]');
+  if (taskModalBg && !event.target.closest('[data-task-modal]')) {
+    editingTaskId = null;
+    addingTask = false;
     renderAppShell();
     return;
   }
@@ -2335,6 +2418,7 @@ appRoot?.addEventListener('submit', (event) => {
     }
   } else {
     addTask(appState, task);
+    addingTask = false;
   }
   persistTaskAndConfirmSupabase(message);
 });
@@ -2443,7 +2527,13 @@ appRoot?.addEventListener('change', (event) => {
     || event.target.closest('[data-task-health-filter]')
     || event.target.closest('[data-task-evidence-filter]')
     || event.target.closest('[data-task-sort]')
+    || event.target.closest('[data-my-task-owner]')
   ) {
+    if (event.target.closest('[data-my-task-owner]')) {
+      saveMyTaskOwner(event.target.value || '');
+      renderAppShell();
+      return;
+    }
     updateTaskFiltersFromControl(event.target);
     renderAppShell();
     return;
@@ -2501,8 +2591,9 @@ appRoot?.addEventListener('change', (event) => {
 });
 
 appRoot?.addEventListener('keydown', (event) => {
-  if (event.key === 'Escape' && (editingTaskId || editingMemberId || editingRunId || editingGearId || editingChecklist || editingIntelId || editingStrategyId)) {
+  if (event.key === 'Escape' && (editingTaskId || addingTask || editingMemberId || editingRunId || editingGearId || editingChecklist || editingIntelId || editingStrategyId)) {
     editingTaskId = null;
+    addingTask = false;
     editingMemberId = null;
     editingRunId = null;
     editingGearId = null;
