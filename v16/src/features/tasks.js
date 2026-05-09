@@ -495,9 +495,9 @@ export function renderTaskTable(tasks = [], members = [], options = {}) {
                 </td>
                 <td class="task-actions-cell">
                   <div class="task-action-row">
-                    <button class="btn btn-sm" type="button" data-task-view="${task.id}">${escapeHtml(t('view'))}</button>
-                    <button class="btn btn-sm" type="button" data-task-edit="${task.id}">${escapeHtml(t('edit'))}</button>
-                    <button class="btn btn-sm btn-danger" type="button" data-task-delete="${task.id}">${escapeHtml(t('delete'))}</button>
+                    <button class="btn btn-sm" type="button" data-task-view="${task.id}" title="${escapeHtml(t('view'))}" aria-label="${escapeHtml(t('view'))}">${escapeHtml(t('viewShort'))}</button>
+                    <button class="btn btn-sm" type="button" data-task-edit="${task.id}" title="${escapeHtml(t('edit'))}" aria-label="${escapeHtml(t('edit'))}">${escapeHtml(t('editShort'))}</button>
+                    <button class="btn btn-sm btn-danger" type="button" data-task-delete="${task.id}" title="${escapeHtml(t('delete'))}" aria-label="${escapeHtml(t('delete'))}">${escapeHtml(t('deleteShort'))}</button>
                   </div>
                 </td>
               </tr>`;

@@ -338,7 +338,7 @@
   .task-select-col, .task-select-cell { width:42px; min-width:42px; text-align:center; padding-left:6px; padding-right:6px; position:sticky; left:0; z-index:6; background:var(--white); box-shadow:2px 0 0 var(--border); }
   .task-select-col { z-index:12; background:var(--navy); }
   .task-select-col input, .task-select-cell input { width:18px; height:18px; margin:0; }
-  .task-col-name, .task-name-cell { width:440px; min-width:440px; max-width:520px; }
+  .task-col-name, .task-name-cell { width:500px; min-width:500px; max-width:620px; }
   .task-col-name, .task-name-cell { position:sticky; left:42px; z-index:5; background:var(--white); box-shadow:2px 0 0 var(--border); }
   .task-col-name { z-index:11; background:var(--navy); }
   .task-name-cell { overflow-wrap:anywhere; line-height:1.25; }
@@ -353,13 +353,13 @@
   .task-col-priority, .task-priority-cell { width:78px; min-width:78px; white-space:nowrap; word-break:keep-all; text-align:center; }
   .task-col-category, .task-category-cell { width:132px; min-width:132px; white-space:nowrap; text-align:center; }
   .task-col-status, .task-status-table-cell { width:92px; min-width:92px; white-space:nowrap; text-align:center; }
-  .task-actions-cell { width:150px; min-width:150px; white-space:nowrap; text-align:right; }
+  .task-actions-cell { width:112px; min-width:112px; white-space:nowrap; text-align:right; }
   .task-priority-cell .badge { min-width:68px; min-height:24px; display:inline-flex; align-items:center; justify-content:center; padding:3px 9px; font-weight:900; }
   .task-status-cell { display:flex; justify-content:center; min-width:86px; }
   .task-status-select { width:88px; min-width:88px; height:34px; margin:0; text-align:center; font-weight:800; }
   .task-category-select { width:120px; min-width:120px; height:34px; margin:0; text-align:center; font-weight:800; }
-  .task-action-row { display:flex; gap:4px; flex-wrap:nowrap; justify-content:flex-end; align-items:center; min-width:142px; }
-  .task-action-row .btn-sm { width:46px; min-height:34px; padding:4px 5px; white-space:nowrap; display:flex; align-items:center; justify-content:center; text-align:center; font-weight:900; }
+  .task-action-row { display:flex; gap:4px; flex-wrap:nowrap; justify-content:flex-end; align-items:center; min-width:104px; }
+  .task-action-row .btn-sm { width:34px; min-height:34px; padding:4px 5px; white-space:nowrap; display:flex; align-items:center; justify-content:center; text-align:center; font-weight:900; }
   .task-table-wrap tbody tr:hover .task-select-cell,
   .task-table-wrap tbody tr:hover .task-name-cell { background:var(--table-hover); }
   .task-overdue .task-select-cell,
@@ -1080,6 +1080,9 @@ const STRINGS = {
     editingTask: 'Editing task',
     taskDetails: 'Task details',
     view: 'View',
+    viewShort: 'View',
+    editShort: 'Edit',
+    deleteShort: 'Del',
     updated: 'Updated',
     lastUpdated: 'Last updated',
     selectedTasks: 'Selected tasks',
@@ -1460,6 +1463,9 @@ const STRINGS = {
     editingTask: '\u6b63\u5728\u7de8\u8f2f\u4efb\u52d9',
     taskDetails: '\u4efb\u52d9\u8a73\u60c5',
     view: '\u67e5\u770b',
+    viewShort: '\u770b',
+    editShort: '\u6539',
+    deleteShort: '\u522a',
     updated: '\u66f4\u65b0',
     lastUpdated: '\u6700\u5f8c\u66f4\u65b0',
     selectedTasks: '\u5df2\u9078\u4efb\u52d9',
@@ -3351,9 +3357,9 @@ function renderTaskTable(tasks = [], members = [], options = {}) {
                 </td>
                 <td class="task-actions-cell">
                   <div class="task-action-row">
-                    <button class="btn btn-sm" type="button" data-task-view="${task.id}">${escapeHtml(t('view'))}</button>
-                    <button class="btn btn-sm" type="button" data-task-edit="${task.id}">${escapeHtml(t('edit'))}</button>
-                    <button class="btn btn-sm btn-danger" type="button" data-task-delete="${task.id}">${escapeHtml(t('delete'))}</button>
+                    <button class="btn btn-sm" type="button" data-task-view="${task.id}" title="${escapeHtml(t('view'))}" aria-label="${escapeHtml(t('view'))}">${escapeHtml(t('viewShort'))}</button>
+                    <button class="btn btn-sm" type="button" data-task-edit="${task.id}" title="${escapeHtml(t('edit'))}" aria-label="${escapeHtml(t('edit'))}">${escapeHtml(t('editShort'))}</button>
+                    <button class="btn btn-sm btn-danger" type="button" data-task-delete="${task.id}" title="${escapeHtml(t('delete'))}" aria-label="${escapeHtml(t('delete'))}">${escapeHtml(t('deleteShort'))}</button>
                   </div>
                 </td>
               </tr>`;
