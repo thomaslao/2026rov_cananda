@@ -304,9 +304,12 @@
   .btn-sm { padding: 3px 9px; font-size: .78rem; }
   .task-summary-row { position:relative; z-index:1; display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); gap:8px; margin-bottom:10px; }
   .task-quick-tabs { position:relative; z-index:2; display:grid; grid-template-columns:repeat(8,minmax(0,1fr)); gap:8px; align-items:center; margin-bottom:10px; }
-  .task-quick-tab { width:100%; min-width:0; min-height:38px; padding:7px 8px; border:1px solid var(--border); border-radius:999px; background:var(--input-bg); color:var(--navy); font-size:.82rem; font-weight:900; cursor:pointer; line-height:1.1; text-align:center; display:flex; align-items:center; justify-content:center; white-space:normal; overflow-wrap:anywhere; }
+  .task-quick-tab { width:100%; min-width:0; min-height:38px; padding:7px 8px; border:1px solid var(--border); border-radius:999px; background:var(--input-bg); color:var(--navy); font-size:.82rem; font-weight:900; cursor:pointer; line-height:1.1; text-align:center; display:flex; align-items:center; justify-content:center; gap:6px; white-space:normal; overflow-wrap:anywhere; }
+  .task-quick-tab span { min-width:0; overflow-wrap:anywhere; }
+  .task-quick-tab strong { min-width:24px; height:22px; padding:0 7px; border-radius:999px; background:#E8EEF8; color:var(--navy); display:inline-flex; align-items:center; justify-content:center; font-size:.72rem; font-weight:900; line-height:1; }
   .task-quick-tab:hover { background:var(--table-hover); }
   .task-quick-tab.active { background:var(--blue); color:#fff; border-color:var(--blue); }
+  .task-quick-tab.active strong { background:rgba(255,255,255,.22); color:#fff; }
   .task-quick-tab:disabled { opacity:.55; cursor:not-allowed; }
   .task-summary-card { min-height:76px; text-align:left; border:1px solid var(--task-summary-active, var(--border)); border-left:4px solid var(--task-summary-accent, var(--green)); border-radius:8px; background:var(--task-summary-bg, var(--input-bg)); padding:8px; cursor:pointer; color:var(--text); display:flex; flex-direction:column; justify-content:center; min-width:0; }
   .task-summary-card:hover { background:var(--table-hover); }

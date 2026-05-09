@@ -197,10 +197,16 @@ function sortTasks(tasks = [], sort = 'due-asc') {
   const comparePriority = (a, b) => (priorityRank[a.task.priority] ?? 9) - (priorityRank[b.task.priority] ?? 9);
   const compareStatus = (a, b) => (statusRank[a.task.status] ?? 9) - (statusRank[b.task.status] ?? 9);
   const compareCategory = (a, b) => String(a.task.category || '').localeCompare(String(b.task.category || ''), 'en');
+  const compareUpdated = (a, b) => {
+    const aUpdated = taskUpdatedAt(a.task) || String(a.task.id || '');
+    const bUpdated = taskUpdatedAt(b.task) || String(b.task.id || '');
+    return bUpdated.localeCompare(aUpdated);
+  };
   const sorted = withIndex.sort((a, b) => {
     let result = (a.task.status === 'Done' ? 1 : 0) - (b.task.status === 'Done' ? 1 : 0);
-    if (result) return result;
-    if (sort === 'name') result = compareText(a, b, 'name') || compareDue(a, b);
+    if (result && sort !== 'updated-desc') return result;
+    if (sort === 'updated-desc') result = compareUpdated(a, b) || compareDue(a, b);
+    else if (sort === 'name') result = compareText(a, b, 'name') || compareDue(a, b);
     else if (sort === 'name-desc') result = compareText(b, a, 'name') || compareDue(a, b);
     else if (sort === 'due-desc') result = compareDue(b, a);
     else if (sort === 'priority') result = comparePriority(a, b) || compareDue(a, b);
@@ -390,6 +396,20 @@ function getActiveTaskQuickTab(filters = {}, myOwner = '') {
   return '';
 }
 
+function getTaskQuickTabCounts(tasks = [], myOwner = '') {
+  const active = tasks.filter(task => task.status !== 'Done');
+  return {
+    all: tasks.length,
+    mine: myOwner ? tasks.filter(task => task.owner === myOwner).length : 0,
+    'this-week': tasks.filter(task => taskMatchesHealthFilter(task, 'this-week')).length,
+    overdue: tasks.filter(task => taskMatchesHealthFilter(task, 'overdue')).length,
+    blocked: tasks.filter(task => taskMatchesHealthFilter(task, 'blocked')).length,
+    high: active.filter(task => task.priority === 'High').length,
+    active: active.length,
+    done: tasks.filter(task => task.status === 'Done').length,
+  };
+}
+
 export function renderTaskTable(tasks = [], members = [], options = {}) {
   if (!tasks.length) {
     return `<div style="padding:18px;text-align:center;color:var(--muted);font-weight:900">${escapeHtml(options.totalCount ? t('noMatchingTasks') : t('noTasksYet'))}</div>`;
@@ -515,6 +535,7 @@ export function renderTasksPage(state, options = {}) {
   const selectedTaskIds = (options.selectedTaskIds || []).map(id => Number(id));
   const selectedCount = selectedTaskIds.length;
   const activeQuickTab = getActiveTaskQuickTab(filters, myOwner);
+  const quickTabCounts = getTaskQuickTabCounts(tasks, myOwner);
   const quickTabs = [
     ['all', t('allTasks'), false],
     ['mine', t('myTasks'), !myOwner],
@@ -547,7 +568,7 @@ export function renderTasksPage(state, options = {}) {
       <div class="card">
         <div class="task-quick-tabs" data-task-quick-tabs>
           ${quickTabs.map(([value, label, disabled]) => `
-            <button class="task-quick-tab ${activeQuickTab === value ? 'active' : ''}" type="button" data-task-quick-tab="${escapeHtml(value)}" ${disabled ? 'disabled' : ''}>${escapeHtml(label)}</button>
+            <button class="task-quick-tab ${activeQuickTab === value ? 'active' : ''}" type="button" data-task-quick-tab="${escapeHtml(value)}" ${disabled ? 'disabled' : ''}><span>${escapeHtml(label)}</span><strong>${escapeHtml(quickTabCounts[value] ?? 0)}</strong></button>
           `).join('')}
         </div>
         <div class="task-summary-row" data-task-evidence-summary data-task-health-summary>
@@ -606,6 +627,7 @@ export function renderTasksPage(state, options = {}) {
             ['priority', t('sortPriority')],
             ['status', t('sortStatus')],
             ['owner', t('sortOwner')],
+            ['updated-desc', t('sortUpdated')],
             ['created-desc', t('sortNewest')],
           ].map(([value, label]) => `<option value="${value}" ${filters.sort === value ? 'selected' : ''}>${escapeHtml(label)}</option>`).join('')}</select></label>
         </div>

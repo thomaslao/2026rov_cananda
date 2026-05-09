@@ -311,9 +311,12 @@
   .btn-sm { padding: 3px 9px; font-size: .78rem; }
   .task-summary-row { position:relative; z-index:1; display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); gap:8px; margin-bottom:10px; }
   .task-quick-tabs { position:relative; z-index:2; display:grid; grid-template-columns:repeat(8,minmax(0,1fr)); gap:8px; align-items:center; margin-bottom:10px; }
-  .task-quick-tab { width:100%; min-width:0; min-height:38px; padding:7px 8px; border:1px solid var(--border); border-radius:999px; background:var(--input-bg); color:var(--navy); font-size:.82rem; font-weight:900; cursor:pointer; line-height:1.1; text-align:center; display:flex; align-items:center; justify-content:center; white-space:normal; overflow-wrap:anywhere; }
+  .task-quick-tab { width:100%; min-width:0; min-height:38px; padding:7px 8px; border:1px solid var(--border); border-radius:999px; background:var(--input-bg); color:var(--navy); font-size:.82rem; font-weight:900; cursor:pointer; line-height:1.1; text-align:center; display:flex; align-items:center; justify-content:center; gap:6px; white-space:normal; overflow-wrap:anywhere; }
+  .task-quick-tab span { min-width:0; overflow-wrap:anywhere; }
+  .task-quick-tab strong { min-width:24px; height:22px; padding:0 7px; border-radius:999px; background:#E8EEF8; color:var(--navy); display:inline-flex; align-items:center; justify-content:center; font-size:.72rem; font-weight:900; line-height:1; }
   .task-quick-tab:hover { background:var(--table-hover); }
   .task-quick-tab.active { background:var(--blue); color:#fff; border-color:var(--blue); }
+  .task-quick-tab.active strong { background:rgba(255,255,255,.22); color:#fff; }
   .task-quick-tab:disabled { opacity:.55; cursor:not-allowed; }
   .task-summary-card { min-height:76px; text-align:left; border:1px solid var(--task-summary-active, var(--border)); border-left:4px solid var(--task-summary-accent, var(--green)); border-radius:8px; background:var(--task-summary-bg, var(--input-bg)); padding:8px; cursor:pointer; color:var(--text); display:flex; flex-direction:column; justify-content:center; min-width:0; }
   .task-summary-card:hover { background:var(--table-hover); }
@@ -948,6 +951,7 @@ const STRINGS = {
     sortPriority: 'Priority',
     sortStatus: 'Status',
     sortOwner: 'Owner',
+    sortUpdated: 'Recently updated',
     sortNewest: 'Newest',
     sortOldest: 'Oldest',
     sortTitle: 'Title',
@@ -1322,6 +1326,7 @@ const STRINGS = {
     sortPriority: '\u512a\u5148\u7d1a',
     sortStatus: '\u72c0\u614b',
     sortOwner: '\u8ca0\u8cac\u4eba',
+    sortUpdated: '\u6700\u8fd1\u66f4\u65b0',
     sortNewest: '\u6700\u65b0',
     sortOldest: '\u6700\u65e7',
     sortTitle: '\u6a19\u984c',
@@ -3019,10 +3024,16 @@ function sortTasks(tasks = [], sort = 'due-asc') {
   const comparePriority = (a, b) => (priorityRank[a.task.priority] ?? 9) - (priorityRank[b.task.priority] ?? 9);
   const compareStatus = (a, b) => (statusRank[a.task.status] ?? 9) - (statusRank[b.task.status] ?? 9);
   const compareCategory = (a, b) => String(a.task.category || '').localeCompare(String(b.task.category || ''), 'en');
+  const compareUpdated = (a, b) => {
+    const aUpdated = taskUpdatedAt(a.task) || String(a.task.id || '');
+    const bUpdated = taskUpdatedAt(b.task) || String(b.task.id || '');
+    return bUpdated.localeCompare(aUpdated);
+  };
   const sorted = withIndex.sort((a, b) => {
     let result = (a.task.status === 'Done' ? 1 : 0) - (b.task.status === 'Done' ? 1 : 0);
-    if (result) return result;
-    if (sort === 'name') result = compareText(a, b, 'name') || compareDue(a, b);
+    if (result && sort !== 'updated-desc') return result;
+    if (sort === 'updated-desc') result = compareUpdated(a, b) || compareDue(a, b);
+    else if (sort === 'name') result = compareText(a, b, 'name') || compareDue(a, b);
     else if (sort === 'name-desc') result = compareText(b, a, 'name') || compareDue(a, b);
     else if (sort === 'due-desc') result = compareDue(b, a);
     else if (sort === 'priority') result = comparePriority(a, b) || compareDue(a, b);
@@ -3212,6 +3223,20 @@ function getActiveTaskQuickTab(filters = {}, myOwner = '') {
   return '';
 }
 
+function getTaskQuickTabCounts(tasks = [], myOwner = '') {
+  const active = tasks.filter(task => task.status !== 'Done');
+  return {
+    all: tasks.length,
+    mine: myOwner ? tasks.filter(task => task.owner === myOwner).length : 0,
+    'this-week': tasks.filter(task => taskMatchesHealthFilter(task, 'this-week')).length,
+    overdue: tasks.filter(task => taskMatchesHealthFilter(task, 'overdue')).length,
+    blocked: tasks.filter(task => taskMatchesHealthFilter(task, 'blocked')).length,
+    high: active.filter(task => task.priority === 'High').length,
+    active: active.length,
+    done: tasks.filter(task => task.status === 'Done').length,
+  };
+}
+
 function renderTaskTable(tasks = [], members = [], options = {}) {
   if (!tasks.length) {
     return `<div style="padding:18px;text-align:center;color:var(--muted);font-weight:900">${escapeHtml(options.totalCount ? t('noMatchingTasks') : t('noTasksYet'))}</div>`;
@@ -3337,6 +3362,7 @@ function renderTasksPage(state, options = {}) {
   const selectedTaskIds = (options.selectedTaskIds || []).map(id => Number(id));
   const selectedCount = selectedTaskIds.length;
   const activeQuickTab = getActiveTaskQuickTab(filters, myOwner);
+  const quickTabCounts = getTaskQuickTabCounts(tasks, myOwner);
   const quickTabs = [
     ['all', t('allTasks'), false],
     ['mine', t('myTasks'), !myOwner],
@@ -3369,7 +3395,7 @@ function renderTasksPage(state, options = {}) {
       <div class="card">
         <div class="task-quick-tabs" data-task-quick-tabs>
           ${quickTabs.map(([value, label, disabled]) => `
-            <button class="task-quick-tab ${activeQuickTab === value ? 'active' : ''}" type="button" data-task-quick-tab="${escapeHtml(value)}" ${disabled ? 'disabled' : ''}>${escapeHtml(label)}</button>
+            <button class="task-quick-tab ${activeQuickTab === value ? 'active' : ''}" type="button" data-task-quick-tab="${escapeHtml(value)}" ${disabled ? 'disabled' : ''}><span>${escapeHtml(label)}</span><strong>${escapeHtml(quickTabCounts[value] ?? 0)}</strong></button>
           `).join('')}
         </div>
         <div class="task-summary-row" data-task-evidence-summary data-task-health-summary>
@@ -3428,6 +3454,7 @@ function renderTasksPage(state, options = {}) {
             ['priority', t('sortPriority')],
             ['status', t('sortStatus')],
             ['owner', t('sortOwner')],
+            ['updated-desc', t('sortUpdated')],
             ['created-desc', t('sortNewest')],
           ].map(([value, label]) => `<option value="${value}" ${filters.sort === value ? 'selected' : ''}>${escapeHtml(label)}</option>`).join('')}</select></label>
         </div>
