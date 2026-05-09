@@ -335,6 +335,7 @@
   .task-name-cell strong { display:block; max-height:42px; overflow:hidden; }
   .task-name-button { width:100%; max-height:42px; padding:0; border:0; background:transparent; color:var(--navy); font:inherit; font-weight:900; text-align:left; overflow:hidden; overflow-wrap:anywhere; cursor:pointer; }
   .task-name-button:hover, .task-name-button:focus-visible { color:var(--blue); text-decoration:underline; outline:none; }
+  .task-updated-at { margin-top:3px; color:var(--muted); font-size:.7rem; font-weight:900; line-height:1.15; }
   .task-col-owner, .task-owner-cell { width:128px; white-space:nowrap; word-break:keep-all; text-align:center; }
   .task-col-due, .task-due-cell { width:134px; white-space:nowrap; word-break:keep-all; text-align:center; }
   .task-col-priority, .task-priority-cell { width:94px; white-space:nowrap; word-break:keep-all; text-align:center; }
@@ -351,7 +352,7 @@
   .task-detail-title { display:grid; gap:8px; }
   .task-detail-title h3 { margin:0; color:var(--navy); font-size:1.08rem; line-height:1.25; }
   .task-detail-badges, .task-detail-evidence { display:flex; flex-wrap:wrap; gap:6px; align-items:center; }
-  .task-detail-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; }
+  .task-detail-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(145px,1fr)); gap:8px; }
   .task-detail-field { min-height:64px; padding:9px; border:1px solid var(--border); border-radius:8px; background:var(--input-bg); display:flex; flex-direction:column; justify-content:center; gap:5px; text-align:center; }
   .task-detail-field div, .task-detail-section-title { color:var(--muted); font-size:.75rem; font-weight:900; }
   .task-detail-field strong { color:var(--navy); font-size:.9rem; overflow-wrap:anywhere; }
@@ -1054,6 +1055,8 @@ const STRINGS = {
     editingTask: 'Editing task',
     taskDetails: 'Task details',
     view: 'View',
+    updated: 'Updated',
+    lastUpdated: 'Last updated',
     selectedTasks: 'Selected tasks',
     selectTask: 'Select task',
     selectVisibleTasks: 'Select visible tasks',
@@ -1426,6 +1429,8 @@ const STRINGS = {
     editingTask: '\u6b63\u5728\u7de8\u8f2f\u4efb\u52d9',
     taskDetails: '\u4efb\u52d9\u8a73\u60c5',
     view: '\u67e5\u770b',
+    updated: '\u66f4\u65b0',
+    lastUpdated: '\u6700\u5f8c\u66f4\u65b0',
     selectedTasks: '\u5df2\u9078\u4efb\u52d9',
     selectTask: '\u9078\u53d6\u4efb\u52d9',
     selectVisibleTasks: '\u9078\u53d6\u76ee\u524d\u986f\u793a\u4efb\u52d9',
@@ -1763,6 +1768,7 @@ function normalizeTask(task, index) {
     blocked: Boolean(task.blocked || task.isBlocked),
     notes: String(task.notes || task.note || ''),
     evidence: normalizeTaskEvidence(task),
+    updatedAt: String(task.updatedAt || task.updated_at || task.modifiedAt || task.modified_at || task.createdAt || task.created_at || ''),
   };
 }
 
@@ -2126,6 +2132,7 @@ function normalizeTask(row, index) {
     category: String(row.category || row.cat || 'General'),
     blocked: Boolean(row.blocked || row.depends_on),
     notes: String(row.notes || row.note || ''),
+    updatedAt: String(row.updated_at || row.updatedAt || row.created_at || ''),
   };
 }
 
@@ -2446,11 +2453,12 @@ function comparable(row) {
   const copy = { ...(row || {}) };
   delete copy.created_at;
   delete copy.updated_at;
+  delete copy.updatedAt;
   return JSON.stringify(copy, Object.keys(copy).sort());
 }
 
 function diffFields(local = {}, remote = {}) {
-  const ignored = new Set(['created_at', 'updated_at']);
+  const ignored = new Set(['created_at', 'updated_at', 'updatedAt']);
   const keys = new Set([...Object.keys(local || {}), ...Object.keys(remote || {})]);
   return [...keys]
     .filter(key => !ignored.has(key))
@@ -2820,6 +2828,21 @@ function clean(value) {
   return String(value || '').trim();
 }
 
+function nowIso() {
+  return new Date().toISOString();
+}
+
+function taskUpdatedAt(task = {}) {
+  return clean(task.updatedAt || task.updated_at || task.modifiedAt || task.modified_at || task.createdAt || task.created_at);
+}
+
+function formatTaskUpdatedAt(value = '') {
+  if (!value) return '';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return String(value);
+  return date.toLocaleString(undefined, { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
+}
+
 function normalizeEvidence(items = []) {
   return (Array.isArray(items) ? items : [])
     .map((item, index) => ({
@@ -2855,6 +2878,7 @@ function getEvidenceFromForm(form) {
 }
 
 function createTaskFromForm(form) {
+  const ts = nowIso();
   return {
     id: Date.now(),
     name: clean(form.get('name')) || 'Untitled task',
@@ -2866,11 +2890,12 @@ function createTaskFromForm(form) {
     blocked: form.get('blocked') === 'on',
     notes: clean(form.get('notes')),
     evidence: getEvidenceFromForm(form),
+    updatedAt: ts,
   };
 }
 
 function addTask(state, task) {
-  state.data.tasks.unshift(task);
+  state.data.tasks.unshift({ ...task, updatedAt: taskUpdatedAt(task) || nowIso() });
   state.dirtyFlags.tasks = true;
 }
 
@@ -2881,6 +2906,7 @@ function updateTask(state, id, task) {
     ...state.data.tasks[index],
     ...task,
     id: state.data.tasks[index].id,
+    updatedAt: nowIso(),
   };
   state.dirtyFlags.tasks = true;
   return true;
@@ -2890,6 +2916,7 @@ function updateTaskStatus(state, id, status) {
   const task = state.data.tasks.find(item => item.id === Number(id));
   if (!task) return false;
   task.status = status;
+  task.updatedAt = nowIso();
   state.dirtyFlags.tasks = true;
   return true;
 }
@@ -3059,6 +3086,7 @@ function renderTaskDetail(task = null, members = []) {
   const due = getTaskDueInfo(task);
   const late = isOverdue(task.due) && task.status !== 'Done';
   const healthBadges = getTaskHealthBadges(task, new Set(members.map(member => clean(member.name)).filter(Boolean)));
+  const updatedAt = taskUpdatedAt(task);
   const detailRows = [
     [t('owner'), task.owner || labelFor('Unassigned')],
     [t('due'), `${task.due || '-'}${due.days !== null ? ` (${due.days}d)` : ''}`],
@@ -3066,6 +3094,7 @@ function renderTaskDetail(task = null, members = []) {
     [t('status'), labelFor(task.status || 'Open')],
     [t('category'), labelFor(task.category || 'General')],
     [t('blocked'), task.blocked ? t('blocked') : '-'],
+    [t('lastUpdated'), updatedAt ? formatTaskUpdatedAt(updatedAt) : '-'],
   ];
   return `
     <div class="task-detail-view">
@@ -3229,6 +3258,7 @@ function renderTaskTable(tasks = [], members = [], options = {}) {
                 <td class="task-select-cell"><input type="checkbox" data-task-select="${task.id}" ${selected ? 'checked' : ''} aria-label="${escapeHtml(`${t('selectTask')} ${task.name}`)}"></td>
                 <td class="task-name-cell">
                   <button class="task-name-button" type="button" data-task-view="${task.id}">${escapeHtml(task.name)}</button>
+                  ${taskUpdatedAt(task) ? `<div class="task-updated-at">${escapeHtml(t('updated'))}: ${escapeHtml(formatTaskUpdatedAt(taskUpdatedAt(task)))}</div>` : ''}
                   ${task.blocked ? `<div style="font-size:.76rem;color:var(--muted)">${escapeHtml(t('blocked'))}</div>` : ''}
                   ${healthBadges.length ? `<div data-task-health-badges style="display:flex;gap:4px;flex-wrap:wrap;margin-top:4px">${healthBadges.map(label => `<span class="badge mid">${escapeHtml(label)}</span>`).join('')}</div>` : ''}
                   ${renderTaskEvidence(task.evidence)}
@@ -7178,6 +7208,7 @@ function syncSignatureForData(data = {}) {
     priority: String(task.priority || ''),
     status: String(task.status || ''),
     category: String(task.category || task.cat || ''),
+    updatedAt: String(task.updatedAt || task.updated_at || ''),
   });
   const normalizeMember = member => ({
     id: Number(member.id || 0),

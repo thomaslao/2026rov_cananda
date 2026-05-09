@@ -6,6 +6,21 @@ function clean(value) {
   return String(value || '').trim();
 }
 
+function nowIso() {
+  return new Date().toISOString();
+}
+
+function taskUpdatedAt(task = {}) {
+  return clean(task.updatedAt || task.updated_at || task.modifiedAt || task.modified_at || task.createdAt || task.created_at);
+}
+
+function formatTaskUpdatedAt(value = '') {
+  if (!value) return '';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return String(value);
+  return date.toLocaleString(undefined, { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
+}
+
 function normalizeEvidence(items = []) {
   return (Array.isArray(items) ? items : [])
     .map((item, index) => ({
@@ -41,6 +56,7 @@ function getEvidenceFromForm(form) {
 }
 
 export function createTaskFromForm(form) {
+  const ts = nowIso();
   return {
     id: Date.now(),
     name: clean(form.get('name')) || 'Untitled task',
@@ -52,11 +68,12 @@ export function createTaskFromForm(form) {
     blocked: form.get('blocked') === 'on',
     notes: clean(form.get('notes')),
     evidence: getEvidenceFromForm(form),
+    updatedAt: ts,
   };
 }
 
 export function addTask(state, task) {
-  state.data.tasks.unshift(task);
+  state.data.tasks.unshift({ ...task, updatedAt: taskUpdatedAt(task) || nowIso() });
   state.dirtyFlags.tasks = true;
 }
 
@@ -67,6 +84,7 @@ export function updateTask(state, id, task) {
     ...state.data.tasks[index],
     ...task,
     id: state.data.tasks[index].id,
+    updatedAt: nowIso(),
   };
   state.dirtyFlags.tasks = true;
   return true;
@@ -76,6 +94,7 @@ export function updateTaskStatus(state, id, status) {
   const task = state.data.tasks.find(item => item.id === Number(id));
   if (!task) return false;
   task.status = status;
+  task.updatedAt = nowIso();
   state.dirtyFlags.tasks = true;
   return true;
 }
@@ -245,6 +264,7 @@ function renderTaskDetail(task = null, members = []) {
   const due = getTaskDueInfo(task);
   const late = isOverdue(task.due) && task.status !== 'Done';
   const healthBadges = getTaskHealthBadges(task, new Set(members.map(member => clean(member.name)).filter(Boolean)));
+  const updatedAt = taskUpdatedAt(task);
   const detailRows = [
     [t('owner'), task.owner || labelFor('Unassigned')],
     [t('due'), `${task.due || '-'}${due.days !== null ? ` (${due.days}d)` : ''}`],
@@ -252,6 +272,7 @@ function renderTaskDetail(task = null, members = []) {
     [t('status'), labelFor(task.status || 'Open')],
     [t('category'), labelFor(task.category || 'General')],
     [t('blocked'), task.blocked ? t('blocked') : '-'],
+    [t('lastUpdated'), updatedAt ? formatTaskUpdatedAt(updatedAt) : '-'],
   ];
   return `
     <div class="task-detail-view">
@@ -415,6 +436,7 @@ export function renderTaskTable(tasks = [], members = [], options = {}) {
                 <td class="task-select-cell"><input type="checkbox" data-task-select="${task.id}" ${selected ? 'checked' : ''} aria-label="${escapeHtml(`${t('selectTask')} ${task.name}`)}"></td>
                 <td class="task-name-cell">
                   <button class="task-name-button" type="button" data-task-view="${task.id}">${escapeHtml(task.name)}</button>
+                  ${taskUpdatedAt(task) ? `<div class="task-updated-at">${escapeHtml(t('updated'))}: ${escapeHtml(formatTaskUpdatedAt(taskUpdatedAt(task)))}</div>` : ''}
                   ${task.blocked ? `<div style="font-size:.76rem;color:var(--muted)">${escapeHtml(t('blocked'))}</div>` : ''}
                   ${healthBadges.length ? `<div data-task-health-badges style="display:flex;gap:4px;flex-wrap:wrap;margin-top:4px">${healthBadges.map(label => `<span class="badge mid">${escapeHtml(label)}</span>`).join('')}</div>` : ''}
                   ${renderTaskEvidence(task.evidence)}

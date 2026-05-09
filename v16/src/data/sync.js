@@ -29,11 +29,12 @@ function comparable(row) {
   const copy = { ...(row || {}) };
   delete copy.created_at;
   delete copy.updated_at;
+  delete copy.updatedAt;
   return JSON.stringify(copy, Object.keys(copy).sort());
 }
 
 function diffFields(local = {}, remote = {}) {
-  const ignored = new Set(['created_at', 'updated_at']);
+  const ignored = new Set(['created_at', 'updated_at', 'updatedAt']);
   const keys = new Set([...Object.keys(local || {}), ...Object.keys(remote || {})]);
   return [...keys]
     .filter(key => !ignored.has(key))

@@ -328,6 +328,7 @@
   .task-name-cell strong { display:block; max-height:42px; overflow:hidden; }
   .task-name-button { width:100%; max-height:42px; padding:0; border:0; background:transparent; color:var(--navy); font:inherit; font-weight:900; text-align:left; overflow:hidden; overflow-wrap:anywhere; cursor:pointer; }
   .task-name-button:hover, .task-name-button:focus-visible { color:var(--blue); text-decoration:underline; outline:none; }
+  .task-updated-at { margin-top:3px; color:var(--muted); font-size:.7rem; font-weight:900; line-height:1.15; }
   .task-col-owner, .task-owner-cell { width:128px; white-space:nowrap; word-break:keep-all; text-align:center; }
   .task-col-due, .task-due-cell { width:134px; white-space:nowrap; word-break:keep-all; text-align:center; }
   .task-col-priority, .task-priority-cell { width:94px; white-space:nowrap; word-break:keep-all; text-align:center; }
@@ -344,7 +345,7 @@
   .task-detail-title { display:grid; gap:8px; }
   .task-detail-title h3 { margin:0; color:var(--navy); font-size:1.08rem; line-height:1.25; }
   .task-detail-badges, .task-detail-evidence { display:flex; flex-wrap:wrap; gap:6px; align-items:center; }
-  .task-detail-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; }
+  .task-detail-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(145px,1fr)); gap:8px; }
   .task-detail-field { min-height:64px; padding:9px; border:1px solid var(--border); border-radius:8px; background:var(--input-bg); display:flex; flex-direction:column; justify-content:center; gap:5px; text-align:center; }
   .task-detail-field div, .task-detail-section-title { color:var(--muted); font-size:.75rem; font-weight:900; }
   .task-detail-field strong { color:var(--navy); font-size:.9rem; overflow-wrap:anywhere; }

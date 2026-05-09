@@ -53,6 +53,7 @@ function normalizeTask(task, index) {
     blocked: Boolean(task.blocked || task.isBlocked),
     notes: String(task.notes || task.note || ''),
     evidence: normalizeTaskEvidence(task),
+    updatedAt: String(task.updatedAt || task.updated_at || task.modifiedAt || task.modified_at || task.createdAt || task.created_at || ''),
   };
 }
 

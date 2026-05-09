@@ -75,6 +75,7 @@ function normalizeTask(row, index) {
     category: String(row.category || row.cat || 'General'),
     blocked: Boolean(row.blocked || row.depends_on),
     notes: String(row.notes || row.note || ''),
+    updatedAt: String(row.updated_at || row.updatedAt || row.created_at || ''),
   };
 }
 

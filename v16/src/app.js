@@ -620,6 +620,7 @@ function syncSignatureForData(data = {}) {
     priority: String(task.priority || ''),
     status: String(task.status || ''),
     category: String(task.category || task.cat || ''),
+    updatedAt: String(task.updatedAt || task.updated_at || ''),
   });
   const normalizeMember = member => ({
     id: Number(member.id || 0),
