@@ -1275,7 +1275,7 @@ function buildReleaseReadiness(stats) {
   const healthOk = (stats.healthIssues || []).length === 0;
   const evidenceOk = !stats.missingEvidenceTasks;
   const schemaOk = Boolean(stats.schemaStatus && Object.keys(stats.schemaStatus.tables || {}).length);
-  const syncPrepared = Boolean(stats.syncPreview || stats.postWritePreview);
+  const syncPrepared = Boolean(stats.dbStatus && !stats.dbStatus.error);
   const backupReady = true;
   const diagnosticsReady = true;
   const writeGuardReady = true;
@@ -1287,15 +1287,15 @@ function buildReleaseReadiness(stats) {
       action: smokeOk ? null : { label: 'Run', page: 'settings', settingsScroll: 'settings-health-section', readinessAction: 'run-smoke' },
     },
     {
-      label: 'Local data',
+      label: 'Supabase data',
       ok: hasData,
-      detail: hasData ? 'Local working data is present.' : 'Import v15 backup or add demo data.',
-      action: hasData ? null : { label: 'Import', page: 'settings', settingsScroll: 'settings-migration-section' },
+      detail: hasData ? 'Live Supabase data is loaded.' : 'Reload Supabase or add data through the app.',
+      action: hasData ? null : { label: 'Reload', page: 'settings', settingsScroll: 'settings-db-section' },
     },
     {
       label: 'Data health',
       ok: healthOk,
-      detail: healthOk ? 'No local data health issues found.' : `${stats.healthIssues.length} data health issue(s) need review.`,
+      detail: healthOk ? 'No Supabase data health issues found.' : `${stats.healthIssues.length} data health issue(s) need review.`,
       action: healthOk ? null : { label: 'Open', page: 'settings', settingsScroll: 'settings-health-section' },
     },
     {
@@ -1307,24 +1307,24 @@ function buildReleaseReadiness(stats) {
     {
       label: 'Schema probe',
       ok: schemaOk,
-      detail: schemaOk ? 'Supabase writable fields were probed.' : 'Run schema probe before write sync.',
+      detail: schemaOk ? 'Supabase fields were probed.' : 'Run schema probe if writes fail.',
       action: schemaOk ? null : { label: 'Open', page: 'settings', settingsScroll: 'settings-schema-section' },
     },
     {
-      label: 'Sync review',
+      label: 'Supabase connection',
       ok: syncPrepared,
-      detail: syncPrepared ? 'Dry-run or post-write diff is available.' : 'Build sync preview after DB read.',
-      action: syncPrepared ? null : { label: 'Open', page: 'settings', settingsScroll: 'settings-sync-section' },
+      detail: syncPrepared ? 'Live database has been loaded.' : 'Reload Supabase DB.',
+      action: syncPrepared ? null : { label: 'Reload', page: 'settings', settingsScroll: 'settings-db-section' },
     },
     {
-      label: 'Backup path',
+      label: 'Reports',
       ok: backupReady,
-      detail: 'Manual export, auto backup, and restore are available.',
+      detail: 'Handoff, diagnostics, action log, and safety reports are available.',
     },
     {
       label: 'Safety guard',
       ok: writeGuardReady,
-      detail: 'Writes require confirmation, schema whitelist, and no deletes.',
+      detail: 'CRUD writes go directly to Supabase; deprecated local backup/sync tools are hidden.',
     },
     {
       label: 'Diagnostics',

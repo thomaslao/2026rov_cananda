@@ -1867,78 +1867,27 @@ appRoot?.addEventListener('click', (event) => {
     return;
   }
   if (event.target.closest('[data-action="build-sync-preview"]')) {
-    try {
-      lastSyncPreview = buildSupabaseSyncPreview(appState, lastDbStatus);
-    } catch (error) {
-      lastSyncPreview = {
-        ts: new Date().toISOString(),
-        mode: 'dry-run',
-        writable: false,
-        tables: [],
-        totalCreate: 0,
-        totalUpdate: 0,
-        totalRemove: 0,
-        error: error.message || String(error),
-      };
-      alert(`Sync preview failed: ${lastSyncPreview.error}`);
-    }
-    renderAppShell();
+    showToast('Deprecated: v16 now writes directly to Supabase.', 'error');
     return;
   }
   if (event.target.closest('[data-action="execute-guarded-write-sync"]')) {
-    const confirmText = document.querySelector('[data-sync-confirm]')?.value || '';
-    const tables = [...document.querySelectorAll('[data-sync-table]:checked')].map(input => input.dataset.syncTable);
-    const previewBeforeWrite = lastSyncPreview;
-    try {
-      downloadLocalBackup(appState);
-      ensureSupabaseClient().then(client => executeGuardedSupabaseWriteSync(client, appState, lastDbStatus, { confirmText, tables, schemaStatus: lastSchemaStatus }))
-        .then((result) => {
-          lastWriteResult = result;
-          lastSyncPreview = null;
-          const summary = summarizeWriteResult(result);
-          if (!summary.ok) {
-            saveWriteAuditEntry(buildWriteAuditEntry({ preview: previewBeforeWrite, writeResult: result, postWritePreview: null, tables }));
-            renderAppShell();
-            return null;
-          }
-          return loadSupabaseReadOnly();
-        })
-        .then((payload) => {
-          if (!payload) return;
-          lastDbStatus = payload;
-          lastPostWritePreview = buildSupabaseSyncPreview(appState, payload);
-          saveWriteAuditEntry(buildWriteAuditEntry({
-            preview: previewBeforeWrite,
-            writeResult: lastWriteResult,
-            postWritePreview: lastPostWritePreview,
-            tables,
-          }));
-          renderAppShell();
-        })
-        .catch((error) => {
-          alert(`Guarded write sync failed: ${error.message || error}`);
-        });
-    } catch (error) {
-      alert(`Guarded write sync failed: ${error.message || error}`);
-    }
+    showToast('Deprecated: use normal add/edit/delete. Changes sync to Supabase.', 'error');
     return;
   }
   if (event.target.closest('[data-action="choose-v15-backup"]')) {
-    document.querySelector('[data-v15-backup-file]')?.click();
+    showToast('Deprecated: v16 uses live Supabase data.', 'error');
     return;
   }
   if (event.target.closest('[data-action="choose-v16-backup"]')) {
-    document.querySelector('[data-v16-backup-file]')?.click();
+    showToast('Deprecated: v16 uses live Supabase data.', 'error');
     return;
   }
   if (event.target.closest('[data-action="export-v16-backup"]')) {
-    downloadLocalBackup(appState);
-    showToast(t('backupExported'));
-    recordAction(t('backupExported'));
+    showToast('Deprecated: export diagnostics or handoff report instead.', 'error');
     return;
   }
   if (event.target.closest('[data-action="reset-v16-local-data"]')) {
-    resetV16LocalDataWithBackup();
+    showToast('Deprecated: reload Supabase DB instead.', 'error');
     return;
   }
   if (event.target.closest('[data-action="analyze-float-packets"]')) {
