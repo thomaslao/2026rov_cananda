@@ -73,7 +73,9 @@ const PENDING_LOCAL_SYNC_KEY = 'rov_v16_pending_local_sync';
 const SYNCED_DATA_SIGNATURE_KEY = 'rov_v16_synced_data_signature';
 const PAGE_FEATURES_STORAGE_KEY = 'rov_v16_page_features';
 const MY_TASK_OWNER_STORAGE_KEY = 'rov_v16_my_task_owner';
+const TASK_COLUMNS_STORAGE_KEY = 'rov_v16_task_columns';
 const DEFAULT_VISIBLE_PAGE_IDS = ['dashboard', 'prep', 'tasks', 'members', 'intel', 'competition', 'settings'];
+const DEFAULT_TASK_COLUMNS = ['owner', 'due', 'priority', 'category', 'status', 'actions'];
 const ACTION_LOG_LIMIT = 8;
 const UNDO_BAR_AUTO_CLEAR_MS = 5000;
 const SUPABASE_REFRESH_INTERVAL_MS = 5000;
@@ -115,6 +117,7 @@ let undoClearTimer = null;
 let actionLog = loadActionLog();
 let visiblePageIds = loadVisiblePageIds();
 let myTaskOwner = loadMyTaskOwner();
+let visibleTaskColumns = loadVisibleTaskColumns();
 let syncStatus = {
   state: hasPendingLocalSync() ? 'pending' : 'idle',
   label: hasPendingLocalSync() ? 'Supabase pending' : 'Supabase ready',
@@ -197,6 +200,33 @@ function saveMyTaskOwner(value, storage = localStorage) {
   if (myTaskOwner) storage.setItem(MY_TASK_OWNER_STORAGE_KEY, myTaskOwner);
   else storage.removeItem(MY_TASK_OWNER_STORAGE_KEY);
   return myTaskOwner;
+}
+
+function normalizeVisibleTaskColumns(columns = []) {
+  const valid = new Set(DEFAULT_TASK_COLUMNS);
+  const cleaned = [...new Set((Array.isArray(columns) ? columns : []).filter(column => valid.has(column)))];
+  return cleaned.length ? cleaned : [...DEFAULT_TASK_COLUMNS];
+}
+
+function loadVisibleTaskColumns(storage = localStorage) {
+  try {
+    return normalizeVisibleTaskColumns(JSON.parse(storage.getItem(TASK_COLUMNS_STORAGE_KEY) || 'null') || DEFAULT_TASK_COLUMNS);
+  } catch {
+    return [...DEFAULT_TASK_COLUMNS];
+  }
+}
+
+function saveVisibleTaskColumns(storage = localStorage) {
+  visibleTaskColumns = normalizeVisibleTaskColumns(visibleTaskColumns);
+  storage.setItem(TASK_COLUMNS_STORAGE_KEY, JSON.stringify(visibleTaskColumns));
+}
+
+function setTaskColumnVisible(column, visible) {
+  const set = new Set(visibleTaskColumns);
+  if (visible) set.add(column);
+  else set.delete(column);
+  visibleTaskColumns = normalizeVisibleTaskColumns([...set]);
+  saveVisibleTaskColumns();
 }
 
 function applyMyTasksFilter() {
@@ -1645,7 +1675,7 @@ function renderCurrentPage() {
   if (appState.currentPage === 'prep') return renderPrepCenter(appState, { editingGearId, editingChecklist, prepFocus, filters: prepFilters });
   if (appState.currentPage === 'tasks') {
     pruneSelectedTaskIds();
-    return renderTasksPage(appState, { editingTaskId, addingTask, viewingTaskId, filters: taskFilters, myOwner: myTaskOwner, selectedTaskIds: [...selectedTaskIds] });
+    return renderTasksPage(appState, { editingTaskId, addingTask, viewingTaskId, filters: taskFilters, myOwner: myTaskOwner, selectedTaskIds: [...selectedTaskIds], visibleColumns: visibleTaskColumns });
   }
   if (appState.currentPage === 'members') return renderMembersPage(appState, { editingMemberId, filters: memberFilters });
   if (appState.currentPage === 'intel') return renderIntelPage(appState, { editingIntelId, editingStrategyId, intelFocus, filters: intelFilters });
@@ -1956,6 +1986,12 @@ appRoot?.addEventListener('click', (event) => {
   if (pageFeature) {
     setPageFeature(pageFeature.dataset.pageFeature, pageFeature.checked);
     showToast(t('saved'));
+    renderAppShell();
+    return;
+  }
+  const taskColumn = event.target.closest('[data-task-column-toggle]');
+  if (taskColumn) {
+    setTaskColumnVisible(taskColumn.dataset.taskColumnToggle, taskColumn.checked);
     renderAppShell();
     return;
   }
