@@ -273,6 +273,11 @@ function applyTaskQuickTab(tab = '') {
     Object.assign(taskFilters, base, { owner: myTaskOwner });
     return true;
   }
+  if (tab === 'mine-active') {
+    if (!myTaskOwner) return false;
+    Object.assign(taskFilters, base, { owner: myTaskOwner, status: 'active' });
+    return true;
+  }
   if (tab === 'this-week') Object.assign(taskFilters, base, { health: 'this-week' });
   else if (tab === 'overdue') Object.assign(taskFilters, base, { health: 'overdue' });
   else if (tab === 'blocked') Object.assign(taskFilters, base, { health: 'blocked' });

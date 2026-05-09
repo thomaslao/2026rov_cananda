@@ -284,15 +284,36 @@ function renderTaskDetail(task = null, members = [], nav = {}) {
   const late = isOverdue(task.due) && task.status !== 'Done';
   const healthBadges = getTaskHealthBadges(task, new Set(members.map(member => clean(member.name)).filter(Boolean)));
   const updatedAt = taskUpdatedAt(task);
-  const detailRows = [
+  const basicRows = [
     [t('owner'), task.owner || labelFor('Unassigned')],
     [t('due'), `${task.due || '-'}${due.days !== null ? ` (${due.days}d)` : ''}`],
     [t('priority'), labelFor(task.priority || 'Medium')],
     [t('status'), labelFor(task.status || 'Open')],
     [t('category'), labelFor(task.category || 'General')],
-    [t('blocked'), task.blocked ? t('blocked') : '-'],
-    [t('lastUpdated'), updatedAt ? formatTaskUpdatedAt(updatedAt) : '-'],
   ];
+  const dataRows = [
+    [t('lastUpdated'), updatedAt ? formatTaskUpdatedAt(updatedAt) : '-'],
+    [t('blocked'), task.blocked ? t('blocked') : '-'],
+    [t('overdue'), late ? t('overdue') : '-'],
+    [t('evidenceCount'), evidence.length],
+    [t('dataHealth'), healthBadges.length ? healthBadges.join(', ') : t('noHealthIssues')],
+  ];
+  const renderDetailGrid = (rows = []) => `
+    <div class="task-detail-grid">
+      ${rows.map(([label, value]) => `
+        <div class="task-detail-field">
+          <div>${escapeHtml(label)}</div>
+          <strong>${escapeHtml(value)}</strong>
+        </div>
+      `).join('')}
+    </div>`;
+  const evidenceMarkup = evidence.length ? `
+    <div class="task-detail-evidence">
+      ${evidence.map(item => item.url
+        ? `<a class="badge mid" href="${escapeHtml(item.url)}" target="_blank" rel="noreferrer" title="${escapeHtml(item.note || item.url)}">${escapeHtml(item.label || item.url)}</a>`
+        : `<span class="badge mid" title="${escapeHtml(item.note)}">${escapeHtml(item.label || item.note || t('evidence'))}</span>`).join('')}
+    </div>
+  ` : `<div class="task-detail-note">-</div>`;
   return `
     <div class="task-detail-view">
       <div class="task-detail-title">
@@ -303,13 +324,9 @@ function renderTaskDetail(task = null, members = [], nav = {}) {
           ${healthBadges.map(label => `<span class="badge mid">${escapeHtml(label)}</span>`).join('')}
         </div>
       </div>
-      <div class="task-detail-grid">
-        ${detailRows.map(([label, value]) => `
-          <div class="task-detail-field">
-            <div>${escapeHtml(label)}</div>
-            <strong>${escapeHtml(value)}</strong>
-          </div>
-        `).join('')}
+      <div class="task-detail-section">
+        <div class="task-detail-section-title">${escapeHtml(t('taskDetails'))}</div>
+        ${renderDetailGrid(basicRows)}
       </div>
       <div class="task-detail-section">
         <div class="task-detail-section-title">${escapeHtml(t('note'))}</div>
@@ -317,13 +334,11 @@ function renderTaskDetail(task = null, members = [], nav = {}) {
       </div>
       <div class="task-detail-section">
         <div class="task-detail-section-title">${escapeHtml(t('evidence'))}</div>
-        ${evidence.length ? `
-          <div class="task-detail-evidence">
-            ${evidence.map(item => item.url
-              ? `<a class="badge mid" href="${escapeHtml(item.url)}" target="_blank" rel="noreferrer" title="${escapeHtml(item.note || item.url)}">${escapeHtml(item.label || item.url)}</a>`
-              : `<span class="badge mid" title="${escapeHtml(item.note)}">${escapeHtml(item.label || item.note || t('evidence'))}</span>`).join('')}
-          </div>
-        ` : `<div class="task-detail-note">-</div>`}
+        ${evidenceMarkup}
+      </div>
+      <div class="task-detail-section">
+        <div class="task-detail-section-title">${escapeHtml(t('dataHealth'))}</div>
+        ${renderDetailGrid(dataRows)}
       </div>
       <div class="modal-actions">
         <button class="btn" type="button" data-task-detail-nav="-1" ${nav.prevId ? '' : 'disabled'}>${escapeHtml(t('previousTask'))}</button>
@@ -401,6 +416,7 @@ function getActiveFilterChips(filters = {}) {
 function getActiveTaskQuickTab(filters = {}, myOwner = '') {
   const hasOnlySort = !filters.search && !filters.owner && !filters.status && !filters.priority && !filters.category && !filters.health && !filters.evidence;
   if (hasOnlySort) return 'all';
+  if (myOwner && filters.owner === myOwner && filters.status === 'active' && !filters.search && !filters.priority && !filters.category && !filters.health && !filters.evidence) return 'mine-active';
   if (myOwner && filters.owner === myOwner && !filters.search && !filters.status && !filters.priority && !filters.category && !filters.health && !filters.evidence) return 'mine';
   if (filters.health === 'this-week' && !filters.search && !filters.owner && !filters.status && !filters.priority && !filters.category && !filters.evidence) return 'this-week';
   if (filters.health === 'overdue' && !filters.search && !filters.owner && !filters.status && !filters.priority && !filters.category && !filters.evidence) return 'overdue';
@@ -416,6 +432,7 @@ function getTaskQuickTabCounts(tasks = [], myOwner = '') {
   return {
     all: tasks.length,
     mine: myOwner ? tasks.filter(task => task.owner === myOwner).length : 0,
+    'mine-active': myOwner ? active.filter(task => task.owner === myOwner).length : 0,
     'this-week': tasks.filter(task => taskMatchesHealthFilter(task, 'this-week')).length,
     overdue: tasks.filter(task => taskMatchesHealthFilter(task, 'overdue')).length,
     blocked: tasks.filter(task => taskMatchesHealthFilter(task, 'blocked')).length,
@@ -584,6 +601,7 @@ export function renderTasksPage(state, options = {}) {
   const quickTabs = [
     ['all', t('allTasks'), false],
     ['mine', t('myTasks'), !myOwner],
+    ['mine-active', t('myActiveTasks'), !myOwner],
     ['this-week', t('thisWeek'), false],
     ['overdue', t('overdue'), false],
     ['blocked', t('blocked'), false],

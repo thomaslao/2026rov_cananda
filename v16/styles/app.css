@@ -377,6 +377,9 @@
   .task-detail-field div, .task-detail-section-title { color:var(--muted); font-size:.75rem; font-weight:900; }
   .task-detail-field strong { color:var(--navy); font-size:.9rem; overflow-wrap:anywhere; }
   .task-detail-section { border:1px solid var(--border); border-radius:8px; background:var(--input-bg); padding:10px; }
+  .task-detail-section-title { margin-bottom:8px; color:var(--navy); text-transform:uppercase; letter-spacing:0; }
+  .task-detail-section .task-detail-grid { grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); }
+  .task-detail-section .task-detail-field { min-height:58px; background:var(--white); }
   .task-detail-note { margin-top:6px; color:var(--text); font-size:.88rem; font-weight:800; line-height:1.45; white-space:pre-wrap; overflow-wrap:anywhere; }
   .task-bulk-toolbar { display:none; grid-template-columns:minmax(115px,.8fr) repeat(4,minmax(120px,1fr)) auto auto; gap:8px; align-items:center; margin:0 0 10px; padding:9px; border:1px solid var(--border); border-left:5px solid var(--blue); border-radius:8px; background:#F7FAFF; }
   .task-bulk-toolbar.active { display:grid; }
