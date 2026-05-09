@@ -356,6 +356,9 @@
   .task-actions-cell { width:112px; min-width:112px; white-space:nowrap; text-align:right; }
   .task-priority-cell .badge { min-width:68px; min-height:24px; display:inline-flex; align-items:center; justify-content:center; padding:3px 9px; font-weight:900; }
   .task-status-cell { display:flex; justify-content:center; min-width:86px; }
+  .task-inline-input { width:100%; min-width:0; height:34px; margin:0; padding:5px 7px; border:1px solid transparent; border-radius:7px; background:transparent; color:inherit; text-align:center; font-size:.78rem; font-weight:850; }
+  .task-inline-input:hover, .task-inline-input:focus { border-color:var(--border); background:var(--input-bg); outline:none; }
+  .task-due-days { margin-top:3px; font-size:.68rem; font-weight:900; color:var(--muted); text-align:center; }
   .task-status-select { width:88px; min-width:88px; height:34px; margin:0; text-align:center; font-weight:800; }
   .task-category-select { width:120px; min-width:120px; height:34px; margin:0; text-align:center; font-weight:800; }
   .task-action-row { display:flex; gap:4px; flex-wrap:nowrap; justify-content:flex-end; align-items:center; min-width:104px; }
@@ -397,6 +400,35 @@
   .task-search-submit { min-height:60px; height:60px; padding:8px 14px; border-radius:8px; font-size:.88rem; font-weight:900; white-space:nowrap; display:flex; align-items:center; justify-content:center; text-align:center; }
   .task-toolbar-clear { background:#FFF3CD; color:#7A4B00; border:1px solid rgba(245,158,11,.45); box-shadow:inset 0 0 0 1px rgba(255,255,255,.55); }
   .task-toolbar-clear:hover { background:#FDE68A; opacity:1; }
+  .task-table-controls { display:flex; flex-wrap:wrap; gap:8px; align-items:stretch; margin:0 0 10px; }
+  .task-density-controls,
+  .task-column-controls { display:flex; flex-wrap:wrap; gap:7px; align-items:center; padding:8px; border:1px solid var(--border); border-radius:8px; background:var(--input-bg); }
+  .task-column-controls { flex:1 1 420px; }
+  .task-density-controls { flex:0 0 auto; }
+  .task-density-controls strong,
+  .task-column-controls strong { color:var(--navy); font-size:.78rem; font-weight:900; margin-right:2px; }
+  .task-density-button,
+  .task-column-controls label { min-height:30px; padding:5px 9px; border:1px solid var(--border); border-radius:999px; background:#F7FAFF; color:var(--navy); font-size:.78rem; font-weight:900; display:inline-flex; align-items:center; gap:5px; cursor:pointer; }
+  .task-density-button.active { background:var(--blue); color:#fff; border-color:var(--blue); }
+  .task-column-controls input { margin:0; width:14px; height:14px; }
+  .task-density-compact .task-table-wrap th,
+  .task-density-compact .task-table-wrap td { height:44px; }
+  .task-density-compact .task-table-wrap td { padding:5px 8px; }
+  .task-density-compact .task-table-wrap tbody tr { min-height:44px; }
+  .task-density-compact .task-name-button { max-height:34px; font-size:.82rem; line-height:1.15; }
+  .task-density-compact .task-name-cell { line-height:1.15; }
+  .task-density-compact .task-updated-at { margin-top:2px; font-size:.64rem; }
+  .task-density-compact .task-search-snippet,
+  .task-density-compact [data-task-evidence],
+  .task-density-compact [data-task-health-badges] { display:none !important; }
+  .task-density-compact .task-priority-cell .badge { min-height:20px; padding:2px 7px; font-size:.68rem; }
+  .task-density-compact .task-inline-input { height:28px; padding:3px 5px; font-size:.72rem; }
+  .task-density-compact .task-due-days { display:none; }
+  .task-density-compact .task-status-select,
+  .task-density-compact .task-category-select { height:28px; font-size:.76rem; }
+  .task-density-compact .task-action-row .btn-sm { width:30px; min-height:28px; height:28px; padding:3px 4px; font-size:.72rem; }
+  .task-density-compact .task-select-col input,
+  .task-density-compact .task-select-cell input { width:16px; height:16px; }
   .task-category-manager { border:1px solid var(--border); border-left:5px solid var(--blue); border-radius:8px; background:var(--input-bg); padding:10px; margin-bottom:10px; }
   .task-category-manager-head { display:flex; justify-content:space-between; gap:10px; align-items:start; margin-bottom:8px; }
   .task-category-manager-head h3 { margin:0 0 4px; color:var(--navy); font-size:.96rem; }
@@ -1060,6 +1092,11 @@ const STRINGS = {
     due: 'Due',
     priority: 'Priority',
     status: 'Status',
+    actions: 'Actions',
+    visibleColumns: 'Columns',
+    density: 'Density',
+    comfortable: 'Comfortable',
+    compact: 'Compact',
     category: 'Category',
     highPriority: 'High priority',
     doneTasks: 'Done',
@@ -1443,6 +1480,11 @@ const STRINGS = {
     due: '\u622a\u6b62\u65e5',
     priority: '\u512a\u5148\u7d1a',
     status: '\u72c0\u614b',
+    actions: '\u64cd\u4f5c',
+    visibleColumns: '\u6b04\u4f4d',
+    density: '\u5bc6\u5ea6',
+    comfortable: '\u8212\u9069',
+    compact: '\u7dca\u6e4a',
     category: '\u5206\u985e',
     highPriority: '\u9ad8\u512a\u5148',
     doneTasks: '\u5df2\u5b8c\u6210',
@@ -3293,7 +3335,9 @@ function renderTaskTable(tasks = [], members = [], options = {}) {
   }
   const memberNames = new Set(members.map(member => clean(member.name)).filter(Boolean));
   const filters = normalizeTaskFilters(options.filters);
+  const visibleColumns = new Set(options.visibleColumns || ['owner', 'due', 'priority', 'category', 'status', 'actions']);
   const searchQuery = filters.search || '';
+  const ownerOptions = unique([...members.map(member => member.name), ...tasks.map(task => task.owner), 'Unassigned']);
   const selectedTaskIds = new Set((options.selectedTaskIds || []).map(id => Number(id)));
   const allVisibleSelected = tasks.length > 0 && tasks.every(task => selectedTaskIds.has(Number(task.id)));
   const sortColumns = {
@@ -3315,7 +3359,7 @@ function renderTaskTable(tasks = [], members = [], options = {}) {
   return `
     <div class="task-table-wrap">
       <table>
-        <thead><tr><th class="task-select-col"><input type="checkbox" data-task-select-visible ${allVisibleSelected ? 'checked' : ''} aria-label="${escapeHtml(t('selectVisibleTasks'))}"></th>${sortHeader('name', t('task'))}${sortHeader('owner', t('owner'))}${sortHeader('due', t('due'))}${sortHeader('priority', t('priority'))}${sortHeader('category', t('category'))}${sortHeader('status', t('status'))}<th></th></tr></thead>
+        <thead><tr><th class="task-select-col"><input type="checkbox" data-task-select-visible ${allVisibleSelected ? 'checked' : ''} aria-label="${escapeHtml(t('selectVisibleTasks'))}"></th>${sortHeader('name', t('task'))}${visibleColumns.has('owner') ? sortHeader('owner', t('owner')) : ''}${visibleColumns.has('due') ? sortHeader('due', t('due')) : ''}${visibleColumns.has('priority') ? sortHeader('priority', t('priority')) : ''}${visibleColumns.has('category') ? sortHeader('category', t('category')) : ''}${visibleColumns.has('status') ? sortHeader('status', t('status')) : ''}${visibleColumns.has('actions') ? '<th></th>' : ''}</tr></thead>
         <tbody>
           ${tasks.map((task) => {
             const due = getTaskDueInfo(task);
@@ -3340,32 +3384,38 @@ function renderTaskTable(tasks = [], members = [], options = {}) {
                   ${searchQuery && clean(task.notes).toLowerCase().includes(searchQuery.toLowerCase()) ? `<div class="task-search-snippet">${highlightText(task.notes, searchQuery)}</div>` : ''}
                   ${renderTaskEvidence(task.evidence)}
                 </td>
-                <td class="task-owner-cell">${highlightText(task.owner || labelFor('Unassigned'), searchQuery)}</td>
-                <td class="task-due-cell" style="color:${late ? 'var(--red)' : 'var(--text)'}">${escapeHtml(task.due || '-')} ${due.days !== null ? `(${due.days}d)` : ''}</td>
-                <td class="task-priority-cell"><span class="badge ${task.priority === 'High' ? 'urgent' : task.priority === 'Low' ? 'done' : 'mid'}">${escapeHtml(labelFor(task.priority || 'Medium'))}</span></td>
-                <td class="task-category-cell">
+                ${visibleColumns.has('owner') ? `<td class="task-owner-cell">
+                  <input class="task-inline-input task-owner-input" data-task-owner="${task.id}" list="task-inline-owner-list" value="${escapeHtml(task.owner || 'Unassigned')}" aria-label="${escapeHtml(t('owner'))}">
+                </td>` : ''}
+                ${visibleColumns.has('due') ? `<td class="task-due-cell" style="color:${late ? 'var(--red)' : 'var(--text)'}">
+                  <input class="task-inline-input task-due-input" data-task-due="${task.id}" type="date" value="${escapeHtml(task.due || '')}" aria-label="${escapeHtml(t('due'))}">
+                  ${due.days !== null ? `<div class="task-due-days">(${due.days}d)</div>` : ''}
+                </td>` : ''}
+                ${visibleColumns.has('priority') ? `<td class="task-priority-cell"><span class="badge ${task.priority === 'High' ? 'urgent' : task.priority === 'Low' ? 'done' : 'mid'}">${escapeHtml(labelFor(task.priority || 'Medium'))}</span></td>` : ''}
+                ${visibleColumns.has('category') ? `<td class="task-category-cell">
                   <select class="task-category-select" data-task-category="${task.id}" aria-label="${escapeHtml(t('category'))}">
                     ${categoryOptions.map(category => `<option value="${escapeHtml(category)}" ${selectedCategory === category ? 'selected' : ''}>${escapeHtml(labelFor(category))}</option>`).join('')}
                   </select>
-                </td>
-                <td class="task-status-table-cell">
+                </td>` : ''}
+                ${visibleColumns.has('status') ? `<td class="task-status-table-cell">
                   <div class="task-status-cell">
                     <select class="task-status-select" data-task-status="${task.id}" aria-label="${escapeHtml(t('status'))}">
                       ${['Open', 'In Progress', 'Done'].map(status => `<option value="${status}" ${task.status === status ? 'selected' : ''}>${escapeHtml(labelFor(status))}</option>`).join('')}
                     </select>
                   </div>
-                </td>
-                <td class="task-actions-cell">
+                </td>` : ''}
+                ${visibleColumns.has('actions') ? `<td class="task-actions-cell">
                   <div class="task-action-row">
                     <button class="btn btn-sm" type="button" data-task-view="${task.id}" title="${escapeHtml(t('view'))}" aria-label="${escapeHtml(t('view'))}">${escapeHtml(t('viewShort'))}</button>
                     <button class="btn btn-sm" type="button" data-task-edit="${task.id}" title="${escapeHtml(t('edit'))}" aria-label="${escapeHtml(t('edit'))}">${escapeHtml(t('editShort'))}</button>
                     <button class="btn btn-sm btn-danger" type="button" data-task-delete="${task.id}" title="${escapeHtml(t('delete'))}" aria-label="${escapeHtml(t('delete'))}">${escapeHtml(t('deleteShort'))}</button>
                   </div>
-                </td>
+                </td>` : ''}
               </tr>`;
           }).join('')}
         </tbody>
       </table>
+      <datalist id="task-inline-owner-list">${ownerOptions.map(owner => `<option value="${escapeHtml(owner)}"></option>`).join('')}</datalist>
     </div>`;
 }
 
@@ -3419,6 +3469,16 @@ function renderTasksPage(state, options = {}) {
   const activeFilterChips = getActiveFilterChips(filters);
   const selectedTaskIds = (options.selectedTaskIds || []).map(id => Number(id));
   const selectedCount = selectedTaskIds.length;
+  const visibleColumns = new Set(options.visibleColumns || ['owner', 'due', 'priority', 'category', 'status', 'actions']);
+  const taskDensity = options.taskDensity === 'compact' ? 'compact' : 'comfortable';
+  const columnToggles = [
+    ['owner', t('owner')],
+    ['due', t('due')],
+    ['priority', t('priority')],
+    ['category', t('category')],
+    ['status', t('status')],
+    ['actions', t('actions')],
+  ];
   const activeQuickTab = getActiveTaskQuickTab(filters, myOwner);
   const quickTabCounts = getTaskQuickTabCounts(tasks, myOwner);
   const quickTabs = [
@@ -3432,7 +3492,7 @@ function renderTasksPage(state, options = {}) {
     ['done', t('doneTasks'), false],
   ];
   return `
-    <section id="page-tasks" class="page active" style="display:grid;gap:12px">
+    <section id="page-tasks" class="page active task-density-${escapeHtml(taskDensity)}" style="display:grid;gap:12px">
       <div class="page-topbar">
         <div>
           <h1 style="margin:0;color:var(--navy)">${escapeHtml(t('tasks'))}</h1>
@@ -3532,6 +3592,19 @@ function renderTasksPage(state, options = {}) {
             <button class="btn btn-primary task-search-submit" type="button" data-task-search-submit>${escapeHtml(t('search'))}</button>
           </div>
         </div>
+        <div class="task-table-controls">
+          <div class="task-density-controls" data-task-density-controls>
+            <strong>${escapeHtml(t('density'))}</strong>
+            <button class="task-density-button ${taskDensity === 'comfortable' ? 'active' : ''}" type="button" data-task-density="comfortable">${escapeHtml(t('comfortable'))}</button>
+            <button class="task-density-button ${taskDensity === 'compact' ? 'active' : ''}" type="button" data-task-density="compact">${escapeHtml(t('compact'))}</button>
+          </div>
+          <div class="task-column-controls" data-task-column-controls>
+            <strong>${escapeHtml(t('visibleColumns'))}</strong>
+            ${columnToggles.map(([column, label]) => `
+              <label><input type="checkbox" data-task-column-toggle="${escapeHtml(column)}" ${visibleColumns.has(column) ? 'checked' : ''}> ${escapeHtml(label)}</label>
+            `).join('')}
+          </div>
+        </div>
         <div class="task-bulk-toolbar ${selectedCount ? 'active' : ''}" data-task-bulk-toolbar>
           <div class="task-bulk-count">${escapeHtml(t('selectedTasks'))}: ${selectedCount}</div>
           <select data-task-bulk-status aria-label="${escapeHtml(t('bulkUpdateStatus'))}">
@@ -3556,7 +3629,7 @@ function renderTasksPage(state, options = {}) {
         <div data-task-active-filters style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:10px;min-height:24px">
           ${activeFilterChips.length ? `<strong style="font-size:.76rem;color:var(--muted)">${escapeHtml(t('activeFilters'))}</strong>${activeFilterChips.map(chip => `<button class="badge mid" type="button" data-task-remove-filter="${escapeHtml(chip.key)}" title="${escapeHtml(t('removeFilter'))}" style="cursor:pointer">${escapeHtml(chip.label)}: ${escapeHtml(chip.value)} x</button>`).join('')}` : `<span style="font-size:.76rem;color:var(--muted);font-weight:800">${escapeHtml(t('noActiveFilters'))}</span>`}
         </div>
-        ${renderTaskTable(visibleTasks, state.data.members || [], { totalCount: tasks.length, filters, categories, selectedTaskIds })}
+        ${renderTaskTable(visibleTasks, state.data.members || [], { totalCount: tasks.length, filters, categories, selectedTaskIds, visibleColumns: [...visibleColumns], taskDensity })}
       </div>
     </section>`;
 }
@@ -6750,7 +6823,10 @@ const PENDING_LOCAL_SYNC_KEY = 'rov_v16_pending_local_sync';
 const SYNCED_DATA_SIGNATURE_KEY = 'rov_v16_synced_data_signature';
 const PAGE_FEATURES_STORAGE_KEY = 'rov_v16_page_features';
 const MY_TASK_OWNER_STORAGE_KEY = 'rov_v16_my_task_owner';
+const TASK_COLUMNS_STORAGE_KEY = 'rov_v16_task_columns';
+const TASK_DENSITY_STORAGE_KEY = 'rov_v16_task_density';
 const DEFAULT_VISIBLE_PAGE_IDS = ['dashboard', 'prep', 'tasks', 'members', 'intel', 'competition', 'settings'];
+const DEFAULT_TASK_COLUMNS = ['owner', 'due', 'priority', 'category', 'status', 'actions'];
 const ACTION_LOG_LIMIT = 8;
 const UNDO_BAR_AUTO_CLEAR_MS = 5000;
 const SUPABASE_REFRESH_INTERVAL_MS = 5000;
@@ -6792,6 +6868,8 @@ let undoClearTimer = null;
 let actionLog = loadActionLog();
 let visiblePageIds = loadVisiblePageIds();
 let myTaskOwner = loadMyTaskOwner();
+let visibleTaskColumns = loadVisibleTaskColumns();
+let taskDensity = loadTaskDensity();
 let syncStatus = {
   state: hasPendingLocalSync() ? 'pending' : 'idle',
   label: hasPendingLocalSync() ? 'Supabase pending' : 'Supabase ready',
@@ -6874,6 +6952,47 @@ function saveMyTaskOwner(value, storage = localStorage) {
   if (myTaskOwner) storage.setItem(MY_TASK_OWNER_STORAGE_KEY, myTaskOwner);
   else storage.removeItem(MY_TASK_OWNER_STORAGE_KEY);
   return myTaskOwner;
+}
+
+function normalizeVisibleTaskColumns(columns = []) {
+  const valid = new Set(DEFAULT_TASK_COLUMNS);
+  const cleaned = [...new Set((Array.isArray(columns) ? columns : []).filter(column => valid.has(column)))];
+  return cleaned.length ? cleaned : [...DEFAULT_TASK_COLUMNS];
+}
+
+function loadVisibleTaskColumns(storage = localStorage) {
+  try {
+    return normalizeVisibleTaskColumns(JSON.parse(storage.getItem(TASK_COLUMNS_STORAGE_KEY) || 'null') || DEFAULT_TASK_COLUMNS);
+  } catch {
+    return [...DEFAULT_TASK_COLUMNS];
+  }
+}
+
+function saveVisibleTaskColumns(storage = localStorage) {
+  visibleTaskColumns = normalizeVisibleTaskColumns(visibleTaskColumns);
+  storage.setItem(TASK_COLUMNS_STORAGE_KEY, JSON.stringify(visibleTaskColumns));
+}
+
+function setTaskColumnVisible(column, visible) {
+  const set = new Set(visibleTaskColumns);
+  if (visible) set.add(column);
+  else set.delete(column);
+  visibleTaskColumns = normalizeVisibleTaskColumns([...set]);
+  saveVisibleTaskColumns();
+}
+
+function normalizeTaskDensity(value = '') {
+  return value === 'compact' ? 'compact' : 'comfortable';
+}
+
+function loadTaskDensity(storage = localStorage) {
+  return normalizeTaskDensity(storage.getItem(TASK_DENSITY_STORAGE_KEY));
+}
+
+function saveTaskDensity(value, storage = localStorage) {
+  taskDensity = normalizeTaskDensity(value);
+  storage.setItem(TASK_DENSITY_STORAGE_KEY, taskDensity);
+  return taskDensity;
 }
 
 function applyMyTasksFilter() {
@@ -8322,7 +8441,7 @@ function renderCurrentPage() {
   if (appState.currentPage === 'prep') return renderPrepCenter(appState, { editingGearId, editingChecklist, prepFocus, filters: prepFilters });
   if (appState.currentPage === 'tasks') {
     pruneSelectedTaskIds();
-    return renderTasksPage(appState, { editingTaskId, addingTask, viewingTaskId, filters: taskFilters, myOwner: myTaskOwner, selectedTaskIds: [...selectedTaskIds] });
+    return renderTasksPage(appState, { editingTaskId, addingTask, viewingTaskId, filters: taskFilters, myOwner: myTaskOwner, selectedTaskIds: [...selectedTaskIds], visibleColumns: visibleTaskColumns, taskDensity });
   }
   if (appState.currentPage === 'members') return renderMembersPage(appState, { editingMemberId, filters: memberFilters });
   if (appState.currentPage === 'intel') return renderIntelPage(appState, { editingIntelId, editingStrategyId, intelFocus, filters: intelFilters });
@@ -8633,6 +8752,18 @@ appRoot?.addEventListener('click', (event) => {
   if (pageFeature) {
     setPageFeature(pageFeature.dataset.pageFeature, pageFeature.checked);
     showToast(t('saved'));
+    renderAppShell();
+    return;
+  }
+  const taskColumn = event.target.closest('[data-task-column-toggle]');
+  if (taskColumn) {
+    setTaskColumnVisible(taskColumn.dataset.taskColumnToggle, taskColumn.checked);
+    renderAppShell();
+    return;
+  }
+  const taskDensityButton = event.target.closest('[data-task-density]');
+  if (taskDensityButton) {
+    saveTaskDensity(taskDensityButton.dataset.taskDensity);
     renderAppShell();
     return;
   }
@@ -9350,6 +9481,26 @@ appRoot?.addEventListener('change', (event) => {
     const message = actionMessage(t('saved'), task ? `${task.name || t('task')} -> ${labelFor(taskCategory.value)}` : labelFor(taskCategory.value));
     captureUndo(message);
     if (updateTask(appState, taskCategory.dataset.taskCategory, { category: taskCategory.value })) persistAndRender(message, { keepUndo: true });
+    return;
+  }
+  const taskOwner = event.target.closest('[data-task-owner]');
+  if (taskOwner) {
+    const task = appState.data.tasks.find(row => Number(row.id) === Number(taskOwner.dataset.taskOwner));
+    const owner = String(taskOwner.value || '').trim() || 'Unassigned';
+    if (task && String(task.owner || 'Unassigned') === owner) return;
+    const message = actionMessage(t('saved'), task ? `${task.name || t('task')} -> ${owner}` : owner);
+    captureUndo(message);
+    if (updateTask(appState, taskOwner.dataset.taskOwner, { owner })) persistAndRender(message, { keepUndo: true });
+    return;
+  }
+  const taskDue = event.target.closest('[data-task-due]');
+  if (taskDue) {
+    const task = appState.data.tasks.find(row => Number(row.id) === Number(taskDue.dataset.taskDue));
+    const due = String(taskDue.value || '');
+    if (task && String(task.due || '') === due) return;
+    const message = actionMessage(t('saved'), task ? `${task.name || t('task')} -> ${due || '-'}` : due || '-');
+    captureUndo(message);
+    if (updateTask(appState, taskDue.dataset.taskDue, { due })) persistAndRender(message, { keepUndo: true });
     return;
   }
   const check = event.target.closest('[data-checklist]');

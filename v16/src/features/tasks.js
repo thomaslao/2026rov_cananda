@@ -431,7 +431,9 @@ export function renderTaskTable(tasks = [], members = [], options = {}) {
   }
   const memberNames = new Set(members.map(member => clean(member.name)).filter(Boolean));
   const filters = normalizeTaskFilters(options.filters);
+  const visibleColumns = new Set(options.visibleColumns || ['owner', 'due', 'priority', 'category', 'status', 'actions']);
   const searchQuery = filters.search || '';
+  const ownerOptions = unique([...members.map(member => member.name), ...tasks.map(task => task.owner), 'Unassigned']);
   const selectedTaskIds = new Set((options.selectedTaskIds || []).map(id => Number(id)));
   const allVisibleSelected = tasks.length > 0 && tasks.every(task => selectedTaskIds.has(Number(task.id)));
   const sortColumns = {
@@ -453,7 +455,7 @@ export function renderTaskTable(tasks = [], members = [], options = {}) {
   return `
     <div class="task-table-wrap">
       <table>
-        <thead><tr><th class="task-select-col"><input type="checkbox" data-task-select-visible ${allVisibleSelected ? 'checked' : ''} aria-label="${escapeHtml(t('selectVisibleTasks'))}"></th>${sortHeader('name', t('task'))}${sortHeader('owner', t('owner'))}${sortHeader('due', t('due'))}${sortHeader('priority', t('priority'))}${sortHeader('category', t('category'))}${sortHeader('status', t('status'))}<th></th></tr></thead>
+        <thead><tr><th class="task-select-col"><input type="checkbox" data-task-select-visible ${allVisibleSelected ? 'checked' : ''} aria-label="${escapeHtml(t('selectVisibleTasks'))}"></th>${sortHeader('name', t('task'))}${visibleColumns.has('owner') ? sortHeader('owner', t('owner')) : ''}${visibleColumns.has('due') ? sortHeader('due', t('due')) : ''}${visibleColumns.has('priority') ? sortHeader('priority', t('priority')) : ''}${visibleColumns.has('category') ? sortHeader('category', t('category')) : ''}${visibleColumns.has('status') ? sortHeader('status', t('status')) : ''}${visibleColumns.has('actions') ? '<th></th>' : ''}</tr></thead>
         <tbody>
           ${tasks.map((task) => {
             const due = getTaskDueInfo(task);
@@ -478,32 +480,38 @@ export function renderTaskTable(tasks = [], members = [], options = {}) {
                   ${searchQuery && clean(task.notes).toLowerCase().includes(searchQuery.toLowerCase()) ? `<div class="task-search-snippet">${highlightText(task.notes, searchQuery)}</div>` : ''}
                   ${renderTaskEvidence(task.evidence)}
                 </td>
-                <td class="task-owner-cell">${highlightText(task.owner || labelFor('Unassigned'), searchQuery)}</td>
-                <td class="task-due-cell" style="color:${late ? 'var(--red)' : 'var(--text)'}">${escapeHtml(task.due || '-')} ${due.days !== null ? `(${due.days}d)` : ''}</td>
-                <td class="task-priority-cell"><span class="badge ${task.priority === 'High' ? 'urgent' : task.priority === 'Low' ? 'done' : 'mid'}">${escapeHtml(labelFor(task.priority || 'Medium'))}</span></td>
-                <td class="task-category-cell">
+                ${visibleColumns.has('owner') ? `<td class="task-owner-cell">
+                  <input class="task-inline-input task-owner-input" data-task-owner="${task.id}" list="task-inline-owner-list" value="${escapeHtml(task.owner || 'Unassigned')}" aria-label="${escapeHtml(t('owner'))}">
+                </td>` : ''}
+                ${visibleColumns.has('due') ? `<td class="task-due-cell" style="color:${late ? 'var(--red)' : 'var(--text)'}">
+                  <input class="task-inline-input task-due-input" data-task-due="${task.id}" type="date" value="${escapeHtml(task.due || '')}" aria-label="${escapeHtml(t('due'))}">
+                  ${due.days !== null ? `<div class="task-due-days">(${due.days}d)</div>` : ''}
+                </td>` : ''}
+                ${visibleColumns.has('priority') ? `<td class="task-priority-cell"><span class="badge ${task.priority === 'High' ? 'urgent' : task.priority === 'Low' ? 'done' : 'mid'}">${escapeHtml(labelFor(task.priority || 'Medium'))}</span></td>` : ''}
+                ${visibleColumns.has('category') ? `<td class="task-category-cell">
                   <select class="task-category-select" data-task-category="${task.id}" aria-label="${escapeHtml(t('category'))}">
                     ${categoryOptions.map(category => `<option value="${escapeHtml(category)}" ${selectedCategory === category ? 'selected' : ''}>${escapeHtml(labelFor(category))}</option>`).join('')}
                   </select>
-                </td>
-                <td class="task-status-table-cell">
+                </td>` : ''}
+                ${visibleColumns.has('status') ? `<td class="task-status-table-cell">
                   <div class="task-status-cell">
                     <select class="task-status-select" data-task-status="${task.id}" aria-label="${escapeHtml(t('status'))}">
                       ${['Open', 'In Progress', 'Done'].map(status => `<option value="${status}" ${task.status === status ? 'selected' : ''}>${escapeHtml(labelFor(status))}</option>`).join('')}
                     </select>
                   </div>
-                </td>
-                <td class="task-actions-cell">
+                </td>` : ''}
+                ${visibleColumns.has('actions') ? `<td class="task-actions-cell">
                   <div class="task-action-row">
                     <button class="btn btn-sm" type="button" data-task-view="${task.id}" title="${escapeHtml(t('view'))}" aria-label="${escapeHtml(t('view'))}">${escapeHtml(t('viewShort'))}</button>
                     <button class="btn btn-sm" type="button" data-task-edit="${task.id}" title="${escapeHtml(t('edit'))}" aria-label="${escapeHtml(t('edit'))}">${escapeHtml(t('editShort'))}</button>
                     <button class="btn btn-sm btn-danger" type="button" data-task-delete="${task.id}" title="${escapeHtml(t('delete'))}" aria-label="${escapeHtml(t('delete'))}">${escapeHtml(t('deleteShort'))}</button>
                   </div>
-                </td>
+                </td>` : ''}
               </tr>`;
           }).join('')}
         </tbody>
       </table>
+      <datalist id="task-inline-owner-list">${ownerOptions.map(owner => `<option value="${escapeHtml(owner)}"></option>`).join('')}</datalist>
     </div>`;
 }
 
@@ -557,6 +565,16 @@ export function renderTasksPage(state, options = {}) {
   const activeFilterChips = getActiveFilterChips(filters);
   const selectedTaskIds = (options.selectedTaskIds || []).map(id => Number(id));
   const selectedCount = selectedTaskIds.length;
+  const visibleColumns = new Set(options.visibleColumns || ['owner', 'due', 'priority', 'category', 'status', 'actions']);
+  const taskDensity = options.taskDensity === 'compact' ? 'compact' : 'comfortable';
+  const columnToggles = [
+    ['owner', t('owner')],
+    ['due', t('due')],
+    ['priority', t('priority')],
+    ['category', t('category')],
+    ['status', t('status')],
+    ['actions', t('actions')],
+  ];
   const activeQuickTab = getActiveTaskQuickTab(filters, myOwner);
   const quickTabCounts = getTaskQuickTabCounts(tasks, myOwner);
   const quickTabs = [
@@ -570,7 +588,7 @@ export function renderTasksPage(state, options = {}) {
     ['done', t('doneTasks'), false],
   ];
   return `
-    <section id="page-tasks" class="page active" style="display:grid;gap:12px">
+    <section id="page-tasks" class="page active task-density-${escapeHtml(taskDensity)}" style="display:grid;gap:12px">
       <div class="page-topbar">
         <div>
           <h1 style="margin:0;color:var(--navy)">${escapeHtml(t('tasks'))}</h1>
@@ -670,6 +688,19 @@ export function renderTasksPage(state, options = {}) {
             <button class="btn btn-primary task-search-submit" type="button" data-task-search-submit>${escapeHtml(t('search'))}</button>
           </div>
         </div>
+        <div class="task-table-controls">
+          <div class="task-density-controls" data-task-density-controls>
+            <strong>${escapeHtml(t('density'))}</strong>
+            <button class="task-density-button ${taskDensity === 'comfortable' ? 'active' : ''}" type="button" data-task-density="comfortable">${escapeHtml(t('comfortable'))}</button>
+            <button class="task-density-button ${taskDensity === 'compact' ? 'active' : ''}" type="button" data-task-density="compact">${escapeHtml(t('compact'))}</button>
+          </div>
+          <div class="task-column-controls" data-task-column-controls>
+            <strong>${escapeHtml(t('visibleColumns'))}</strong>
+            ${columnToggles.map(([column, label]) => `
+              <label><input type="checkbox" data-task-column-toggle="${escapeHtml(column)}" ${visibleColumns.has(column) ? 'checked' : ''}> ${escapeHtml(label)}</label>
+            `).join('')}
+          </div>
+        </div>
         <div class="task-bulk-toolbar ${selectedCount ? 'active' : ''}" data-task-bulk-toolbar>
           <div class="task-bulk-count">${escapeHtml(t('selectedTasks'))}: ${selectedCount}</div>
           <select data-task-bulk-status aria-label="${escapeHtml(t('bulkUpdateStatus'))}">
@@ -694,7 +725,7 @@ export function renderTasksPage(state, options = {}) {
         <div data-task-active-filters style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:10px;min-height:24px">
           ${activeFilterChips.length ? `<strong style="font-size:.76rem;color:var(--muted)">${escapeHtml(t('activeFilters'))}</strong>${activeFilterChips.map(chip => `<button class="badge mid" type="button" data-task-remove-filter="${escapeHtml(chip.key)}" title="${escapeHtml(t('removeFilter'))}" style="cursor:pointer">${escapeHtml(chip.label)}: ${escapeHtml(chip.value)} x</button>`).join('')}` : `<span style="font-size:.76rem;color:var(--muted);font-weight:800">${escapeHtml(t('noActiveFilters'))}</span>`}
         </div>
-        ${renderTaskTable(visibleTasks, state.data.members || [], { totalCount: tasks.length, filters, categories, selectedTaskIds })}
+        ${renderTaskTable(visibleTasks, state.data.members || [], { totalCount: tasks.length, filters, categories, selectedTaskIds, visibleColumns: [...visibleColumns], taskDensity })}
       </div>
     </section>`;
 }

@@ -74,6 +74,7 @@ const SYNCED_DATA_SIGNATURE_KEY = 'rov_v16_synced_data_signature';
 const PAGE_FEATURES_STORAGE_KEY = 'rov_v16_page_features';
 const MY_TASK_OWNER_STORAGE_KEY = 'rov_v16_my_task_owner';
 const TASK_COLUMNS_STORAGE_KEY = 'rov_v16_task_columns';
+const TASK_DENSITY_STORAGE_KEY = 'rov_v16_task_density';
 const DEFAULT_VISIBLE_PAGE_IDS = ['dashboard', 'prep', 'tasks', 'members', 'intel', 'competition', 'settings'];
 const DEFAULT_TASK_COLUMNS = ['owner', 'due', 'priority', 'category', 'status', 'actions'];
 const ACTION_LOG_LIMIT = 8;
@@ -118,6 +119,7 @@ let actionLog = loadActionLog();
 let visiblePageIds = loadVisiblePageIds();
 let myTaskOwner = loadMyTaskOwner();
 let visibleTaskColumns = loadVisibleTaskColumns();
+let taskDensity = loadTaskDensity();
 let syncStatus = {
   state: hasPendingLocalSync() ? 'pending' : 'idle',
   label: hasPendingLocalSync() ? 'Supabase pending' : 'Supabase ready',
@@ -227,6 +229,20 @@ function setTaskColumnVisible(column, visible) {
   else set.delete(column);
   visibleTaskColumns = normalizeVisibleTaskColumns([...set]);
   saveVisibleTaskColumns();
+}
+
+function normalizeTaskDensity(value = '') {
+  return value === 'compact' ? 'compact' : 'comfortable';
+}
+
+function loadTaskDensity(storage = localStorage) {
+  return normalizeTaskDensity(storage.getItem(TASK_DENSITY_STORAGE_KEY));
+}
+
+function saveTaskDensity(value, storage = localStorage) {
+  taskDensity = normalizeTaskDensity(value);
+  storage.setItem(TASK_DENSITY_STORAGE_KEY, taskDensity);
+  return taskDensity;
 }
 
 function applyMyTasksFilter() {
@@ -1675,7 +1691,7 @@ function renderCurrentPage() {
   if (appState.currentPage === 'prep') return renderPrepCenter(appState, { editingGearId, editingChecklist, prepFocus, filters: prepFilters });
   if (appState.currentPage === 'tasks') {
     pruneSelectedTaskIds();
-    return renderTasksPage(appState, { editingTaskId, addingTask, viewingTaskId, filters: taskFilters, myOwner: myTaskOwner, selectedTaskIds: [...selectedTaskIds], visibleColumns: visibleTaskColumns });
+    return renderTasksPage(appState, { editingTaskId, addingTask, viewingTaskId, filters: taskFilters, myOwner: myTaskOwner, selectedTaskIds: [...selectedTaskIds], visibleColumns: visibleTaskColumns, taskDensity });
   }
   if (appState.currentPage === 'members') return renderMembersPage(appState, { editingMemberId, filters: memberFilters });
   if (appState.currentPage === 'intel') return renderIntelPage(appState, { editingIntelId, editingStrategyId, intelFocus, filters: intelFilters });
@@ -1992,6 +2008,12 @@ appRoot?.addEventListener('click', (event) => {
   const taskColumn = event.target.closest('[data-task-column-toggle]');
   if (taskColumn) {
     setTaskColumnVisible(taskColumn.dataset.taskColumnToggle, taskColumn.checked);
+    renderAppShell();
+    return;
+  }
+  const taskDensityButton = event.target.closest('[data-task-density]');
+  if (taskDensityButton) {
+    saveTaskDensity(taskDensityButton.dataset.taskDensity);
     renderAppShell();
     return;
   }
@@ -2709,6 +2731,26 @@ appRoot?.addEventListener('change', (event) => {
     const message = actionMessage(t('saved'), task ? `${task.name || t('task')} -> ${labelFor(taskCategory.value)}` : labelFor(taskCategory.value));
     captureUndo(message);
     if (updateTask(appState, taskCategory.dataset.taskCategory, { category: taskCategory.value })) persistAndRender(message, { keepUndo: true });
+    return;
+  }
+  const taskOwner = event.target.closest('[data-task-owner]');
+  if (taskOwner) {
+    const task = appState.data.tasks.find(row => Number(row.id) === Number(taskOwner.dataset.taskOwner));
+    const owner = String(taskOwner.value || '').trim() || 'Unassigned';
+    if (task && String(task.owner || 'Unassigned') === owner) return;
+    const message = actionMessage(t('saved'), task ? `${task.name || t('task')} -> ${owner}` : owner);
+    captureUndo(message);
+    if (updateTask(appState, taskOwner.dataset.taskOwner, { owner })) persistAndRender(message, { keepUndo: true });
+    return;
+  }
+  const taskDue = event.target.closest('[data-task-due]');
+  if (taskDue) {
+    const task = appState.data.tasks.find(row => Number(row.id) === Number(taskDue.dataset.taskDue));
+    const due = String(taskDue.value || '');
+    if (task && String(task.due || '') === due) return;
+    const message = actionMessage(t('saved'), task ? `${task.name || t('task')} -> ${due || '-'}` : due || '-');
+    captureUndo(message);
+    if (updateTask(appState, taskDue.dataset.taskDue, { due })) persistAndRender(message, { keepUndo: true });
     return;
   }
   const check = event.target.closest('[data-checklist]');
