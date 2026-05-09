@@ -16,28 +16,28 @@ export const MASTER_DATA_TYPES = {
 };
 
 const TASK_CATEGORY_DETAILS = {
-  'E1 Electronics': { group: 'Engineering Design', zh: '電子工程', en: 'Electronics', folder: '02Electronic' },
-  'E2 Mechanical': { group: 'Engineering Design', zh: '機械工程', en: 'Mechanical', folder: '03Mechanic' },
-  'E3 Software': { group: 'Engineering Design', zh: '軟體開發', en: 'Software', folder: '04Software' },
-  'E4 Buoyancy & Float': { group: 'Engineering Design', zh: '浮力系統', en: 'Buoyancy & Float', folder: '05Float' },
-  'E5 Sensor & Payload': { group: 'Engineering Design', zh: '感測器與載荷', en: 'Sensor & Payload', folder: '新增' },
-  'E6 Power System': { group: 'Engineering Design', zh: '電源系統', en: 'Power System', folder: '新增' },
-  'E7 Testing Log': { group: 'Engineering Design', zh: '測試記錄', en: 'Testing Log', folder: '新增' },
-  'C1 Task Mission': { group: 'Competition Management', zh: '競賽管理', en: 'Task Mission', folder: '新增' },
-  'C1 Technical Report': { group: 'Competition Management', zh: '競賽管理', en: 'Technical Report', folder: '新增' },
-  'C1 Presentation': { group: 'Competition Management', zh: '競賽管理', en: 'Presentation', folder: '08Pilot / 新增' },
-  'C1 Score Analysis': { group: 'Competition Management', zh: '競賽管理', en: 'Score Analysis', folder: '10_2026HK_Score' },
+  'E1 Electronics': { group: 'Engineering Design', zh: '?��?工�?', en: 'Electronics', folder: '02Electronic' },
+  'E2 Mechanical': { group: 'Engineering Design', zh: '機械工�?', en: 'Mechanical', folder: '03Mechanic' },
+  'E3 Software': { group: 'Engineering Design', zh: '軟�??�發', en: 'Software', folder: '04Software' },
+  'E4 Buoyancy & Float': { group: 'Engineering Design', zh: '浮�?系統', en: 'Buoyancy & Float', folder: '05Float' },
+  'E5 Sensor & Payload': { group: 'Engineering Design', zh: '?�測?��?載荷', en: 'Sensor & Payload', folder: '?��?' },
+  'E6 Power System': { group: 'Engineering Design', zh: '?��?系統', en: 'Power System', folder: '?��?' },
+  'E7 Testing Log': { group: 'Engineering Design', zh: '測試記�?', en: 'Testing Log', folder: '?��?' },
+  'C1 Task Mission': { group: 'Competition Management', zh: '競賽管�?', en: 'Task Mission', folder: '?��?' },
+  'C1 Technical Report': { group: 'Competition Management', zh: '競賽管�?', en: 'Technical Report', folder: '?��?' },
+  'C1 Presentation': { group: 'Competition Management', zh: '競賽管�?', en: 'Presentation', folder: '08Pilot / ?��?' },
+  'C1 Score Analysis': { group: 'Competition Management', zh: '競賽管�?', en: 'Score Analysis', folder: '10_2026HK_Score' },
   'L1 Documentation': { group: 'Logistics & Administration', zh: '後勤行政', en: 'Documentation', folder: '01Document' },
   'L1 Finance': { group: 'Logistics & Administration', zh: '後勤行政', en: 'Finance', folder: '06Finance' },
   'L1 Travel': { group: 'Logistics & Administration', zh: '後勤行政', en: 'Travel', folder: 'Travelling' },
-  'L1 Safety': { group: 'Logistics & Administration', zh: '後勤行政', en: 'Safety', folder: '新增' },
-  'P1 Public Relation': { group: 'Public Affairs', zh: '對外事務', en: 'Public Relation', folder: '07Public Relation' },
-  'P1 Marketing Display': { group: 'Public Affairs', zh: '對外事務', en: 'Marketing Display', folder: '09 Marketing Display' },
-  'P1 Sponsorship': { group: 'Public Affairs', zh: '對外事務', en: 'Sponsorship', folder: '新增' },
-  'P1 Media Coverage': { group: 'Public Affairs', zh: '對外事務', en: 'Media Coverage', folder: '新增' },
-  'T1 Training Plan': { group: 'Team Development', zh: '團隊發展', en: 'Training Plan', folder: '新增' },
-  'T1 Meeting Notes': { group: 'Team Development', zh: '團隊發展', en: 'Meeting Notes', folder: '新增' },
-  'T1 Mentor Guidance': { group: 'Team Development', zh: '團隊發展', en: 'Mentor Guidance', folder: '新增' },
+  'L1 Safety': { group: 'Logistics & Administration', zh: '後勤行政', en: 'Safety', folder: '?��?' },
+  'P1 Public Relation': { group: 'Public Affairs', zh: '對�?事�?', en: 'Public Relation', folder: '07Public Relation' },
+  'P1 Marketing Display': { group: 'Public Affairs', zh: '對�?事�?', en: 'Marketing Display', folder: '09 Marketing Display' },
+  'P1 Sponsorship': { group: 'Public Affairs', zh: '對�?事�?', en: 'Sponsorship', folder: '?��?' },
+  'P1 Media Coverage': { group: 'Public Affairs', zh: '對�?事�?', en: 'Media Coverage', folder: '?��?' },
+  'T1 Training Plan': { group: 'Team Development', zh: '?��??��?', en: 'Training Plan', folder: '?��?' },
+  'T1 Meeting Notes': { group: 'Team Development', zh: '?��??��?', en: 'Meeting Notes', folder: '?��?' },
+  'T1 Mentor Guidance': { group: 'Team Development', zh: '?��??��?', en: 'Mentor Guidance', folder: '?��?' },
 };
 
 export const V15_DB_TABLE_LABELS = {
@@ -843,96 +843,6 @@ export function renderSettingsHub(container, options = {}) {
         ` : `<div style="font-size:.82rem;color:var(--muted);font-weight:800">${escapeHtml(t('noSchemaProbe'))}</div>`}
       </div>
 
-      <div id="settings-sync-section" class="card" style="display:none">
-        <div style="display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px">
-          <div>
-            <h2 style="margin-bottom:4px">${escapeHtml(t('supabaseSyncPreview'))}</h2>
-            <div style="font-size:.82rem;color:var(--muted);font-weight:800">${escapeHtml(t('syncPreviewHint'))}</div>
-          </div>
-          <button class="btn btn-sm btn-primary" type="button" data-action="build-sync-preview">${escapeHtml(t('buildPreview'))}</button>
-        </div>
-        ${stats.syncPreview ? `
-          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin-bottom:8px">
-            ${[
-              ['Create', stats.syncPreview.totalCreate],
-              ['Update', stats.syncPreview.totalUpdate],
-              ['Remove', stats.syncPreview.totalRemove],
-              ['Mode', stats.syncPreview.mode],
-            ].map(([label, value]) => `
-              <div style="border:1px solid var(--border);border-radius:8px;background:var(--input-bg);padding:8px">
-                <div style="font-size:.73rem;color:var(--muted);font-weight:900">${escapeHtml(label)}</div>
-                <div style="font-size:1.15rem;font-weight:900;color:var(--navy)">${escapeHtml(value)}</div>
-              </div>
-            `).join('')}
-          </div>
-          <div style="display:grid;gap:6px">
-            ${stats.syncPreview.tables.map(table => `
-              <details style="border:1px solid var(--border);border-radius:8px;background:var(--input-bg);padding:8px">
-                <summary style="display:grid;grid-template-columns:1fr repeat(5,auto);gap:8px;align-items:center;cursor:pointer">
-                  <strong>${escapeHtml(table.label)}</strong>
-                  <span style="font-size:.76rem;color:var(--muted);font-weight:900">L ${escapeHtml(table.local)}</span>
-                  <span style="font-size:.76rem;color:var(--muted);font-weight:900">R ${escapeHtml(table.remote)}</span>
-                  <span class="badge done">+${escapeHtml(table.create)}</span>
-                  <span class="badge mid">~${escapeHtml(table.update)}</span>
-                  <span class="badge urgent">-${escapeHtml(table.remove)}</span>
-                </summary>
-                <div style="display:grid;gap:6px;margin-top:8px">
-                  ${renderSyncDetailGroup('Create', table.details.create)}
-                  ${renderSyncUpdateDetailGroup(table.details.update)}
-                  ${renderSyncDetailGroup('Remove skipped', table.details.remove)}
-                </div>
-              </details>
-            `).join('')}
-          </div>
-          <div style="font-size:.78rem;color:var(--muted);font-weight:800;margin-top:8px">Generated ${escapeHtml(new Date(stats.syncPreview.ts).toLocaleString())}. Writes remain disabled.</div>
-        ` : `<div style="font-size:.82rem;color:var(--muted);font-weight:800">${escapeHtml(t('noPreviewYet'))}</div>`}
-      </div>
-
-      <div id="settings-write-section" class="card" style="display:none">
-        <div style="display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px">
-          <div>
-            <h2 style="margin-bottom:4px">${escapeHtml(t('guardedWriteSync'))}</h2>
-            <div style="font-size:.82rem;color:var(--muted);font-weight:800">${escapeHtml(t('guardedWriteHint'))}</div>
-          </div>
-        </div>
-        <div style="display:grid;gap:8px">
-          <label>${escapeHtml(t('confirmation'))}
-            <input data-sync-confirm placeholder="Type SYNC V16">
-          </label>
-          <div style="display:flex;gap:8px;flex-wrap:wrap">
-            ${['tasks', 'members', 'checklist_items', 'predive_checklist_items'].map(table => `
-              <label style="display:flex;gap:6px;align-items:center;border:1px solid var(--border);border-radius:999px;background:var(--input-bg);padding:5px 9px;font-weight:900;font-size:.8rem">
-                <input type="checkbox" data-sync-table="${escapeHtml(table)}" checked> ${escapeHtml(table)}
-              </label>
-            `).join('')}
-          </div>
-          <button class="btn btn-sm btn-danger" type="button" data-action="execute-guarded-write-sync">${escapeHtml(t('executeGuardedWriteSync'))}</button>
-        </div>
-        ${stats.writeResult ? `
-          <div style="display:grid;gap:6px;margin-top:10px">
-            ${stats.writeResult.results.map(result => `
-              <div style="display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:center;border:1px solid var(--border);border-left:4px solid ${result.ok ? 'var(--green)' : 'var(--red)'};border-radius:8px;background:var(--input-bg);padding:8px">
-                <strong>${escapeHtml(result.table)}</strong>
-                <span class="badge done">wrote ${escapeHtml(result.written)}</span>
-                <span class="badge mid">skipped delete ${escapeHtml(result.skippedDelete)}</span>
-                ${result.droppedFields?.length ? `<span class="badge mid">dropped ${escapeHtml(result.droppedFields.length)}</span>` : ''}
-                ${result.error ? `<div style="grid-column:1/-1;font-size:.76rem;color:var(--red);font-weight:800">${escapeHtml(result.error)}</div>` : ''}
-                ${result.droppedFields?.length ? `<div style="grid-column:1/-1;font-size:.76rem;color:var(--muted);font-weight:800">Dropped fields: ${escapeHtml(result.droppedFields.join(', '))}</div>` : ''}
-              </div>
-            `).join('')}
-            <div style="font-size:.78rem;color:var(--muted);font-weight:800">Executed ${escapeHtml(new Date(stats.writeResult.ts).toLocaleString())}. Delete sync remained disabled.</div>
-          </div>
-        ` : `<div style="font-size:.82rem;color:var(--muted);font-weight:800;margin-top:8px">${escapeHtml(t('noWriteSyncYet'))} Writable fields: tasks(id,name,owner,due,priority,status,cat), members(id,name,role), checklist item_id/label/done/order_index.</div>`}
-        ${stats.postWritePreview ? `
-          <div style="border:1px solid var(--border);border-left:4px solid ${(stats.postWritePreview.totalCreate + stats.postWritePreview.totalUpdate + stats.postWritePreview.totalRemove) === 0 ? 'var(--green)' : 'var(--orange)'};border-radius:8px;background:var(--input-bg);padding:8px;margin-top:10px">
-            <div style="font-size:.82rem;font-weight:900;color:var(--navy)">${escapeHtml(t('postWriteVerification'))}</div>
-            <div style="font-size:.78rem;color:var(--muted);font-weight:800">
-              Remaining diff: create ${escapeHtml(stats.postWritePreview.totalCreate)}, update ${escapeHtml(stats.postWritePreview.totalUpdate)}, remove ${escapeHtml(stats.postWritePreview.totalRemove)}
-            </div>
-          </div>
-        ` : ''}
-      </div>
-
       <div id="settings-audit-section" class="card">
         <div style="display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px">
           <div>
@@ -961,77 +871,6 @@ export function renderSettingsHub(container, options = {}) {
             `).join('')}
           </div>
         ` : `<div style="font-size:.82rem;color:var(--muted);font-weight:800">${escapeHtml(t('noAuditEntries'))}</div>`}
-      </div>
-
-      <div id="settings-rollback-section" class="card" style="display:none">
-        <div style="display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px">
-          <div>
-            <h2 style="margin-bottom:4px">${escapeHtml(t('rollbackFromBackup'))}</h2>
-            <div style="font-size:.82rem;color:var(--muted);font-weight:800">${escapeHtml(t('rollbackHint'))}</div>
-          </div>
-          <div style="display:flex;gap:6px;flex-wrap:wrap">
-            <input type="file" id="v16-backup-restore-file" accept="application/json,.json" style="display:none" data-v16-backup-file>
-            <button class="btn btn-sm" type="button" data-action="export-v16-backup">${escapeHtml(t('exportV16Backup'))}</button>
-            <button class="btn btn-sm btn-primary" type="button" data-action="choose-v16-backup">${escapeHtml(t('restoreV16Backup'))}</button>
-          </div>
-        </div>
-        ${stats.rollbackSummary ? `
-          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px">
-            ${[
-              ['Tasks', stats.rollbackSummary.tasks],
-              ['Members', stats.rollbackSummary.members],
-              ['Runs', stats.rollbackSummary.missionRuns],
-              ['Season', stats.rollbackSummary.season || '-'],
-            ].map(([label, value]) => `
-              <div style="border:1px solid var(--border);border-radius:8px;background:var(--input-bg);padding:8px">
-                <div style="font-size:.73rem;color:var(--muted);font-weight:900">${escapeHtml(label)}</div>
-                <div style="font-size:1.05rem;font-weight:900;color:var(--navy)">${escapeHtml(value)}</div>
-              </div>
-            `).join('')}
-          </div>
-          <div style="font-size:.78rem;color:var(--muted);font-weight:800;margin-top:8px">Restored ${escapeHtml(new Date(stats.rollbackSummary.restoredAt).toLocaleString())} from backup ${escapeHtml(stats.rollbackSummary.exportedAt || '-')}</div>
-        ` : `<div style="font-size:.82rem;color:var(--muted);font-weight:800">${escapeHtml(t('noRollbackYet'))}</div>`}
-        <div style="border:1px solid var(--border);border-left:4px solid var(--red);border-radius:8px;background:var(--input-bg);padding:9px;margin-top:10px;display:grid;gap:7px">
-          <div>
-            <div style="font-size:.84rem;font-weight:900;color:var(--navy)">${escapeHtml(t('resetLocalData'))}</div>
-            <div style="font-size:.78rem;color:var(--muted);font-weight:800">${escapeHtml(t('resetLocalDataHint'))}</div>
-          </div>
-          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-            <button class="btn btn-sm btn-danger" type="button" data-action="reset-v16-local-data">${escapeHtml(t('resetLocalData'))}</button>
-            <span style="font-size:.76rem;color:var(--muted);font-weight:900">RESET V16</span>
-          </div>
-        </div>
-      </div>
-
-      <div id="settings-migration-section" class="card" style="display:none">
-        <div style="display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px">
-          <div>
-            <h2 style="margin-bottom:4px">${escapeHtml(t('v15BackupImport'))}</h2>
-            <div style="font-size:.82rem;color:var(--muted);font-weight:800">${escapeHtml(t('v15BackupImportHint'))}</div>
-          </div>
-          <div style="display:flex;gap:6px;flex-wrap:wrap">
-            <input type="file" id="v15-backup-import-file" accept="application/json,.json" style="display:none" data-v15-backup-file>
-            <button class="btn btn-sm btn-primary" type="button" data-action="choose-v15-backup">${escapeHtml(t('importV15Backup'))}</button>
-          </div>
-        </div>
-        ${stats.migrationSummary ? `
-          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px">
-            ${[
-              ['Tasks', stats.migrationSummary.tasks],
-              ['Members', stats.migrationSummary.members],
-              ['Checklist', stats.migrationSummary.checklist],
-              ['Pre-Dive', stats.migrationSummary.prediveChecklist],
-              ['Runs', stats.migrationSummary.missionRuns],
-              ['Gear', stats.migrationSummary.gearItems],
-            ].map(([label, value]) => `
-              <div style="border:1px solid var(--border);border-radius:8px;background:var(--input-bg);padding:8px">
-                <div style="font-size:.73rem;color:var(--muted);font-weight:900">${escapeHtml(label)}</div>
-                <div style="font-size:1.15rem;font-weight:900;color:var(--navy)">${escapeHtml(value)}</div>
-              </div>
-            `).join('')}
-          </div>
-          <div style="font-size:.78rem;color:var(--muted);font-weight:800;margin-top:8px">Last import: season ${escapeHtml(stats.migrationSummary.season || '-')} | ${escapeHtml(stats.migrationSummary.exportedAt || 'unknown export time')}</div>
-        ` : `<div style="font-size:.82rem;color:var(--muted);font-weight:800">${escapeHtml(t('noV15ImportYet'))}</div>`}
       </div>
 
       <div id="settings-pack-section" class="card">

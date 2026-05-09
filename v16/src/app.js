@@ -1559,10 +1559,7 @@ function runAndRenderSmokeTest() {
     ['smoke panel', '#v16-smoke-report'],
     ['supabase read panel', '#settings-db-section'],
     ['schema panel', '#settings-schema-section'],
-    ['sync preview panel', '#settings-sync-section'],
-    ['write sync panel', '#settings-write-section'],
     ['audit panel', '#settings-audit-section'],
-    ['rollback panel', '#settings-rollback-section'],
   ].forEach(([label, selector]) => addCheck(label, selector));
 
   const failed = checks.filter(check => !check.ok);
@@ -1849,30 +1846,6 @@ appRoot?.addEventListener('click', (event) => {
   }
   if (event.target.closest('[data-action="load-supabase-readonly"]')) {
     loadSupabaseIntoApp({ forceImport: true });
-    return;
-  }
-  if (event.target.closest('[data-action="build-sync-preview"]')) {
-    showToast('Deprecated: v16 now writes directly to Supabase.', 'error');
-    return;
-  }
-  if (event.target.closest('[data-action="execute-guarded-write-sync"]')) {
-    showToast('Deprecated: use normal add/edit/delete. Changes sync to Supabase.', 'error');
-    return;
-  }
-  if (event.target.closest('[data-action="choose-v15-backup"]')) {
-    showToast('Deprecated: v16 uses live Supabase data.', 'error');
-    return;
-  }
-  if (event.target.closest('[data-action="choose-v16-backup"]')) {
-    showToast('Deprecated: v16 uses live Supabase data.', 'error');
-    return;
-  }
-  if (event.target.closest('[data-action="export-v16-backup"]')) {
-    showToast('Deprecated: export diagnostics or handoff report instead.', 'error');
-    return;
-  }
-  if (event.target.closest('[data-action="reset-v16-local-data"]')) {
-    showToast('Deprecated: reload Supabase DB instead.', 'error');
     return;
   }
   if (event.target.closest('[data-action="analyze-float-packets"]')) {

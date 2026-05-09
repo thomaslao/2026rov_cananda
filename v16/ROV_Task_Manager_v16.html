@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
   <meta charset="UTF-8">
@@ -40,7 +40,7 @@
     --input-bg:#101826; --table-hover:#172235;
   }
 
-  /* ── NAV ── */
+  /* ?? NAV ?? */
   nav { background: var(--navy); color: #fff; padding: 6px 20px;
         display: flex; align-items: center; gap: 6px; min-height: 56px;
         position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 8px rgba(0,0,0,.3);
@@ -114,13 +114,13 @@
     to { transform: translateY(0); opacity: 1; }
   }
 
-  /* ── LAYOUT ── */
+  /* ?? LAYOUT ?? */
   .page { display: none; padding: 20px; max-width: 1200px; margin: 0 auto; }
   .page.active { display: block; }
   h1 { font-size: 1.4rem; color: var(--navy); margin-bottom: 16px; }
   h2 { font-size: 1.05rem; color: var(--blue); margin: 18px 0 10px; border-left: 4px solid var(--blue); padding-left: 10px; }
 
-  /* ── CARDS ── */
+  /* ?? CARDS ?? */
   .card { background: var(--white); border-radius: 10px; padding: 16px 20px;
           box-shadow: var(--shadow); margin-bottom: 16px; }
   .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px,1fr)); gap: 9px; }
@@ -253,11 +253,11 @@
     body.competition-print-mode .check-item input { transform:scale(1.25); }
   }
 
-  /* ── PROGRESS BAR ── */
+  /* ?? PROGRESS BAR ?? */
   .prog-wrap { background: #E0E8F0; border-radius: 99px; height: 10px; overflow: hidden; }
   .prog-bar { height: 100%; border-radius: 99px; transition: width .4s; }
 
-  /* ── TAGS / BADGES ── */
+  /* ?? TAGS / BADGES ?? */
   .badge { display: inline-block; padding: 2px 9px; border-radius: 99px;
            font-size: .75rem; font-weight: 700; }
   .badge.urgent { background: #FFD6D6; color: var(--red); }
@@ -266,7 +266,7 @@
   .badge.done { background: var(--lgreen); color: #375623; }
   .badge.inprog { background: #D6EAF8; color: #1A5276; }
 
-  /* ── TASK TABLE ── */
+  /* ?? TASK TABLE ?? */
   table { width: 100%; border-collapse: collapse; font-size: .88rem; }
   th { background: var(--navy); color: #fff; padding: 9px 10px; text-align: left; }
   td { padding: 9px 10px; border-bottom: 1px solid var(--border); vertical-align: middle; }
@@ -288,7 +288,7 @@
   .sortable-ghost { opacity: .45; background: var(--lblue) !important; }
   .batch-bar { display:none; gap:8px; flex-wrap:wrap; align-items:center; padding:10px 14px; margin-bottom:10px; border:1px solid var(--border); border-radius:8px; background:var(--white); box-shadow:var(--shadow); }
   .batch-bar.show { display:flex; }
-  /* Mission Run 備註／賽中事件：保留換行以便閱讀 */
+  /* Mission Run ?酉嚗魚銝凋?隞塚?靽???隞乩噶?梯? */
   .mission-note-cell { white-space: pre-wrap; word-break: break-word; line-height: 1.45; max-width: min(520px, 42vw); }
 
   label {
@@ -360,7 +360,7 @@
   .prep-entry-row { display:grid; grid-template-columns:minmax(0,1fr) auto auto; gap:8px; align-items:end; }
   .prep-gear-entry-row { display:grid; grid-template-columns:minmax(0,2fr) minmax(0,1fr) 90px auto auto; gap:8px; align-items:end; }
 
-  /* ── GANTT ── */
+  /* ?? GANTT ?? */
   .gantt-wrap { overflow-x: auto; }
   .gantt-table { border-collapse: collapse; font-size: .78rem; min-width: 900px; }
   .gantt-table th, .gantt-table td { border: 1px solid #dde3ee; padding: 4px 5px; white-space: nowrap; }
@@ -373,7 +373,7 @@
   .g-admin { background: #7030A0; }
   .g-weekend { background: #F0F0F0 !important; }
 
-  /* ── CHECKLIST ── */
+  /* ?? CHECKLIST ?? */
   .check-section { margin-bottom: 12px; }
   .check-section h3 { font-size: .92rem; font-weight: 700; padding: 6px 12px;
                       border-radius: 6px; margin-bottom: 6px; }
@@ -406,7 +406,7 @@
   .check-time { font-size: .75rem; color: #aaa; white-space: nowrap; }
   .checked label { text-decoration: line-through; color: #aaa; }
 
-  /* ── MEMBER CARDS ── */
+  /* ?? MEMBER CARDS ?? */
   .member-grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(260px,1fr)); gap: 14px; }
   .member-card { background: var(--white); border-radius: 10px; padding: 14px 16px;
                  box-shadow: var(--shadow); border-left: 4px solid var(--blue);
@@ -434,7 +434,7 @@
   .owner-source-badge { display:inline-block; border-radius:99px; padding:2px 7px; font-size:.7rem; font-weight:900; background:#E8EEF8; color:var(--navy); }
   @media (max-width: 900px) { .owner-settings-grid { grid-template-columns:1fr; } }
 
-  /* ── MODAL ── */
+  /* ?? MODAL ?? */
   .modal-bg { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 200;
               align-items: center; justify-content: center; }
   .modal-bg.open { display: flex; }
@@ -453,7 +453,7 @@
   .task-input-row button { flex-shrink: 0; padding: 5px 10px; background: var(--red); color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: .8rem; }
   #member-tasks-list-edit { margin-bottom: 8px; }
 
-  /* ── TIMELINE ── */
+  /* ?? TIMELINE ?? */
   .timeline { position: relative; padding-left: 28px; }
   .timeline::before { content:''; position:absolute; left:10px; top:0; bottom:0;
                       width:2px; background: var(--lblue); }
@@ -469,7 +469,7 @@
   .tl-content { background: var(--white); border-radius: 8px; padding: 10px 14px;
                 box-shadow: var(--shadow); font-size: .88rem; }
 
-  /* ── NOTES ── */
+  /* ?? NOTES ?? */
   .quote-item { border-left: 4px solid var(--blue); padding: 8px 14px; margin: 8px 0; color: #444; font-style: italic; background: #f8f9ff; border-radius: 0 6px 6px 0; display:flex; align-items:flex-start; gap:8px; }
   .quote-item:nth-child(3n+1) { border-color: var(--blue); background:#f0f5ff; }
   .quote-item:nth-child(3n+2) { border-color: var(--green); background:#f0fff4; }
@@ -480,7 +480,7 @@
   #notes-area { width:100%; height:180px; resize:vertical; padding:10px;
                 border:1px solid var(--border); border-radius:8px; font-size:.88rem; }
 
-  /* ── SKELETON LOADER ── */
+  /* ?? SKELETON LOADER ?? */
   .skeleton-card { background: var(--white); border-radius:10px; padding:16px 20px; box-shadow:var(--shadow); margin-bottom:16px; }
   .skeleton-line { height:12px; border-radius:99px; margin:9px 0; background:linear-gradient(90deg, rgba(150,160,180,.18), rgba(150,160,180,.34), rgba(150,160,180,.18)); background-size:200% 100%; animation:skeleton-wave 1.1s ease-in-out infinite; }
   .skeleton-line.short { width:42%; }
@@ -488,7 +488,7 @@
   @keyframes skeleton-wave { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
 
 
-  /* ── TOAST ── */
+  /* ?? TOAST ?? */
   #toast { position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(80px);
            background:var(--navy); color:#fff; padding:10px 22px; border-radius:8px;
            font-size:.88rem; font-weight:600; z-index:999; opacity:0;
@@ -526,7 +526,7 @@
     .mode-tab { flex:1 1 calc(50% - 8px); min-height:42px; padding:8px 10px; }
   }
 
-  /* ── NAV BADGE (逾期角標) ── */
+  /* ?? NAV BADGE (?暹?閫?) ?? */
   .nav-badge-wrap { position: relative; display: inline-flex; align-items: center; }
   .nav-badge { position: absolute; top: -6px; right: -8px; background: var(--red);
                color: #fff; font-size: .62rem; font-weight: 800; border-radius: 99px;
@@ -541,8 +541,8 @@
   .badge[onclick]:hover { filter:brightness(1.08); transform:scale(1.03); }
   details.card > summary { cursor:pointer; list-style:none; font-weight:900; color:var(--navy); display:flex; align-items:center; justify-content:space-between; gap:10px; }
   details.card > summary::-webkit-details-marker { display:none; }
-  details.card > summary::after { content:'展開'; font-size:.74rem; color:var(--muted); border:1px solid var(--border); border-radius:99px; padding:2px 8px; }
-  details.card[open] > summary::after { content:'收合'; }
+  details.card > summary::after { content:'撅?'; font-size:.74rem; color:var(--muted); border:1px solid var(--border); border-radius:99px; padding:2px 8px; }
+  details.card[open] > summary::after { content:'?嗅?'; }
   .card-header { display:flex; justify-content:space-between; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:8px; }
   .card-header-title { color:var(--navy); font-weight:900; margin:0; }
   .card-actions { display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end; align-items:center; }
@@ -618,7 +618,7 @@
 window.addEventListener('error', (event) => {
   const app = document.getElementById('app');
   if (!app) return;
-  app.innerHTML = '<div style="padding:24px;font-family:Arial,sans-serif;color:#8a1f11;background:#fff3f0;border:1px solid #f0b8aa;margin:16px;border-radius:8px"><strong>ROV Task Manager v16 failed to load / 載入失敗</strong><div style="margin-top:8px;white-space:pre-wrap">' + String(event.message || event.error || 'Unknown error') + '</div></div>';
+  app.innerHTML = '<div style="padding:24px;font-family:Arial,sans-serif;color:#8a1f11;background:#fff3f0;border:1px solid #f0b8aa;margin:16px;border-radius:8px"><strong>ROV Task Manager v16 failed to load / 頛憭望?</strong><div style="margin-top:8px;white-space:pre-wrap">' + String(event.message || event.error || 'Unknown error') + '</div></div>';
 });
 const __src_data_defaults_js = (() => {
 
@@ -2096,7 +2096,7 @@ function taskDedupeKey(task) {
 }
 
 function preferRicherTask(current, next) {
-  const statusRank = { Done: 3, Completed: 3, '已完成': 3, '進行中': 2, 'In Progress': 2, Open: 1, '待辦': 1 };
+  const statusRank = { Done: 3, Completed: 3, '撌脣???: 3, '?脰?銝?: 2, 'In Progress': 2, Open: 1, '敺齒': 1 };
   const score = task => [
     task.notes,
     task.category,
@@ -3097,7 +3097,7 @@ function renderTaskTable(tasks = [], members = [], options = {}) {
     const activeAsc = filters.sort === asc;
     const activeDesc = filters.sort === desc;
     const nextSort = activeAsc ? desc : asc;
-    const mark = activeAsc ? '↑' : activeDesc ? '↓' : '';
+    const mark = activeAsc ? '?? : activeDesc ? '?? : '';
     return `<th class="task-sort-th task-col-${escapeHtml(column)}"><button class="task-sort-button" type="button" data-task-header-sort="${escapeHtml(nextSort)}" aria-label="${escapeHtml(`${label} ${t('sort')}`)}">${escapeHtml(label)}<span>${escapeHtml(mark)}</span></button></th>`;
   };
   return `
@@ -3496,7 +3496,7 @@ function renderNavigation(currentPage) {
           ${V16_PAGES.map(page => `
             <button class="btn btn-sm ${page.id === currentPage ? 'btn-primary' : ''}" type="button" data-page="${page.id}">${t(page.labelKey)}</button>
           `).join('')}
-          <button class="btn btn-sm btn-primary" type="button" data-locale-toggle data-next-locale="${nextLocale}" title="${locale === 'zh' ? 'Switch to English' : '切換到繁中'}">繁中 / EN</button>
+          <button class="btn btn-sm btn-primary" type="button" data-locale-toggle data-next-locale="${nextLocale}" title="${locale === 'zh' ? 'Switch to English' : '???啁?銝?}">蝜葉 / EN</button>
         </div>
       </div>
     </nav>`;
@@ -5002,28 +5002,28 @@ const MASTER_DATA_TYPES = {
 };
 
 const TASK_CATEGORY_DETAILS = {
-  'E1 Electronics': { group: 'Engineering Design', zh: '電子工程', en: 'Electronics', folder: '02Electronic' },
-  'E2 Mechanical': { group: 'Engineering Design', zh: '機械工程', en: 'Mechanical', folder: '03Mechanic' },
-  'E3 Software': { group: 'Engineering Design', zh: '軟體開發', en: 'Software', folder: '04Software' },
-  'E4 Buoyancy & Float': { group: 'Engineering Design', zh: '浮力系統', en: 'Buoyancy & Float', folder: '05Float' },
-  'E5 Sensor & Payload': { group: 'Engineering Design', zh: '感測器與載荷', en: 'Sensor & Payload', folder: '新增' },
-  'E6 Power System': { group: 'Engineering Design', zh: '電源系統', en: 'Power System', folder: '新增' },
-  'E7 Testing Log': { group: 'Engineering Design', zh: '測試記錄', en: 'Testing Log', folder: '新增' },
-  'C1 Task Mission': { group: 'Competition Management', zh: '競賽管理', en: 'Task Mission', folder: '新增' },
-  'C1 Technical Report': { group: 'Competition Management', zh: '競賽管理', en: 'Technical Report', folder: '新增' },
-  'C1 Presentation': { group: 'Competition Management', zh: '競賽管理', en: 'Presentation', folder: '08Pilot / 新增' },
-  'C1 Score Analysis': { group: 'Competition Management', zh: '競賽管理', en: 'Score Analysis', folder: '10_2026HK_Score' },
-  'L1 Documentation': { group: 'Logistics & Administration', zh: '後勤行政', en: 'Documentation', folder: '01Document' },
-  'L1 Finance': { group: 'Logistics & Administration', zh: '後勤行政', en: 'Finance', folder: '06Finance' },
-  'L1 Travel': { group: 'Logistics & Administration', zh: '後勤行政', en: 'Travel', folder: 'Travelling' },
-  'L1 Safety': { group: 'Logistics & Administration', zh: '後勤行政', en: 'Safety', folder: '新增' },
-  'P1 Public Relation': { group: 'Public Affairs', zh: '對外事務', en: 'Public Relation', folder: '07Public Relation' },
-  'P1 Marketing Display': { group: 'Public Affairs', zh: '對外事務', en: 'Marketing Display', folder: '09 Marketing Display' },
-  'P1 Sponsorship': { group: 'Public Affairs', zh: '對外事務', en: 'Sponsorship', folder: '新增' },
-  'P1 Media Coverage': { group: 'Public Affairs', zh: '對外事務', en: 'Media Coverage', folder: '新增' },
-  'T1 Training Plan': { group: 'Team Development', zh: '團隊發展', en: 'Training Plan', folder: '新增' },
-  'T1 Meeting Notes': { group: 'Team Development', zh: '團隊發展', en: 'Meeting Notes', folder: '新增' },
-  'T1 Mentor Guidance': { group: 'Team Development', zh: '團隊發展', en: 'Mentor Guidance', folder: '新增' },
+  'E1 Electronics': { group: 'Engineering Design', zh: '?餃?撌亦?', en: 'Electronics', folder: '02Electronic' },
+  'E2 Mechanical': { group: 'Engineering Design', zh: '璈１撌亦?', en: 'Mechanical', folder: '03Mechanic' },
+  'E3 Software': { group: 'Engineering Design', zh: '頠??', en: 'Software', folder: '04Software' },
+  'E4 Buoyancy & Float': { group: 'Engineering Design', zh: '瘚桀?蝟餌絞', en: 'Buoyancy & Float', folder: '05Float' },
+  'E5 Sensor & Payload': { group: 'Engineering Design', zh: '?葫?刻?頛', en: 'Sensor & Payload', folder: '?啣?' },
+  'E6 Power System': { group: 'Engineering Design', zh: '?餅?蝟餌絞', en: 'Power System', folder: '?啣?' },
+  'E7 Testing Log': { group: 'Engineering Design', zh: '皜祈岫閮?', en: 'Testing Log', folder: '?啣?' },
+  'C1 Task Mission': { group: 'Competition Management', zh: '蝡嗉魚蝞∠?', en: 'Task Mission', folder: '?啣?' },
+  'C1 Technical Report': { group: 'Competition Management', zh: '蝡嗉魚蝞∠?', en: 'Technical Report', folder: '?啣?' },
+  'C1 Presentation': { group: 'Competition Management', zh: '蝡嗉魚蝞∠?', en: 'Presentation', folder: '08Pilot / ?啣?' },
+  'C1 Score Analysis': { group: 'Competition Management', zh: '蝡嗉魚蝞∠?', en: 'Score Analysis', folder: '10_2026HK_Score' },
+  'L1 Documentation': { group: 'Logistics & Administration', zh: '敺銵', en: 'Documentation', folder: '01Document' },
+  'L1 Finance': { group: 'Logistics & Administration', zh: '敺銵', en: 'Finance', folder: '06Finance' },
+  'L1 Travel': { group: 'Logistics & Administration', zh: '敺銵', en: 'Travel', folder: 'Travelling' },
+  'L1 Safety': { group: 'Logistics & Administration', zh: '敺銵', en: 'Safety', folder: '?啣?' },
+  'P1 Public Relation': { group: 'Public Affairs', zh: '撠?鈭?', en: 'Public Relation', folder: '07Public Relation' },
+  'P1 Marketing Display': { group: 'Public Affairs', zh: '撠?鈭?', en: 'Marketing Display', folder: '09 Marketing Display' },
+  'P1 Sponsorship': { group: 'Public Affairs', zh: '撠?鈭?', en: 'Sponsorship', folder: '?啣?' },
+  'P1 Media Coverage': { group: 'Public Affairs', zh: '撠?鈭?', en: 'Media Coverage', folder: '?啣?' },
+  'T1 Training Plan': { group: 'Team Development', zh: '???澆?', en: 'Training Plan', folder: '?啣?' },
+  'T1 Meeting Notes': { group: 'Team Development', zh: '???澆?', en: 'Meeting Notes', folder: '?啣?' },
+  'T1 Mentor Guidance': { group: 'Team Development', zh: '???澆?', en: 'Mentor Guidance', folder: '?啣?' },
 };
 
 const V15_DB_TABLE_LABELS = {
@@ -5829,96 +5829,6 @@ function renderSettingsHub(container, options = {}) {
         ` : `<div style="font-size:.82rem;color:var(--muted);font-weight:800">${escapeHtml(t('noSchemaProbe'))}</div>`}
       </div>
 
-      <div id="settings-sync-section" class="card" style="display:none">
-        <div style="display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px">
-          <div>
-            <h2 style="margin-bottom:4px">${escapeHtml(t('supabaseSyncPreview'))}</h2>
-            <div style="font-size:.82rem;color:var(--muted);font-weight:800">${escapeHtml(t('syncPreviewHint'))}</div>
-          </div>
-          <button class="btn btn-sm btn-primary" type="button" data-action="build-sync-preview">${escapeHtml(t('buildPreview'))}</button>
-        </div>
-        ${stats.syncPreview ? `
-          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin-bottom:8px">
-            ${[
-              ['Create', stats.syncPreview.totalCreate],
-              ['Update', stats.syncPreview.totalUpdate],
-              ['Remove', stats.syncPreview.totalRemove],
-              ['Mode', stats.syncPreview.mode],
-            ].map(([label, value]) => `
-              <div style="border:1px solid var(--border);border-radius:8px;background:var(--input-bg);padding:8px">
-                <div style="font-size:.73rem;color:var(--muted);font-weight:900">${escapeHtml(label)}</div>
-                <div style="font-size:1.15rem;font-weight:900;color:var(--navy)">${escapeHtml(value)}</div>
-              </div>
-            `).join('')}
-          </div>
-          <div style="display:grid;gap:6px">
-            ${stats.syncPreview.tables.map(table => `
-              <details style="border:1px solid var(--border);border-radius:8px;background:var(--input-bg);padding:8px">
-                <summary style="display:grid;grid-template-columns:1fr repeat(5,auto);gap:8px;align-items:center;cursor:pointer">
-                  <strong>${escapeHtml(table.label)}</strong>
-                  <span style="font-size:.76rem;color:var(--muted);font-weight:900">L ${escapeHtml(table.local)}</span>
-                  <span style="font-size:.76rem;color:var(--muted);font-weight:900">R ${escapeHtml(table.remote)}</span>
-                  <span class="badge done">+${escapeHtml(table.create)}</span>
-                  <span class="badge mid">~${escapeHtml(table.update)}</span>
-                  <span class="badge urgent">-${escapeHtml(table.remove)}</span>
-                </summary>
-                <div style="display:grid;gap:6px;margin-top:8px">
-                  ${renderSyncDetailGroup('Create', table.details.create)}
-                  ${renderSyncUpdateDetailGroup(table.details.update)}
-                  ${renderSyncDetailGroup('Remove skipped', table.details.remove)}
-                </div>
-              </details>
-            `).join('')}
-          </div>
-          <div style="font-size:.78rem;color:var(--muted);font-weight:800;margin-top:8px">Generated ${escapeHtml(new Date(stats.syncPreview.ts).toLocaleString())}. Writes remain disabled.</div>
-        ` : `<div style="font-size:.82rem;color:var(--muted);font-weight:800">${escapeHtml(t('noPreviewYet'))}</div>`}
-      </div>
-
-      <div id="settings-write-section" class="card" style="display:none">
-        <div style="display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px">
-          <div>
-            <h2 style="margin-bottom:4px">${escapeHtml(t('guardedWriteSync'))}</h2>
-            <div style="font-size:.82rem;color:var(--muted);font-weight:800">${escapeHtml(t('guardedWriteHint'))}</div>
-          </div>
-        </div>
-        <div style="display:grid;gap:8px">
-          <label>${escapeHtml(t('confirmation'))}
-            <input data-sync-confirm placeholder="Type SYNC V16">
-          </label>
-          <div style="display:flex;gap:8px;flex-wrap:wrap">
-            ${['tasks', 'members', 'checklist_items', 'predive_checklist_items'].map(table => `
-              <label style="display:flex;gap:6px;align-items:center;border:1px solid var(--border);border-radius:999px;background:var(--input-bg);padding:5px 9px;font-weight:900;font-size:.8rem">
-                <input type="checkbox" data-sync-table="${escapeHtml(table)}" checked> ${escapeHtml(table)}
-              </label>
-            `).join('')}
-          </div>
-          <button class="btn btn-sm btn-danger" type="button" data-action="execute-guarded-write-sync">${escapeHtml(t('executeGuardedWriteSync'))}</button>
-        </div>
-        ${stats.writeResult ? `
-          <div style="display:grid;gap:6px;margin-top:10px">
-            ${stats.writeResult.results.map(result => `
-              <div style="display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:center;border:1px solid var(--border);border-left:4px solid ${result.ok ? 'var(--green)' : 'var(--red)'};border-radius:8px;background:var(--input-bg);padding:8px">
-                <strong>${escapeHtml(result.table)}</strong>
-                <span class="badge done">wrote ${escapeHtml(result.written)}</span>
-                <span class="badge mid">skipped delete ${escapeHtml(result.skippedDelete)}</span>
-                ${result.droppedFields?.length ? `<span class="badge mid">dropped ${escapeHtml(result.droppedFields.length)}</span>` : ''}
-                ${result.error ? `<div style="grid-column:1/-1;font-size:.76rem;color:var(--red);font-weight:800">${escapeHtml(result.error)}</div>` : ''}
-                ${result.droppedFields?.length ? `<div style="grid-column:1/-1;font-size:.76rem;color:var(--muted);font-weight:800">Dropped fields: ${escapeHtml(result.droppedFields.join(', '))}</div>` : ''}
-              </div>
-            `).join('')}
-            <div style="font-size:.78rem;color:var(--muted);font-weight:800">Executed ${escapeHtml(new Date(stats.writeResult.ts).toLocaleString())}. Delete sync remained disabled.</div>
-          </div>
-        ` : `<div style="font-size:.82rem;color:var(--muted);font-weight:800;margin-top:8px">${escapeHtml(t('noWriteSyncYet'))} Writable fields: tasks(id,name,owner,due,priority,status,cat), members(id,name,role), checklist item_id/label/done/order_index.</div>`}
-        ${stats.postWritePreview ? `
-          <div style="border:1px solid var(--border);border-left:4px solid ${(stats.postWritePreview.totalCreate + stats.postWritePreview.totalUpdate + stats.postWritePreview.totalRemove) === 0 ? 'var(--green)' : 'var(--orange)'};border-radius:8px;background:var(--input-bg);padding:8px;margin-top:10px">
-            <div style="font-size:.82rem;font-weight:900;color:var(--navy)">${escapeHtml(t('postWriteVerification'))}</div>
-            <div style="font-size:.78rem;color:var(--muted);font-weight:800">
-              Remaining diff: create ${escapeHtml(stats.postWritePreview.totalCreate)}, update ${escapeHtml(stats.postWritePreview.totalUpdate)}, remove ${escapeHtml(stats.postWritePreview.totalRemove)}
-            </div>
-          </div>
-        ` : ''}
-      </div>
-
       <div id="settings-audit-section" class="card">
         <div style="display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px">
           <div>
@@ -5947,77 +5857,6 @@ function renderSettingsHub(container, options = {}) {
             `).join('')}
           </div>
         ` : `<div style="font-size:.82rem;color:var(--muted);font-weight:800">${escapeHtml(t('noAuditEntries'))}</div>`}
-      </div>
-
-      <div id="settings-rollback-section" class="card" style="display:none">
-        <div style="display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px">
-          <div>
-            <h2 style="margin-bottom:4px">${escapeHtml(t('rollbackFromBackup'))}</h2>
-            <div style="font-size:.82rem;color:var(--muted);font-weight:800">${escapeHtml(t('rollbackHint'))}</div>
-          </div>
-          <div style="display:flex;gap:6px;flex-wrap:wrap">
-            <input type="file" id="v16-backup-restore-file" accept="application/json,.json" style="display:none" data-v16-backup-file>
-            <button class="btn btn-sm" type="button" data-action="export-v16-backup">${escapeHtml(t('exportV16Backup'))}</button>
-            <button class="btn btn-sm btn-primary" type="button" data-action="choose-v16-backup">${escapeHtml(t('restoreV16Backup'))}</button>
-          </div>
-        </div>
-        ${stats.rollbackSummary ? `
-          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px">
-            ${[
-              ['Tasks', stats.rollbackSummary.tasks],
-              ['Members', stats.rollbackSummary.members],
-              ['Runs', stats.rollbackSummary.missionRuns],
-              ['Season', stats.rollbackSummary.season || '-'],
-            ].map(([label, value]) => `
-              <div style="border:1px solid var(--border);border-radius:8px;background:var(--input-bg);padding:8px">
-                <div style="font-size:.73rem;color:var(--muted);font-weight:900">${escapeHtml(label)}</div>
-                <div style="font-size:1.05rem;font-weight:900;color:var(--navy)">${escapeHtml(value)}</div>
-              </div>
-            `).join('')}
-          </div>
-          <div style="font-size:.78rem;color:var(--muted);font-weight:800;margin-top:8px">Restored ${escapeHtml(new Date(stats.rollbackSummary.restoredAt).toLocaleString())} from backup ${escapeHtml(stats.rollbackSummary.exportedAt || '-')}</div>
-        ` : `<div style="font-size:.82rem;color:var(--muted);font-weight:800">${escapeHtml(t('noRollbackYet'))}</div>`}
-        <div style="border:1px solid var(--border);border-left:4px solid var(--red);border-radius:8px;background:var(--input-bg);padding:9px;margin-top:10px;display:grid;gap:7px">
-          <div>
-            <div style="font-size:.84rem;font-weight:900;color:var(--navy)">${escapeHtml(t('resetLocalData'))}</div>
-            <div style="font-size:.78rem;color:var(--muted);font-weight:800">${escapeHtml(t('resetLocalDataHint'))}</div>
-          </div>
-          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-            <button class="btn btn-sm btn-danger" type="button" data-action="reset-v16-local-data">${escapeHtml(t('resetLocalData'))}</button>
-            <span style="font-size:.76rem;color:var(--muted);font-weight:900">RESET V16</span>
-          </div>
-        </div>
-      </div>
-
-      <div id="settings-migration-section" class="card" style="display:none">
-        <div style="display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px">
-          <div>
-            <h2 style="margin-bottom:4px">${escapeHtml(t('v15BackupImport'))}</h2>
-            <div style="font-size:.82rem;color:var(--muted);font-weight:800">${escapeHtml(t('v15BackupImportHint'))}</div>
-          </div>
-          <div style="display:flex;gap:6px;flex-wrap:wrap">
-            <input type="file" id="v15-backup-import-file" accept="application/json,.json" style="display:none" data-v15-backup-file>
-            <button class="btn btn-sm btn-primary" type="button" data-action="choose-v15-backup">${escapeHtml(t('importV15Backup'))}</button>
-          </div>
-        </div>
-        ${stats.migrationSummary ? `
-          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px">
-            ${[
-              ['Tasks', stats.migrationSummary.tasks],
-              ['Members', stats.migrationSummary.members],
-              ['Checklist', stats.migrationSummary.checklist],
-              ['Pre-Dive', stats.migrationSummary.prediveChecklist],
-              ['Runs', stats.migrationSummary.missionRuns],
-              ['Gear', stats.migrationSummary.gearItems],
-            ].map(([label, value]) => `
-              <div style="border:1px solid var(--border);border-radius:8px;background:var(--input-bg);padding:8px">
-                <div style="font-size:.73rem;color:var(--muted);font-weight:900">${escapeHtml(label)}</div>
-                <div style="font-size:1.15rem;font-weight:900;color:var(--navy)">${escapeHtml(value)}</div>
-              </div>
-            `).join('')}
-          </div>
-          <div style="font-size:.78rem;color:var(--muted);font-weight:800;margin-top:8px">Last import: season ${escapeHtml(stats.migrationSummary.season || '-')} | ${escapeHtml(stats.migrationSummary.exportedAt || 'unknown export time')}</div>
-        ` : `<div style="font-size:.82rem;color:var(--muted);font-weight:800">${escapeHtml(t('noV15ImportYet'))}</div>`}
       </div>
 
       <div id="settings-pack-section" class="card">
@@ -7236,7 +7075,7 @@ async function runAutoSupabaseSync() {
 }
 
 function stripSentenceEnd(value = '') {
-  return String(value || '').replace(/[.。]+$/, '');
+  return String(value || '').replace(/[.?+$/, '');
 }
 
 function actionMessage(baseMessage, label = '') {
@@ -8084,10 +7923,7 @@ function runAndRenderSmokeTest() {
     ['smoke panel', '#v16-smoke-report'],
     ['supabase read panel', '#settings-db-section'],
     ['schema panel', '#settings-schema-section'],
-    ['sync preview panel', '#settings-sync-section'],
-    ['write sync panel', '#settings-write-section'],
     ['audit panel', '#settings-audit-section'],
-    ['rollback panel', '#settings-rollback-section'],
   ].forEach(([label, selector]) => addCheck(label, selector));
 
   const failed = checks.filter(check => !check.ok);
@@ -8374,30 +8210,6 @@ appRoot?.addEventListener('click', (event) => {
   }
   if (event.target.closest('[data-action="load-supabase-readonly"]')) {
     loadSupabaseIntoApp({ forceImport: true });
-    return;
-  }
-  if (event.target.closest('[data-action="build-sync-preview"]')) {
-    showToast('Deprecated: v16 now writes directly to Supabase.', 'error');
-    return;
-  }
-  if (event.target.closest('[data-action="execute-guarded-write-sync"]')) {
-    showToast('Deprecated: use normal add/edit/delete. Changes sync to Supabase.', 'error');
-    return;
-  }
-  if (event.target.closest('[data-action="choose-v15-backup"]')) {
-    showToast('Deprecated: v16 uses live Supabase data.', 'error');
-    return;
-  }
-  if (event.target.closest('[data-action="choose-v16-backup"]')) {
-    showToast('Deprecated: v16 uses live Supabase data.', 'error');
-    return;
-  }
-  if (event.target.closest('[data-action="export-v16-backup"]')) {
-    showToast('Deprecated: export diagnostics or handoff report instead.', 'error');
-    return;
-  }
-  if (event.target.closest('[data-action="reset-v16-local-data"]')) {
-    showToast('Deprecated: reload Supabase DB instead.', 'error');
     return;
   }
   if (event.target.closest('[data-action="analyze-float-packets"]')) {
