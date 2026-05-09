@@ -689,11 +689,11 @@ export function renderSettingsHub(container, options = {}) {
         ${stats.dbStatus ? `
           <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin-bottom:8px">
             ${[
-              ['Source', stats.dbStatus.source || 'v15 production Supabase DB'],
-              ['Mode', stats.dbStatus.readOnly === false ? 'Write-enabled' : 'Read-only'],
+              ['Source', 'Supabase live database'],
+              ['Mode', 'Read/write online'],
               ['Loaded', stats.dbStatus.loadedAt ? new Date(stats.dbStatus.loadedAt).toLocaleTimeString() : '-'],
               ['Load ms', stats.dbStatus.loadMs ?? '-'],
-              ['Status', stats.dbStatus.error ? 'Error' : (v15DbReadiness.ok ? 'Read-only complete' : 'Read-only partial')],
+              ['Status', stats.dbStatus.error ? 'Error' : (v15DbReadiness.ok ? 'Live data complete' : 'Live data partial')],
             ].map(([label, value]) => `
               <div style="border:1px solid var(--border);border-radius:8px;background:var(--input-bg);padding:8px">
                 <div style="font-size:.73rem;color:var(--muted);font-weight:900">${escapeHtml(label)}</div>
@@ -704,10 +704,10 @@ export function renderSettingsHub(container, options = {}) {
           ${stats.dbStatus.error ? `<div style="font-size:.82rem;color:var(--red);font-weight:900">${escapeHtml(stats.dbStatus.error)}</div>` : `
             <div data-v15-db-coverage style="border:1px solid var(--border);border-radius:8px;background:var(--white);padding:8px;margin-bottom:8px">
               <div style="display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:7px">
-                <div style="font-size:.8rem;font-weight:900;color:var(--navy)">V15 Supabase coverage</div>
+                <div style="font-size:.8rem;font-weight:900;color:var(--navy)">Supabase table coverage</div>
                 <span class="badge ${v15DbReadiness.ok ? 'done' : 'urgent'}">${escapeHtml(v15DbReadiness.label)}</span>
               </div>
-              ${v15DbReadiness.warning ? `<div data-v15-db-readiness-warning style="font-size:.78rem;color:var(--orange);font-weight:900;margin-bottom:7px">${escapeHtml(v15DbReadiness.warning)}</div>` : `<div data-v15-db-readiness-warning style="font-size:.78rem;color:var(--green);font-weight:900;margin-bottom:7px">V15 DB coverage complete.</div>`}
+              ${v15DbReadiness.warning ? `<div data-v15-db-readiness-warning style="font-size:.78rem;color:var(--orange);font-weight:900;margin-bottom:7px">${escapeHtml(v15DbReadiness.warning.replace('V15 DB', 'Supabase'))}</div>` : `<div data-v15-db-readiness-warning style="font-size:.78rem;color:var(--green);font-weight:900;margin-bottom:7px">Supabase table coverage complete.</div>`}
               <div style="display:flex;gap:5px;flex-wrap:wrap">
                 ${DB_TABLES.map((table) => {
                   const row = stats.dbStatus.tables?.[table];
@@ -720,7 +720,7 @@ export function renderSettingsHub(container, options = {}) {
               </div>
               ${Object.entries(stats.dbStatus.tables || {}).some(([, row]) => row?.error) ? `
                 <div data-v15-db-table-errors style="border-top:1px solid var(--border);margin-top:8px;padding-top:8px;display:grid;gap:5px">
-                  <div style="font-size:.76rem;color:var(--muted);font-weight:900">V15 Supabase table errors</div>
+                  <div style="font-size:.76rem;color:var(--muted);font-weight:900">Supabase table errors</div>
                   ${Object.entries(stats.dbStatus.tables || {})
                     .filter(([, row]) => row?.error)
                     .map(([table, row]) => `
@@ -735,7 +735,7 @@ export function renderSettingsHub(container, options = {}) {
             ${stats.dbStatus.dedupeSummary ? `
               <div data-v15-import-dedupe-summary style="border:1px solid var(--border);border-radius:8px;background:var(--white);padding:8px;margin-bottom:8px">
                 <div style="display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:7px">
-                  <div style="font-size:.8rem;font-weight:900;color:var(--navy)">V15 Import dedupe</div>
+                  <div style="font-size:.8rem;font-weight:900;color:var(--navy)">Live data dedupe</div>
                   <span class="badge ${Object.values(stats.dbStatus.dedupeSummary).some(Boolean) ? 'mid' : 'done'}">${escapeHtml(Object.values(stats.dbStatus.dedupeSummary).reduce((sum, value) => sum + Number(value || 0), 0))}</span>
                 </div>
                 <div style="display:flex;gap:5px;flex-wrap:wrap">
@@ -745,12 +745,12 @@ export function renderSettingsHub(container, options = {}) {
             ` : ''}
             <div data-v15-audit-preview style="border:1px solid var(--border);border-radius:8px;background:var(--white);padding:8px;margin-bottom:8px">
               <div style="display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:7px">
-                <div style="font-size:.8rem;font-weight:900;color:var(--navy)">V15 Audit preview</div>
+                <div style="font-size:.8rem;font-weight:900;color:var(--navy)">Supabase audit preview</div>
                 <span class="badge ${stats.v15AuditLog ? 'done' : 'mid'}">${escapeHtml(stats.v15AuditLog)}</span>
               </div>
               <div data-v15-audit-risk-preview style="border:1px solid var(--border);border-radius:8px;background:var(--input-bg);padding:7px;margin-bottom:7px">
                 <div style="display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:5px">
-                  <div style="font-size:.76rem;color:var(--muted);font-weight:900">V15 Audit risk preview</div>
+                  <div style="font-size:.76rem;color:var(--muted);font-weight:900">Audit risk preview</div>
                   <span class="badge ${v15AuditHighlights.length ? 'urgent' : 'done'}">${escapeHtml(v15AuditHighlights.length)}</span>
                 </div>
                 ${v15AuditHighlights.length ? `

@@ -107,6 +107,11 @@ let toastTimer = null;
 let undoState = loadUndoState();
 let undoClearTimer = null;
 let actionLog = loadActionLog();
+let syncStatus = {
+  state: hasPendingLocalSync() ? 'pending' : 'idle',
+  label: hasPendingLocalSync() ? 'Supabase pending' : 'Supabase ready',
+  detail: '',
+};
 const taskFilters = {
   search: '',
   owner: '',
@@ -263,6 +268,10 @@ function showToast(message, type = 'success') {
     toastState = null;
     renderAppShell();
   }, 3200);
+}
+
+function setSyncStatus(state, label, detail = '') {
+  syncStatus = { state, label, detail, ts: new Date().toISOString() };
 }
 
 function loadActionLog(storage = localStorage) {
@@ -581,6 +590,7 @@ async function upsertTaskEvidenceRows(client, task = {}) {
 function markLocalDataSynced() {
   localStorage.setItem(SYNCED_DATA_SIGNATURE_KEY, getLocalSyncSignature());
   setPendingLocalSync(false);
+  setSyncStatus('idle', 'Supabase synced', 'Latest changes are confirmed in Supabase.');
 }
 
 function localDataNeedsSyncProtection() {
@@ -589,6 +599,7 @@ function localDataNeedsSyncProtection() {
 
 function persistAndRender(message = t('saved'), options = {}) {
   if (!options.skipAutoSync) setPendingLocalSync(true);
+  if (!options.skipAutoSync) setSyncStatus('pending', 'Supabase pending', 'Waiting to write changes to Supabase.');
   saveAppState(appState);
   if (!options.keepUndo) clearUndo();
   showToast(message);
@@ -614,6 +625,7 @@ async function confirmSupabaseTasksSync(message = t('saved')) {
     saveWriteAuditEntry(buildWriteAuditEntry({ preview, writeResult: result, postWritePreview: null, tables: ['tasks'] }));
     if (!summary.ok || evidenceError) {
       setPendingLocalSync(true);
+      setSyncStatus('error', 'Supabase failed', summary.errors[0]?.error || evidenceError?.error || 'Unknown Supabase write error');
       showToast(`${message} | Supabase sync failed: ${summary.errors[0]?.error || evidenceError?.error || 'Unknown error'}`, 'error');
       recordAction('Task Supabase sync failed', 'error');
       renderAppShell();
@@ -624,7 +636,8 @@ async function confirmSupabaseTasksSync(message = t('saved')) {
     const taskTable = lastPostWritePreview.tables.find(table => table.label === 'tasks');
     if (taskTable?.create || taskTable?.update || taskTable?.remove) {
       setPendingLocalSync(true);
-      showToast(`${message} | Local saved, but Supabase did not confirm the task update.`, 'error');
+      setSyncStatus('error', 'Supabase unconfirmed', 'Supabase did not confirm the task update.');
+      showToast(`${message} | Supabase did not confirm the task update.`, 'error');
       recordAction('Task Supabase confirmation failed', 'error');
       renderAppShell();
       return false;
@@ -636,6 +649,7 @@ async function confirmSupabaseTasksSync(message = t('saved')) {
     return true;
   } catch (error) {
     setPendingLocalSync(true);
+    setSyncStatus('error', 'Supabase failed', error.message || String(error));
     showToast(`${message} | Supabase sync failed: ${error.message || error}`, 'error');
     recordAction('Task Supabase sync failed', 'error');
     renderAppShell();
@@ -645,6 +659,7 @@ async function confirmSupabaseTasksSync(message = t('saved')) {
 
 function persistTaskAndConfirmSupabase(message = t('saved')) {
   setPendingLocalSync(true);
+  setSyncStatus('syncing', 'Syncing Supabase', 'Writing task changes to Supabase.');
   saveAppState(appState);
   showToast(`${message} | Syncing to Supabase...`);
   recordAction(message);
@@ -654,6 +669,7 @@ function persistTaskAndConfirmSupabase(message = t('saved')) {
 
 function scheduleAutoSupabaseSync(delayMs = 0) {
   autoSyncQueued = true;
+  setSyncStatus('pending', 'Supabase pending', 'Changes are queued for Supabase.');
   if (autoSyncTimer) clearTimeout(autoSyncTimer);
   autoSyncTimer = setTimeout(runAutoSupabaseSync, delayMs);
 }
@@ -663,6 +679,7 @@ async function runAutoSupabaseSync() {
   if (!autoSyncQueued || autoSyncInFlight) return;
   autoSyncQueued = false;
   autoSyncInFlight = true;
+  setSyncStatus('syncing', 'Syncing Supabase', 'Writing queued changes to Supabase.');
   try {
     if (!lastDbStatus?.data || lastDbStatus.error) {
       lastDbStatus = await loadSupabaseReadOnly();
@@ -679,6 +696,8 @@ async function runAutoSupabaseSync() {
     const summary = summarizeWriteResult(result);
     saveWriteAuditEntry(buildWriteAuditEntry({ preview, writeResult: result, postWritePreview: null, tables: undefined }));
     if (!summary.ok) {
+      setPendingLocalSync(true);
+      setSyncStatus('error', 'Supabase failed', summary.errors[0]?.error || 'Unknown Supabase write error');
       showToast(`Auto Supabase sync failed: ${summary.errors[0]?.error || 'Unknown error'}`, 'error');
       recordAction('Auto Supabase sync failed', 'error');
       renderAppShell();
@@ -690,13 +709,16 @@ async function runAutoSupabaseSync() {
       markLocalDataSynced();
     } else {
       setPendingLocalSync(true);
-      showToast('Auto Supabase sync incomplete. Local changes kept.', 'error');
+      setSyncStatus('error', 'Supabase unconfirmed', 'Supabase still differs after write.');
+      showToast('Auto Supabase sync incomplete. Changes are not confirmed online.', 'error');
       recordAction('Auto Supabase sync incomplete', 'error');
     }
     showToast(`Synced to Supabase: ${summary.written}`);
     recordAction(`Synced to Supabase: ${summary.written}`);
     renderAppShell();
   } catch (error) {
+    setPendingLocalSync(true);
+    setSyncStatus('error', 'Supabase failed', error.message || String(error));
     showToast(`Auto Supabase sync failed: ${error.message || error}`, 'error');
     recordAction('Auto Supabase sync failed', 'error');
     renderAppShell();
@@ -743,6 +765,7 @@ function applyTaskSearchFromDom() {
 }
 
 function loadSupabaseIntoApp({ silent = false, preserveLocal = false, forceImport = false } = {}) {
+  setSyncStatus('syncing', 'Loading Supabase', 'Reading live Supabase data.');
   lastDbStatus = { loadedAt: new Date().toISOString(), error: 'Loading...' };
   if (!silent) renderAppShell();
   return loadSupabaseReadOnly()
@@ -768,6 +791,7 @@ function loadSupabaseIntoApp({ silent = false, preserveLocal = false, forceImpor
       return payload;
     })
     .catch((error) => {
+      setSyncStatus('error', 'Supabase failed', error.message || String(error));
       lastDbStatus = { loadedAt: new Date().toISOString(), error: error.message || String(error), tables: {} };
       if (!silent) showToast(`Supabase load failed: ${error.message || error}`, 'error');
       renderAppShell();
@@ -798,6 +822,7 @@ async function refreshSupabaseFromRemote({ force = false } = {}) {
     }
     return payload;
   } catch (error) {
+    setSyncStatus('error', 'Supabase failed', error.message || String(error));
     lastDbStatus = { loadedAt: new Date().toISOString(), error: error.message || String(error), tables: lastDbStatus?.tables || {} };
     return null;
   } finally {
@@ -1462,7 +1487,7 @@ function renderCurrentPage() {
 
 function renderAppShell() {
   if (!appRoot) throw new Error('App root #app was not found.');
-  appRoot.innerHTML = `${renderNavigation(appState.currentPage)}${renderToast()}${renderUndoBar()}${renderCurrentPage()}`;
+  appRoot.innerHTML = `${renderNavigation(appState.currentPage, syncStatus)}${renderToast()}${renderUndoBar()}${renderCurrentPage()}`;
   scheduleUndoAutoClear();
   if (appState.currentPage === 'settings') {
     renderSettingsHub(document.getElementById('settings-host'), {

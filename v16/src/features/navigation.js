@@ -23,13 +23,26 @@ export const V16_PAGES = [
   { id: 'settings', labelKey: 'settings' },
 ];
 
-export function renderNavigation(currentPage) {
+export function renderNavigation(currentPage, syncStatus = null) {
   const locale = getLocale();
   const nextLocale = locale === 'zh' ? 'en' : 'zh';
+  const status = syncStatus || { state: 'idle', label: 'Supabase', detail: '' };
+  const statusClass = status.state === 'error'
+    ? 'error'
+    : status.state === 'syncing'
+      ? 'syncing'
+      : status.state === 'pending'
+        ? 'pending'
+        : 'ok';
   return `
     <nav style="position:sticky;top:0;z-index:50;background:var(--navy);color:#fff;padding:10px 16px;box-shadow:var(--shadow)">
       <div style="display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap">
-        <strong>${t('appTitle')}</strong>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+          <strong>${t('appTitle')}</strong>
+          <span class="sync-status ${statusClass}" title="${status.detail || status.label}">
+            <span class="sync-status-dot"></span>${status.label}
+          </span>
+        </div>
         <div style="display:flex;gap:6px;flex-wrap:wrap">
           ${V16_PAGES.map(page => `
             <button class="btn btn-sm ${page.id === currentPage ? 'btn-primary' : ''}" type="button" data-page="${page.id}">${t(page.labelKey)}</button>

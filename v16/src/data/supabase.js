@@ -18,7 +18,7 @@ export const DB_TABLES = [
   'mission_runs',
 ];
 
-export const SUPABASE_SOURCE_LABEL = 'v15 production Supabase DB';
+export const SUPABASE_SOURCE_LABEL = 'Supabase live database';
 
 export const SCHEMA_PROBE_COLUMNS = {
   tasks: ['id', 'name', 'owner', 'due', 'priority', 'status', 'cat', 'category', 'depends_on', 'sort_order'],

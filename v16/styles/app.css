@@ -536,6 +536,14 @@
   details.card > summary::-webkit-details-marker { display:none; }
   details.card > summary::after { content:'展開'; font-size:.74rem; color:var(--muted); border:1px solid var(--border); border-radius:99px; padding:2px 8px; }
   details.card[open] > summary::after { content:'收合'; }
+  .sync-status { display:inline-flex; align-items:center; gap:6px; min-height:26px; padding:4px 9px; border-radius:999px; border:1px solid rgba(255,255,255,.24); background:rgba(255,255,255,.12); color:#fff; font-size:.78rem; font-weight:900; line-height:1; }
+  .sync-status-dot { width:8px; height:8px; border-radius:999px; background:#cbd5e1; box-shadow:0 0 0 2px rgba(255,255,255,.12); }
+  .sync-status.ok .sync-status-dot { background:var(--green); }
+  .sync-status.syncing .sync-status-dot { background:var(--blue); animation:sync-pulse 1s ease-in-out infinite; }
+  .sync-status.pending .sync-status-dot { background:var(--orange); }
+  .sync-status.error { background:rgba(192,0,0,.24); border-color:rgba(255,255,255,.35); }
+  .sync-status.error .sync-status-dot { background:var(--red); }
+  @keyframes sync-pulse { 0%,100%{opacity:.45;transform:scale(.85)} 50%{opacity:1;transform:scale(1.15)} }
   .card-header { display:flex; justify-content:space-between; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:8px; }
   .card-header-title { color:var(--navy); font-weight:900; margin:0; }
   .card-actions { display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end; align-items:center; }
