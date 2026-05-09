@@ -1,11 +1,10 @@
-import { escapeHtml, safeJsonParse } from '../utils/index.js';
+ï»¿import { escapeHtml } from '../utils/index.js';
 import { labelFor, t } from '../utils/i18n.js';
 import { buildV15AuditHighlights, buildV15DbCoverage, summarizeV15DbCoverage } from '../data/diagnostics.js';
 import { DB_TABLES } from '../data/supabase.js';
 import { DEFAULT_TASK_CATEGORIES } from '../data/defaults.js';
 import { getDataHealthIssues } from './health.js';
 
-export const MASTER_DATA_STORAGE_PREFIX = 'rov_v16_master_data_';
 export const SETTINGS_PACK_TYPE = 'rov_v16_settings_pack';
 
 export const MASTER_DATA_TYPES = {
@@ -16,28 +15,28 @@ export const MASTER_DATA_TYPES = {
 };
 
 const TASK_CATEGORY_DETAILS = {
-  'E1 Electronics': { group: 'Engineering Design', zh: '?»å?å·¥ç?', en: 'Electronics', folder: '02Electronic' },
-  'E2 Mechanical': { group: 'Engineering Design', zh: 'æ©Ÿæ¢°å·¥ç?', en: 'Mechanical', folder: '03Mechanic' },
-  'E3 Software': { group: 'Engineering Design', zh: 'è»Ÿé??‹ç™¼', en: 'Software', folder: '04Software' },
-  'E4 Buoyancy & Float': { group: 'Engineering Design', zh: 'æµ®å?ç³»çµ±', en: 'Buoyancy & Float', folder: '05Float' },
-  'E5 Sensor & Payload': { group: 'Engineering Design', zh: '?Ÿæ¸¬?¨è?è¼‰è·', en: 'Sensor & Payload', folder: '?°å?' },
-  'E6 Power System': { group: 'Engineering Design', zh: '?»æ?ç³»çµ±', en: 'Power System', folder: '?°å?' },
-  'E7 Testing Log': { group: 'Engineering Design', zh: 'æ¸¬è©¦è¨˜é?', en: 'Testing Log', folder: '?°å?' },
-  'C1 Task Mission': { group: 'Competition Management', zh: 'ç«¶è³½ç®¡ç?', en: 'Task Mission', folder: '?°å?' },
-  'C1 Technical Report': { group: 'Competition Management', zh: 'ç«¶è³½ç®¡ç?', en: 'Technical Report', folder: '?°å?' },
-  'C1 Presentation': { group: 'Competition Management', zh: 'ç«¶è³½ç®¡ç?', en: 'Presentation', folder: '08Pilot / ?°å?' },
-  'C1 Score Analysis': { group: 'Competition Management', zh: 'ç«¶è³½ç®¡ç?', en: 'Score Analysis', folder: '10_2026HK_Score' },
-  'L1 Documentation': { group: 'Logistics & Administration', zh: 'å¾Œå‹¤è¡Œæ”¿', en: 'Documentation', folder: '01Document' },
-  'L1 Finance': { group: 'Logistics & Administration', zh: 'å¾Œå‹¤è¡Œæ”¿', en: 'Finance', folder: '06Finance' },
-  'L1 Travel': { group: 'Logistics & Administration', zh: 'å¾Œå‹¤è¡Œæ”¿', en: 'Travel', folder: 'Travelling' },
-  'L1 Safety': { group: 'Logistics & Administration', zh: 'å¾Œå‹¤è¡Œæ”¿', en: 'Safety', folder: '?°å?' },
-  'P1 Public Relation': { group: 'Public Affairs', zh: 'å°å?äº‹å?', en: 'Public Relation', folder: '07Public Relation' },
-  'P1 Marketing Display': { group: 'Public Affairs', zh: 'å°å?äº‹å?', en: 'Marketing Display', folder: '09 Marketing Display' },
-  'P1 Sponsorship': { group: 'Public Affairs', zh: 'å°å?äº‹å?', en: 'Sponsorship', folder: '?°å?' },
-  'P1 Media Coverage': { group: 'Public Affairs', zh: 'å°å?äº‹å?', en: 'Media Coverage', folder: '?°å?' },
-  'T1 Training Plan': { group: 'Team Development', zh: '?˜é??¼å?', en: 'Training Plan', folder: '?°å?' },
-  'T1 Meeting Notes': { group: 'Team Development', zh: '?˜é??¼å?', en: 'Meeting Notes', folder: '?°å?' },
-  'T1 Mentor Guidance': { group: 'Team Development', zh: '?˜é??¼å?', en: 'Mentor Guidance', folder: '?°å?' },
+  'E1 Electronics': { group: 'Engineering Design', zh: 'Electronics', en: 'Electronics', folder: '02Electronic' },
+  'E2 Mechanical': { group: 'Engineering Design', zh: 'Mechanical', en: 'Mechanical', folder: '03Mechanic' },
+  'E3 Software': { group: 'Engineering Design', zh: 'Software', en: 'Software', folder: '04Software' },
+  'E4 Buoyancy & Float': { group: 'Engineering Design', zh: 'Buoyancy & Float', en: 'Buoyancy & Float', folder: '05Float' },
+  'E5 Sensor & Payload': { group: 'Engineering Design', zh: 'Sensor & Payload', en: 'Sensor & Payload', folder: '?å•£?' },
+  'E6 Power System': { group: 'Engineering Design', zh: 'Power System', en: 'Power System', folder: '?å•£?' },
+  'E7 Testing Log': { group: 'Engineering Design', zh: 'Testing Log', en: 'Testing Log', folder: '?å•£?' },
+  'C1 Task Mission': { group: 'Competition Management', zh: 'Task Mission', en: 'Task Mission', folder: '?å•£?' },
+  'C1 Technical Report': { group: 'Competition Management', zh: 'Technical Report', en: 'Technical Report', folder: '?å•£?' },
+  'C1 Presentation': { group: 'Competition Management', zh: 'Presentation', en: 'Presentation', folder: '08Pilot / ?å•£?' },
+  'C1 Score Analysis': { group: 'Competition Management', zh: 'Score Analysis', en: 'Score Analysis', folder: '10_2026HK_Score' },
+  'L1 Documentation': { group: 'Logistics & Administration', zh: 'Documentation', en: 'Documentation', folder: '01Document' },
+  'L1 Finance': { group: 'Logistics & Administration', zh: 'Finance', en: 'Finance', folder: '06Finance' },
+  'L1 Travel': { group: 'Logistics & Administration', zh: 'Travel', en: 'Travel', folder: 'Travelling' },
+  'L1 Safety': { group: 'Logistics & Administration', zh: 'Safety', en: 'Safety', folder: '?å•£?' },
+  'P1 Public Relation': { group: 'Public Affairs', zh: 'Public Relation', en: 'Public Relation', folder: '07Public Relation' },
+  'P1 Marketing Display': { group: 'Public Affairs', zh: 'Marketing Display', en: 'Marketing Display', folder: '09 Marketing Display' },
+  'P1 Sponsorship': { group: 'Public Affairs', zh: 'Sponsorship', en: 'Sponsorship', folder: '?å•£?' },
+  'P1 Media Coverage': { group: 'Public Affairs', zh: 'Media Coverage', en: 'Media Coverage', folder: '?å•£?' },
+  'T1 Training Plan': { group: 'Team Development', zh: 'Training Plan', en: 'Training Plan', folder: '?å•£?' },
+  'T1 Meeting Notes': { group: 'Team Development', zh: 'Meeting Notes', en: 'Meeting Notes', folder: '?å•£?' },
+  'T1 Mentor Guidance': { group: 'Team Development', zh: 'Mentor Guidance', en: 'Mentor Guidance', folder: '?å•£?' },
 };
 
 export const V15_DB_TABLE_LABELS = {
@@ -106,26 +105,12 @@ export function ensureDefaultTaskCategories(state) {
   return true;
 }
 
-export function getMasterDataStorageKey(season = 'default') {
-  return `${MASTER_DATA_STORAGE_PREFIX}${season || 'default'}`;
-}
-
-export function loadMasterData(state, storage = localStorage) {
-  const key = getMasterDataStorageKey(state?.currentSeason);
-  const saved = safeJsonParse(storage.getItem(key), null);
-  if (!saved) return getMasterData(state);
-  state.data.masterData = {
-    ...getMasterData(state),
-    ...Object.fromEntries(
-      Object.keys(MASTER_DATA_TYPES).map(type => [type, uniqueSorted(saved[type] || [])]),
-    ),
-  };
+export function loadMasterData(state) {
   return getMasterData(state);
 }
 
-export function saveMasterData(state, storage = localStorage) {
+export function saveMasterData(state) {
   const data = getMasterData(state);
-  storage.setItem(getMasterDataStorageKey(state?.currentSeason), JSON.stringify(data));
   state.dirtyFlags.masterData = false;
   return data;
 }

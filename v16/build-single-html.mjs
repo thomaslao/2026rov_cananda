@@ -1,4 +1,4 @@
-import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+﻿import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -83,7 +83,7 @@ function transformExports(source) {
 }
 
 function buildModule(modulePath) {
-  const source = readFileSync(resolve(root, modulePath), 'utf8');
+  const source = stripBom(readFileSync(resolve(root, modulePath), 'utf8'));
   const moduleVar = moduleVars.get(normalize(modulePath));
   if (modulePath === 'src/utils/index.js') {
     return `const ${moduleVar} = { ...${moduleVars.get('src/utils/date.js')}, ...${moduleVars.get('src/utils/dom.js')} };`;
@@ -122,12 +122,21 @@ ${css}
     </div>
   </main>
   <script>
+window.__ROV_V16_RENDERED = false;
+window.setTimeout(() => {
+  const app = document.getElementById('app');
+  if (!app || window.__ROV_V16_RENDERED) return;
+  const stillLoading = String(app.textContent || '').includes('ROV Task Manager v16 loading');
+  if (!stillLoading) return;
+  app.innerHTML = '<div style="padding:24px;font-family:Arial,sans-serif;color:#8a1f11;background:#fff3f0;border:1px solid #f0b8aa;margin:16px;border-radius:8px"><strong>ROV Task Manager v16 did not finish loading.</strong><div style="margin-top:8px;line-height:1.5">Open <code>F:\\\\Dropbox\\\\ROV_Task_Manager\\\\v16\\\\ROV_Task_Manager_v16.html</code> directly, or press Ctrl+F5 to refresh. If this message remains, open DevTools Console and copy the red error.</div></div>';
+}, 1500);
 window.addEventListener('error', (event) => {
   const app = document.getElementById('app');
   if (!app) return;
-  app.innerHTML = '<div style="padding:24px;font-family:Arial,sans-serif;color:#8a1f11;background:#fff3f0;border:1px solid #f0b8aa;margin:16px;border-radius:8px"><strong>ROV Task Manager v16 failed to load / 載入失敗</strong><div style="margin-top:8px;white-space:pre-wrap">' + String(event.message || event.error || 'Unknown error') + '</div></div>';
+  app.innerHTML = '<div style="padding:24px;font-family:Arial,sans-serif;color:#8a1f11;background:#fff3f0;border:1px solid #f0b8aa;margin:16px;border-radius:8px"><strong>ROV Task Manager v16 failed to load / 頛憭望?</strong><div style="margin-top:8px;white-space:pre-wrap">' + String(event.message || event.error || 'Unknown error') + '</div></div>';
 });
 ${escapeScript(script)}
+window.__ROV_V16_RENDERED = true;
   </script>
 </body>
 </html>
@@ -136,3 +145,4 @@ ${escapeScript(script)}
 mkdirSync(dirname(outputPath), { recursive: true });
 writeFileSync(outputPath, html, 'utf8');
 console.log(`Built ${outputPath}`);
+

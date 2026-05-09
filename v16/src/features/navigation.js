@@ -34,7 +34,7 @@ export function renderNavigation(currentPage) {
           ${V16_PAGES.map(page => `
             <button class="btn btn-sm ${page.id === currentPage ? 'btn-primary' : ''}" type="button" data-page="${page.id}">${t(page.labelKey)}</button>
           `).join('')}
-          <button class="btn btn-sm btn-primary" type="button" data-locale-toggle data-next-locale="${nextLocale}" title="${locale === 'zh' ? 'Switch to English' : '切換到繁中'}">繁中 / EN</button>
+          <button class="btn btn-sm btn-primary" type="button" data-locale-toggle data-next-locale="${nextLocale}" title="${locale === 'zh' ? 'Switch to English' : 'Switch to Chinese'}">ZH / EN</button>
         </div>
       </div>
     </nav>`;

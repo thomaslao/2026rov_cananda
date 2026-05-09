@@ -246,47 +246,6 @@ export function buildSupabaseSyncPreview(appState, dbPayload) {
   };
 }
 
-export function buildLocalBackupPayload(appState) {
-  return {
-    type: 'rov_v16_local_backup',
-    version: 1,
-    exportedAt: new Date().toISOString(),
-    season: appState?.currentSeason || 'default',
-    data: appState?.data || {},
-  };
-}
-
-export function restoreLocalBackupPayload(appState, payload) {
-  if (!payload || payload.type !== 'rov_v16_local_backup' || !payload.data) {
-    throw new Error('Not a v16 local backup');
-  }
-  appState.currentSeason = payload.season || appState.currentSeason;
-  appState.data = payload.data;
-  appState.dirtyFlags.rollback = true;
-  return {
-    restoredAt: new Date().toISOString(),
-    exportedAt: payload.exportedAt || '',
-    season: payload.season || '',
-    tasks: payload.data.tasks?.length || 0,
-    members: payload.data.members?.length || 0,
-    missionRuns: payload.data.missionRuns?.length || 0,
-  };
-}
-
-export function downloadLocalBackup(appState, documentRef = document) {
-  const payload = buildLocalBackupPayload(appState);
-  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  const link = documentRef.createElement('a');
-  link.href = url;
-  link.download = `rov-v16-before-sync-${payload.season}-${new Date().toISOString().slice(0, 10)}.json`;
-  documentRef.body.appendChild(link);
-  link.click();
-  link.remove();
-  URL.revokeObjectURL(url);
-  return payload;
-}
-
 export async function executeGuardedSupabaseWriteSync(client, appState, dbPayload, options = {}) {
   const {
     confirmText = '',

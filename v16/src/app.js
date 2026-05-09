@@ -1,4 +1,4 @@
-import { APP_STATE_STORAGE_KEY, loadAppState, saveAppState } from './data/state.js';
+﻿import { APP_STATE_STORAGE_KEY, loadAppState, saveAppState } from './data/state.js';
 import { buildDiagnosticsPayload, downloadDiagnosticsPayload, parseDiagnosticsPayload } from './data/diagnostics.js';
 import { applySupabaseReadOnlyData, buildSupabaseReadOnlyImportDelta, DB_TABLES, ensureSupabaseClient, loadSupabaseReadOnly, probeSupabaseSchema } from './data/supabase.js';
 import {
@@ -52,7 +52,6 @@ import {
   importSettingsPackPayload,
   loadMasterData,
   renderSettingsHub,
-  saveMasterData,
   scrollSettingsSection,
 } from './features/settings.js';
 import { addTask, createTaskFromForm, deleteTask, exportTasksCsv, getVisibleTasks, renderTasksPage, updateTask, updateTaskStatus } from './features/tasks.js';
@@ -77,7 +76,7 @@ const UNDO_BAR_AUTO_CLEAR_MS = 5000;
 const SUPABASE_REFRESH_INTERVAL_MS = 5000;
 const appState = loadAppState();
 loadMasterData(appState);
-if (ensureDefaultTaskCategories(appState)) saveMasterData(appState);
+ensureDefaultTaskCategories(appState);
 let lastMigrationSummary = null;
 let lastDbStatus = null;
 let lastSyncPreview = null;
@@ -456,7 +455,6 @@ function restoreUndo() {
   appState.savedAt = undoState.savedAt || '';
   clearUndo();
   saveAppState(appState);
-  saveMasterData(appState);
   showToast(t('undone'));
   recordAction(t('undone'));
   renderAppShell();
@@ -592,7 +590,6 @@ function localDataNeedsSyncProtection() {
 function persistAndRender(message = t('saved'), options = {}) {
   if (!options.skipAutoSync) setPendingLocalSync(true);
   saveAppState(appState);
-  saveMasterData(appState);
   if (!options.keepUndo) clearUndo();
   showToast(message);
   recordAction(message);
@@ -649,7 +646,6 @@ async function confirmSupabaseTasksSync(message = t('saved')) {
 function persistTaskAndConfirmSupabase(message = t('saved')) {
   setPendingLocalSync(true);
   saveAppState(appState);
-  saveMasterData(appState);
   showToast(`${message} | Syncing to Supabase...`);
   recordAction(message);
   renderAppShell();
@@ -711,7 +707,7 @@ async function runAutoSupabaseSync() {
 }
 
 function stripSentenceEnd(value = '') {
-  return String(value || '').replace(/[.。]+$/, '');
+  return String(value || '').replace(/[.]+$/, '');
 }
 
 function actionMessage(baseMessage, label = '') {
@@ -1465,6 +1461,7 @@ function renderCurrentPage() {
 }
 
 function renderAppShell() {
+  if (!appRoot) throw new Error('App root #app was not found.');
   appRoot.innerHTML = `${renderNavigation(appState.currentPage)}${renderToast()}${renderUndoBar()}${renderCurrentPage()}`;
   scheduleUndoAutoClear();
   if (appState.currentPage === 'settings') {

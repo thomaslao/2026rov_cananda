@@ -313,7 +313,7 @@ export function renderTaskTable(tasks = [], members = [], options = {}) {
     const activeAsc = filters.sort === asc;
     const activeDesc = filters.sort === desc;
     const nextSort = activeAsc ? desc : asc;
-    const mark = activeAsc ? '↑' : activeDesc ? '↓' : '';
+    const mark = activeAsc ? '^' : activeDesc ? 'v' : '';
     return `<th class="task-sort-th task-col-${escapeHtml(column)}"><button class="task-sort-button" type="button" data-task-header-sort="${escapeHtml(nextSort)}" aria-label="${escapeHtml(`${label} ${t('sort')}`)}">${escapeHtml(label)}<span>${escapeHtml(mark)}</span></button></th>`;
   };
   return `

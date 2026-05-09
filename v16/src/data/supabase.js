@@ -1,4 +1,4 @@
-export const SUPABASE_URL = 'https://funahmlcriyrpqelefah.supabase.co';
+﻿export const SUPABASE_URL = 'https://funahmlcriyrpqelefah.supabase.co';
 export const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ1bmFobWxjcml5cnBxZWxlZmFoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc1MTQ5MjQsImV4cCI6MjA5MzA5MDkyNH0.G6de9ZXI4s-AkyzW5poQwwZEVaoUJvw17cXFj90FP88';
 const SUPABASE_CDN_URL = 'https://unpkg.com/@supabase/supabase-js@2';
 let supabaseLoadPromise = null;
@@ -116,7 +116,7 @@ function taskDedupeKey(task) {
 }
 
 function preferRicherTask(current, next) {
-  const statusRank = { Done: 3, Completed: 3, '已完成': 3, '進行中': 2, 'In Progress': 2, Open: 1, '待辦': 1 };
+  const statusRank = { Done: 3, Completed: 3, 'In Progress': 2, Open: 1 };
   const score = task => [
     task.notes,
     task.category,

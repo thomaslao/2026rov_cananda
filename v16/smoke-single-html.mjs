@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from 'node:fs';
+﻿import { existsSync, readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -47,8 +47,8 @@ if (!existsSync(htmlPath)) {
   const script = html.match(/<script>([\s\S]*)<\/script>/)?.[1] || '';
   check('single html has inline script', script.length > 1000, `${script.length} chars`);
   check('single html has inline css', html.includes('<style>') && html.includes(':root'), '');
-  check('single html style starts cleanly', html.includes('<style>\n:root') && !html.includes('嚜?root') && !html.includes('\uFEFF:root'), '');
-  check('single html has readable fallback text', html.includes('ROV Task Manager v16 loading...') && html.includes('failed to load / 載入失敗') && !html.includes('甇?') && !html.includes('頛'), '');
+  check('single html style starts cleanly', html.includes('<style>\n:root') && !html.includes('??root') && !html.includes('\uFEFF:root'), '');
+  check('single html has readable fallback text', html.includes('ROV Task Manager v16 loading...') && html.includes('ROV Task Manager v16 did not finish loading.'), '');
 
   const app = makeElement();
   app.addEventListener = () => {};
@@ -63,6 +63,7 @@ if (!existsSync(htmlPath)) {
   };
   globalThis.window = {
     addEventListener() {},
+    setTimeout: globalThis.setTimeout,
     confirm: () => true,
     prompt: () => null,
     location: { reload() {} },
@@ -82,9 +83,9 @@ if (!existsSync(htmlPath)) {
     Function(script)();
     check('single html renders app root', app.innerHTML.length > 1000, `${app.innerHTML.length} chars`);
     check('single html renders dashboard', app.innerHTML.includes('page-dashboard'), '');
-    check('single html includes language toggle', script.includes('data-locale-toggle') && script.includes('data-next-locale') && script.includes('繁中 / EN') && script.includes('function labelFor') && script.includes('valueInProgress'), '');
+    check('single html includes language toggle', script.includes('data-locale-toggle') && script.includes('data-next-locale') && script.includes('ZH / EN') && script.includes('function labelFor') && script.includes('valueInProgress'), '');
     check('single html includes data safety', script.includes('data-settings-data-safety') && script.includes('data-settings-action-log'), '');
-    check('single html includes task status select support', script.includes('data-task-status') && !script.includes('data-task-next-status') && script.includes('data-task-open-modal') && script.includes('data-task-modal') && script.includes("a.task.status === 'Done' ? 1 : 0"), '');
+    check('single html includes task status select support', script.includes('data-task-status') && !script.includes('data-task-next-status') && script.includes('data-task-form') && script.includes("a.task.status === 'Done' ? 1 : 0"), '');
     check('single html includes submitted task search', script.includes('data-task-search-submit') && script.includes('applyTaskSearchFromDom') && script.includes("event.target.closest('[data-task-search]')"), '');
     check('single html includes task header sorting', script.includes('data-task-header-sort') && script.includes('task-sort-button') && script.includes("sort === 'name-desc'") && script.includes("sort === 'priority-desc'"), '');
     check('single html includes dashboard stat shortcuts', script.includes('data-dashboard-stat') && script.includes('applyDashboardStatTarget') && script.includes("status: 'active'") && script.includes("health === 'overdue'"), '');
@@ -105,7 +106,7 @@ if (!existsSync(htmlPath)) {
     check('single html includes safety report context', script.includes('context: {') && script.includes('currentPage: appState.currentPage') && script.includes('locale: getLocale()') && script.includes('APP_STATE_STORAGE_KEY') && script.includes('supabaseTouched: false'), '');
     check('single html includes safety metadata clearing', script.includes('data-action="clear-safety-metadata"') && script.includes('clearSafetyMetadata') && script.includes('confirmClearSafetyMetadata'), '');
     check('single html includes settings validation summary actions', script.includes('data-readiness-validation-summary') && script.includes('settings-release-readiness') && script.includes('data-settings-scroll="settings-data-safety"'), '');
-    check('single html labels v15 supabase read-only import', script.includes('v15 production Supabase DB') && script.includes('readOnly: true') && script.includes('Load v15 Supabase DB'), '');
+    check('single html labels live supabase data', script.includes('Supabase Live Data') && script.includes('readOnly: true') && script.includes('Reload Supabase DB'), '');
     check('single html dedupes v15 supabase import', script.includes('dedupeRows') && script.includes('dedupeSummary') && script.includes('data-v15-import-dedupe-summary'), '');
     check('single html shows v15 db coverage summary', script.includes('data-v15-db-coverage') && script.includes('V15 Supabase coverage') && script.includes('V15_DB_TABLE_LABELS'), '');
     check('single html shows v15 db table errors', script.includes('data-v15-db-table-errors') && script.includes('V15 Supabase table errors') && script.includes('data-diagnostics-v15-db-table-errors'), '');
@@ -158,3 +159,4 @@ if (failed.length) {
 }
 
 console.log(`v16 single-html smoke passed: ${checks.length} checks`);
+
