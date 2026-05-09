@@ -324,7 +324,7 @@
   .task-sort-button:hover, .task-sort-button:focus-visible { background:rgba(255,255,255,.12); outline:none; }
   .task-sort-button span { min-width:12px; font-weight:900; }
   .task-table-wrap { overflow:auto; border:1px solid var(--border); border-radius:8px; }
-  .task-table-wrap table { min-width:1230px; table-layout:fixed; }
+  .task-table-wrap table { min-width:1300px; table-layout:fixed; }
   .task-table-wrap th, .task-table-wrap td { height:58px; vertical-align:middle; }
   .task-table-wrap td { padding:8px 10px; }
   .task-table-wrap tbody tr { min-height:58px; }
@@ -333,18 +333,30 @@
   .task-col-name, .task-name-cell { width:360px; max-width:360px; }
   .task-name-cell { overflow-wrap:anywhere; line-height:1.25; }
   .task-name-cell strong { display:block; max-height:42px; overflow:hidden; }
+  .task-name-button { width:100%; max-height:42px; padding:0; border:0; background:transparent; color:var(--navy); font:inherit; font-weight:900; text-align:left; overflow:hidden; overflow-wrap:anywhere; cursor:pointer; }
+  .task-name-button:hover, .task-name-button:focus-visible { color:var(--blue); text-decoration:underline; outline:none; }
   .task-col-owner, .task-owner-cell { width:128px; white-space:nowrap; word-break:keep-all; text-align:center; }
   .task-col-due, .task-due-cell { width:134px; white-space:nowrap; word-break:keep-all; text-align:center; }
   .task-col-priority, .task-priority-cell { width:94px; white-space:nowrap; word-break:keep-all; text-align:center; }
   .task-col-category, .task-category-cell { width:158px; white-space:nowrap; text-align:center; }
   .task-col-status, .task-status-table-cell { width:112px; white-space:nowrap; text-align:center; }
-  .task-actions-cell { width:134px; white-space:nowrap; text-align:right; }
+  .task-actions-cell { width:196px; white-space:nowrap; text-align:right; }
   .task-priority-cell .badge { min-width:68px; min-height:24px; display:inline-flex; align-items:center; justify-content:center; padding:3px 9px; font-weight:900; }
   .task-status-cell { display:flex; justify-content:center; min-width:94px; }
   .task-status-select { width:96px; min-width:96px; height:34px; margin:0; text-align:center; font-weight:800; }
   .task-category-select { width:138px; min-width:138px; height:34px; margin:0; text-align:center; font-weight:800; }
-  .task-action-row { display:flex; gap:6px; flex-wrap:nowrap; justify-content:flex-end; align-items:center; min-width:118px; }
+  .task-action-row { display:flex; gap:6px; flex-wrap:nowrap; justify-content:flex-end; align-items:center; min-width:180px; }
   .task-action-row .btn-sm { width:56px; min-height:34px; padding:4px 8px; white-space:nowrap; display:flex; align-items:center; justify-content:center; text-align:center; font-weight:900; }
+  .task-detail-view { display:grid; gap:12px; }
+  .task-detail-title { display:grid; gap:8px; }
+  .task-detail-title h3 { margin:0; color:var(--navy); font-size:1.08rem; line-height:1.25; }
+  .task-detail-badges, .task-detail-evidence { display:flex; flex-wrap:wrap; gap:6px; align-items:center; }
+  .task-detail-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; }
+  .task-detail-field { min-height:64px; padding:9px; border:1px solid var(--border); border-radius:8px; background:var(--input-bg); display:flex; flex-direction:column; justify-content:center; gap:5px; text-align:center; }
+  .task-detail-field div, .task-detail-section-title { color:var(--muted); font-size:.75rem; font-weight:900; }
+  .task-detail-field strong { color:var(--navy); font-size:.9rem; overflow-wrap:anywhere; }
+  .task-detail-section { border:1px solid var(--border); border-radius:8px; background:var(--input-bg); padding:10px; }
+  .task-detail-note { margin-top:6px; color:var(--text); font-size:.88rem; font-weight:800; line-height:1.45; white-space:pre-wrap; overflow-wrap:anywhere; }
   .task-bulk-toolbar { display:none; grid-template-columns:minmax(115px,.8fr) repeat(3,minmax(128px,1fr)) auto auto; gap:8px; align-items:center; margin:0 0 10px; padding:9px; border:1px solid var(--border); border-left:5px solid var(--blue); border-radius:8px; background:#F7FAFF; }
   .task-bulk-toolbar.active { display:grid; }
   .task-bulk-count { color:var(--navy); font-size:.82rem; font-weight:900; text-align:center; }
@@ -533,6 +545,7 @@
     .dashboard-chart-grid { grid-template-columns: 1fr; }
     .task-status-counts { grid-template-columns:repeat(2,minmax(0,1fr)); }
     .task-quick-tabs { grid-template-columns:repeat(2,minmax(0,1fr)); }
+    .task-detail-grid { grid-template-columns:1fr; }
     .task-summary-row { grid-template-columns:repeat(2,minmax(0,1fr)); }
     .task-filter-bar { grid-template-columns:1fr; }
     .task-toolbar-actions { grid-template-columns:1fr; }
@@ -1039,6 +1052,8 @@ const STRINGS = {
     addTask: 'Add task',
     updateTask: 'Update task',
     editingTask: 'Editing task',
+    taskDetails: 'Task details',
+    view: 'View',
     selectedTasks: 'Selected tasks',
     selectTask: 'Select task',
     selectVisibleTasks: 'Select visible tasks',
@@ -1409,6 +1424,8 @@ const STRINGS = {
     addTask: '\u65b0\u589e\u4efb\u52d9',
     updateTask: '\u66f4\u65b0\u4efb\u52d9',
     editingTask: '\u6b63\u5728\u7de8\u8f2f\u4efb\u52d9',
+    taskDetails: '\u4efb\u52d9\u8a73\u60c5',
+    view: '\u67e5\u770b',
     selectedTasks: '\u5df2\u9078\u4efb\u52d9',
     selectTask: '\u9078\u53d6\u4efb\u52d9',
     selectVisibleTasks: '\u9078\u53d6\u76ee\u524d\u986f\u793a\u4efb\u52d9',
@@ -3036,6 +3053,59 @@ function renderTaskEvidence(evidence = []) {
     </div>`;
 }
 
+function renderTaskDetail(task = null, members = []) {
+  if (!task) return '';
+  const evidence = normalizeEvidence(task.evidence);
+  const due = getTaskDueInfo(task);
+  const late = isOverdue(task.due) && task.status !== 'Done';
+  const healthBadges = getTaskHealthBadges(task, new Set(members.map(member => clean(member.name)).filter(Boolean)));
+  const detailRows = [
+    [t('owner'), task.owner || labelFor('Unassigned')],
+    [t('due'), `${task.due || '-'}${due.days !== null ? ` (${due.days}d)` : ''}`],
+    [t('priority'), labelFor(task.priority || 'Medium')],
+    [t('status'), labelFor(task.status || 'Open')],
+    [t('category'), labelFor(task.category || 'General')],
+    [t('blocked'), task.blocked ? t('blocked') : '-'],
+  ];
+  return `
+    <div class="task-detail-view">
+      <div class="task-detail-title">
+        <h3>${escapeHtml(task.name || t('task'))}</h3>
+        <div class="task-detail-badges">
+          <span class="badge ${task.priority === 'High' ? 'urgent' : task.priority === 'Low' ? 'done' : 'mid'}">${escapeHtml(labelFor(task.priority || 'Medium'))}</span>
+          <span class="badge ${late || task.blocked ? 'urgent' : task.status === 'Done' ? 'done' : 'inprog'}">${escapeHtml(late ? t('overdue') : labelFor(task.status || 'Open'))}</span>
+          ${healthBadges.map(label => `<span class="badge mid">${escapeHtml(label)}</span>`).join('')}
+        </div>
+      </div>
+      <div class="task-detail-grid">
+        ${detailRows.map(([label, value]) => `
+          <div class="task-detail-field">
+            <div>${escapeHtml(label)}</div>
+            <strong>${escapeHtml(value)}</strong>
+          </div>
+        `).join('')}
+      </div>
+      <div class="task-detail-section">
+        <div class="task-detail-section-title">${escapeHtml(t('note'))}</div>
+        <div class="task-detail-note">${escapeHtml(task.notes || '-')}</div>
+      </div>
+      <div class="task-detail-section">
+        <div class="task-detail-section-title">${escapeHtml(t('evidence'))}</div>
+        ${evidence.length ? `
+          <div class="task-detail-evidence">
+            ${evidence.map(item => item.url
+              ? `<a class="badge mid" href="${escapeHtml(item.url)}" target="_blank" rel="noreferrer" title="${escapeHtml(item.note || item.url)}">${escapeHtml(item.label || item.url)}</a>`
+              : `<span class="badge mid" title="${escapeHtml(item.note)}">${escapeHtml(item.label || item.note || t('evidence'))}</span>`).join('')}
+          </div>
+        ` : `<div class="task-detail-note">-</div>`}
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-primary" type="button" data-task-detail-edit="${task.id}">${escapeHtml(t('edit'))}</button>
+        <button class="btn" type="button" data-task-cancel-edit>${escapeHtml(t('cancelEdit'))}</button>
+      </div>
+    </div>`;
+}
+
 function csvCell(value) {
   const text = String(value ?? '');
   return /[",\n]/.test(text) ? `"${text.replaceAll('"', '""')}"` : text;
@@ -3158,7 +3228,7 @@ function renderTaskTable(tasks = [], members = [], options = {}) {
               <tr${rowClasses ? ` class="${rowClasses}"` : ''}>
                 <td class="task-select-cell"><input type="checkbox" data-task-select="${task.id}" ${selected ? 'checked' : ''} aria-label="${escapeHtml(`${t('selectTask')} ${task.name}`)}"></td>
                 <td class="task-name-cell">
-                  <strong>${escapeHtml(task.name)}</strong>
+                  <button class="task-name-button" type="button" data-task-view="${task.id}">${escapeHtml(task.name)}</button>
                   ${task.blocked ? `<div style="font-size:.76rem;color:var(--muted)">${escapeHtml(t('blocked'))}</div>` : ''}
                   ${healthBadges.length ? `<div data-task-health-badges style="display:flex;gap:4px;flex-wrap:wrap;margin-top:4px">${healthBadges.map(label => `<span class="badge mid">${escapeHtml(label)}</span>`).join('')}</div>` : ''}
                   ${renderTaskEvidence(task.evidence)}
@@ -3180,6 +3250,7 @@ function renderTaskTable(tasks = [], members = [], options = {}) {
                 </td>
                 <td class="task-actions-cell">
                   <div class="task-action-row">
+                    <button class="btn btn-sm" type="button" data-task-view="${task.id}">${escapeHtml(t('view'))}</button>
                     <button class="btn btn-sm" type="button" data-task-edit="${task.id}">${escapeHtml(t('edit'))}</button>
                     <button class="btn btn-sm btn-danger" type="button" data-task-delete="${task.id}">${escapeHtml(t('delete'))}</button>
                   </div>
@@ -3221,7 +3292,8 @@ function renderTaskForm(editingTask = null, context = {}) {
 function renderTasksPage(state, options = {}) {
   const tasks = state.data.tasks || [];
   const editingTask = tasks.find(task => task.id === Number(options.editingTaskId));
-  const taskModalOpen = Boolean(editingTask || options.addingTask);
+  const viewingTask = tasks.find(task => task.id === Number(options.viewingTaskId));
+  const taskModalOpen = Boolean(editingTask || options.addingTask || viewingTask);
   const stats = getTaskStats(tasks);
   const master = state.data.masterData || {};
   const filters = normalizeTaskFilters(options.filters);
@@ -3257,10 +3329,10 @@ function renderTasksPage(state, options = {}) {
       <div class="modal-bg ${taskModalOpen ? 'open' : ''}" data-task-modal-bg>
         <div class="modal wide task-modal" role="dialog" aria-modal="true" aria-labelledby="task-modal-title" data-task-modal>
           <div class="task-modal-head">
-            <h3 id="task-modal-title">${escapeHtml(editingTask ? t('editingTask') : t('addTask'))}</h3>
+            <h3 id="task-modal-title">${escapeHtml(viewingTask ? t('taskDetails') : editingTask ? t('editingTask') : t('addTask'))}</h3>
             <button class="btn btn-sm" type="button" data-task-cancel-edit>${escapeHtml(t('cancelEdit'))}</button>
           </div>
-          ${taskModalOpen ? renderTaskForm(editingTask || null, { master, ownerSuggestions }) : ''}
+          ${viewingTask ? renderTaskDetail(viewingTask, state.data.members || []) : taskModalOpen ? renderTaskForm(editingTask || null, { master, ownerSuggestions }) : ''}
           ${editingTask ? `<div style="font-size:.78rem;color:var(--muted);font-weight:800;margin-top:8px">${escapeHtml(t('editingTask'))}: ${escapeHtml(editingTask.name)}</div>` : ''}
         </div>
       </div>
@@ -6583,6 +6655,7 @@ let supabaseRealtimeChannel = null;
 let initialSupabaseLoadStarted = false;
 let editingTaskId = null;
 let addingTask = false;
+let viewingTaskId = null;
 let selectedTaskIds = new Set();
 let editingMemberId = null;
 let editingRunId = null;
@@ -6762,6 +6835,7 @@ function clearEditingOutsidePage(page) {
   if (page !== 'tasks') {
     editingTaskId = null;
     addingTask = false;
+    viewingTaskId = null;
     selectedTaskIds = new Set();
   }
   if (page !== 'members') editingMemberId = null;
@@ -8088,7 +8162,7 @@ function renderCurrentPage() {
   if (appState.currentPage === 'prep') return renderPrepCenter(appState, { editingGearId, editingChecklist, prepFocus, filters: prepFilters });
   if (appState.currentPage === 'tasks') {
     pruneSelectedTaskIds();
-    return renderTasksPage(appState, { editingTaskId, addingTask, filters: taskFilters, myOwner: myTaskOwner, selectedTaskIds: [...selectedTaskIds] });
+    return renderTasksPage(appState, { editingTaskId, addingTask, viewingTaskId, filters: taskFilters, myOwner: myTaskOwner, selectedTaskIds: [...selectedTaskIds] });
   }
   if (appState.currentPage === 'members') return renderMembersPage(appState, { editingMemberId, filters: memberFilters });
   if (appState.currentPage === 'intel') return renderIntelPage(appState, { editingIntelId, editingStrategyId, intelFocus, filters: intelFilters });
@@ -8578,12 +8652,30 @@ appRoot?.addEventListener('click', (event) => {
     const label = task?.name || task?.title || t('task');
     captureUndo(actionMessage(t('deleted'), label));
     if (Number(editingTaskId) === Number(deleteTaskTarget.dataset.taskDelete)) editingTaskId = null;
+    if (Number(viewingTaskId) === Number(deleteTaskTarget.dataset.taskDelete)) viewingTaskId = null;
     selectedTaskIds.delete(Number(deleteTaskTarget.dataset.taskDelete));
     if (deleteTask(appState, deleteTaskTarget.dataset.taskDelete)) persistAndRender(actionMessage(t('deleted'), label), { keepUndo: true });
     return;
   }
+  const viewTaskTarget = event.target.closest('[data-task-view]');
+  if (viewTaskTarget) {
+    viewingTaskId = viewTaskTarget.dataset.taskView;
+    editingTaskId = null;
+    addingTask = false;
+    renderAppShell();
+    return;
+  }
+  const taskDetailEdit = event.target.closest('[data-task-detail-edit]');
+  if (taskDetailEdit) {
+    editingTaskId = taskDetailEdit.dataset.taskDetailEdit;
+    viewingTaskId = null;
+    addingTask = false;
+    renderAppShell();
+    return;
+  }
   if (event.target.closest('[data-task-open-add]')) {
     editingTaskId = null;
+    viewingTaskId = null;
     addingTask = true;
     renderAppShell();
     return;
@@ -8591,6 +8683,7 @@ appRoot?.addEventListener('click', (event) => {
   const editTaskTarget = event.target.closest('[data-task-edit]');
   if (editTaskTarget) {
     editingTaskId = editTaskTarget.dataset.taskEdit;
+    viewingTaskId = null;
     addingTask = false;
     renderAppShell();
     return;
@@ -8598,6 +8691,7 @@ appRoot?.addEventListener('click', (event) => {
   if (event.target.closest('[data-task-cancel-edit]')) {
     editingTaskId = null;
     addingTask = false;
+    viewingTaskId = null;
     renderAppShell();
     return;
   }
@@ -8605,6 +8699,7 @@ appRoot?.addEventListener('click', (event) => {
   if (taskModalBg && !event.target.closest('[data-task-modal]')) {
     editingTaskId = null;
     addingTask = false;
+    viewingTaskId = null;
     renderAppShell();
     return;
   }
@@ -9176,9 +9271,10 @@ appRoot?.addEventListener('change', (event) => {
 });
 
 appRoot?.addEventListener('keydown', (event) => {
-  if (event.key === 'Escape' && (editingTaskId || addingTask || editingMemberId || editingRunId || editingGearId || editingChecklist || editingIntelId || editingStrategyId)) {
+  if (event.key === 'Escape' && (editingTaskId || addingTask || viewingTaskId || editingMemberId || editingRunId || editingGearId || editingChecklist || editingIntelId || editingStrategyId)) {
     editingTaskId = null;
     addingTask = false;
+    viewingTaskId = null;
     editingMemberId = null;
     editingRunId = null;
     editingGearId = null;

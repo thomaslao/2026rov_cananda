@@ -97,6 +97,7 @@ let supabaseRealtimeChannel = null;
 let initialSupabaseLoadStarted = false;
 let editingTaskId = null;
 let addingTask = false;
+let viewingTaskId = null;
 let selectedTaskIds = new Set();
 let editingMemberId = null;
 let editingRunId = null;
@@ -276,6 +277,7 @@ function clearEditingOutsidePage(page) {
   if (page !== 'tasks') {
     editingTaskId = null;
     addingTask = false;
+    viewingTaskId = null;
     selectedTaskIds = new Set();
   }
   if (page !== 'members') editingMemberId = null;
@@ -1602,7 +1604,7 @@ function renderCurrentPage() {
   if (appState.currentPage === 'prep') return renderPrepCenter(appState, { editingGearId, editingChecklist, prepFocus, filters: prepFilters });
   if (appState.currentPage === 'tasks') {
     pruneSelectedTaskIds();
-    return renderTasksPage(appState, { editingTaskId, addingTask, filters: taskFilters, myOwner: myTaskOwner, selectedTaskIds: [...selectedTaskIds] });
+    return renderTasksPage(appState, { editingTaskId, addingTask, viewingTaskId, filters: taskFilters, myOwner: myTaskOwner, selectedTaskIds: [...selectedTaskIds] });
   }
   if (appState.currentPage === 'members') return renderMembersPage(appState, { editingMemberId, filters: memberFilters });
   if (appState.currentPage === 'intel') return renderIntelPage(appState, { editingIntelId, editingStrategyId, intelFocus, filters: intelFilters });
@@ -2092,12 +2094,30 @@ appRoot?.addEventListener('click', (event) => {
     const label = task?.name || task?.title || t('task');
     captureUndo(actionMessage(t('deleted'), label));
     if (Number(editingTaskId) === Number(deleteTaskTarget.dataset.taskDelete)) editingTaskId = null;
+    if (Number(viewingTaskId) === Number(deleteTaskTarget.dataset.taskDelete)) viewingTaskId = null;
     selectedTaskIds.delete(Number(deleteTaskTarget.dataset.taskDelete));
     if (deleteTask(appState, deleteTaskTarget.dataset.taskDelete)) persistAndRender(actionMessage(t('deleted'), label), { keepUndo: true });
     return;
   }
+  const viewTaskTarget = event.target.closest('[data-task-view]');
+  if (viewTaskTarget) {
+    viewingTaskId = viewTaskTarget.dataset.taskView;
+    editingTaskId = null;
+    addingTask = false;
+    renderAppShell();
+    return;
+  }
+  const taskDetailEdit = event.target.closest('[data-task-detail-edit]');
+  if (taskDetailEdit) {
+    editingTaskId = taskDetailEdit.dataset.taskDetailEdit;
+    viewingTaskId = null;
+    addingTask = false;
+    renderAppShell();
+    return;
+  }
   if (event.target.closest('[data-task-open-add]')) {
     editingTaskId = null;
+    viewingTaskId = null;
     addingTask = true;
     renderAppShell();
     return;
@@ -2105,6 +2125,7 @@ appRoot?.addEventListener('click', (event) => {
   const editTaskTarget = event.target.closest('[data-task-edit]');
   if (editTaskTarget) {
     editingTaskId = editTaskTarget.dataset.taskEdit;
+    viewingTaskId = null;
     addingTask = false;
     renderAppShell();
     return;
@@ -2112,6 +2133,7 @@ appRoot?.addEventListener('click', (event) => {
   if (event.target.closest('[data-task-cancel-edit]')) {
     editingTaskId = null;
     addingTask = false;
+    viewingTaskId = null;
     renderAppShell();
     return;
   }
@@ -2119,6 +2141,7 @@ appRoot?.addEventListener('click', (event) => {
   if (taskModalBg && !event.target.closest('[data-task-modal]')) {
     editingTaskId = null;
     addingTask = false;
+    viewingTaskId = null;
     renderAppShell();
     return;
   }
@@ -2690,9 +2713,10 @@ appRoot?.addEventListener('change', (event) => {
 });
 
 appRoot?.addEventListener('keydown', (event) => {
-  if (event.key === 'Escape' && (editingTaskId || addingTask || editingMemberId || editingRunId || editingGearId || editingChecklist || editingIntelId || editingStrategyId)) {
+  if (event.key === 'Escape' && (editingTaskId || addingTask || viewingTaskId || editingMemberId || editingRunId || editingGearId || editingChecklist || editingIntelId || editingStrategyId)) {
     editingTaskId = null;
     addingTask = false;
+    viewingTaskId = null;
     editingMemberId = null;
     editingRunId = null;
     editingGearId = null;

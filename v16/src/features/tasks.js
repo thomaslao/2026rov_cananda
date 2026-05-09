@@ -239,6 +239,59 @@ function renderTaskEvidence(evidence = []) {
     </div>`;
 }
 
+function renderTaskDetail(task = null, members = []) {
+  if (!task) return '';
+  const evidence = normalizeEvidence(task.evidence);
+  const due = getTaskDueInfo(task);
+  const late = isOverdue(task.due) && task.status !== 'Done';
+  const healthBadges = getTaskHealthBadges(task, new Set(members.map(member => clean(member.name)).filter(Boolean)));
+  const detailRows = [
+    [t('owner'), task.owner || labelFor('Unassigned')],
+    [t('due'), `${task.due || '-'}${due.days !== null ? ` (${due.days}d)` : ''}`],
+    [t('priority'), labelFor(task.priority || 'Medium')],
+    [t('status'), labelFor(task.status || 'Open')],
+    [t('category'), labelFor(task.category || 'General')],
+    [t('blocked'), task.blocked ? t('blocked') : '-'],
+  ];
+  return `
+    <div class="task-detail-view">
+      <div class="task-detail-title">
+        <h3>${escapeHtml(task.name || t('task'))}</h3>
+        <div class="task-detail-badges">
+          <span class="badge ${task.priority === 'High' ? 'urgent' : task.priority === 'Low' ? 'done' : 'mid'}">${escapeHtml(labelFor(task.priority || 'Medium'))}</span>
+          <span class="badge ${late || task.blocked ? 'urgent' : task.status === 'Done' ? 'done' : 'inprog'}">${escapeHtml(late ? t('overdue') : labelFor(task.status || 'Open'))}</span>
+          ${healthBadges.map(label => `<span class="badge mid">${escapeHtml(label)}</span>`).join('')}
+        </div>
+      </div>
+      <div class="task-detail-grid">
+        ${detailRows.map(([label, value]) => `
+          <div class="task-detail-field">
+            <div>${escapeHtml(label)}</div>
+            <strong>${escapeHtml(value)}</strong>
+          </div>
+        `).join('')}
+      </div>
+      <div class="task-detail-section">
+        <div class="task-detail-section-title">${escapeHtml(t('note'))}</div>
+        <div class="task-detail-note">${escapeHtml(task.notes || '-')}</div>
+      </div>
+      <div class="task-detail-section">
+        <div class="task-detail-section-title">${escapeHtml(t('evidence'))}</div>
+        ${evidence.length ? `
+          <div class="task-detail-evidence">
+            ${evidence.map(item => item.url
+              ? `<a class="badge mid" href="${escapeHtml(item.url)}" target="_blank" rel="noreferrer" title="${escapeHtml(item.note || item.url)}">${escapeHtml(item.label || item.url)}</a>`
+              : `<span class="badge mid" title="${escapeHtml(item.note)}">${escapeHtml(item.label || item.note || t('evidence'))}</span>`).join('')}
+          </div>
+        ` : `<div class="task-detail-note">-</div>`}
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-primary" type="button" data-task-detail-edit="${task.id}">${escapeHtml(t('edit'))}</button>
+        <button class="btn" type="button" data-task-cancel-edit>${escapeHtml(t('cancelEdit'))}</button>
+      </div>
+    </div>`;
+}
+
 function csvCell(value) {
   const text = String(value ?? '');
   return /[",\n]/.test(text) ? `"${text.replaceAll('"', '""')}"` : text;
@@ -361,7 +414,7 @@ export function renderTaskTable(tasks = [], members = [], options = {}) {
               <tr${rowClasses ? ` class="${rowClasses}"` : ''}>
                 <td class="task-select-cell"><input type="checkbox" data-task-select="${task.id}" ${selected ? 'checked' : ''} aria-label="${escapeHtml(`${t('selectTask')} ${task.name}`)}"></td>
                 <td class="task-name-cell">
-                  <strong>${escapeHtml(task.name)}</strong>
+                  <button class="task-name-button" type="button" data-task-view="${task.id}">${escapeHtml(task.name)}</button>
                   ${task.blocked ? `<div style="font-size:.76rem;color:var(--muted)">${escapeHtml(t('blocked'))}</div>` : ''}
                   ${healthBadges.length ? `<div data-task-health-badges style="display:flex;gap:4px;flex-wrap:wrap;margin-top:4px">${healthBadges.map(label => `<span class="badge mid">${escapeHtml(label)}</span>`).join('')}</div>` : ''}
                   ${renderTaskEvidence(task.evidence)}
@@ -383,6 +436,7 @@ export function renderTaskTable(tasks = [], members = [], options = {}) {
                 </td>
                 <td class="task-actions-cell">
                   <div class="task-action-row">
+                    <button class="btn btn-sm" type="button" data-task-view="${task.id}">${escapeHtml(t('view'))}</button>
                     <button class="btn btn-sm" type="button" data-task-edit="${task.id}">${escapeHtml(t('edit'))}</button>
                     <button class="btn btn-sm btn-danger" type="button" data-task-delete="${task.id}">${escapeHtml(t('delete'))}</button>
                   </div>
@@ -424,7 +478,8 @@ function renderTaskForm(editingTask = null, context = {}) {
 export function renderTasksPage(state, options = {}) {
   const tasks = state.data.tasks || [];
   const editingTask = tasks.find(task => task.id === Number(options.editingTaskId));
-  const taskModalOpen = Boolean(editingTask || options.addingTask);
+  const viewingTask = tasks.find(task => task.id === Number(options.viewingTaskId));
+  const taskModalOpen = Boolean(editingTask || options.addingTask || viewingTask);
   const stats = getTaskStats(tasks);
   const master = state.data.masterData || {};
   const filters = normalizeTaskFilters(options.filters);
@@ -460,10 +515,10 @@ export function renderTasksPage(state, options = {}) {
       <div class="modal-bg ${taskModalOpen ? 'open' : ''}" data-task-modal-bg>
         <div class="modal wide task-modal" role="dialog" aria-modal="true" aria-labelledby="task-modal-title" data-task-modal>
           <div class="task-modal-head">
-            <h3 id="task-modal-title">${escapeHtml(editingTask ? t('editingTask') : t('addTask'))}</h3>
+            <h3 id="task-modal-title">${escapeHtml(viewingTask ? t('taskDetails') : editingTask ? t('editingTask') : t('addTask'))}</h3>
             <button class="btn btn-sm" type="button" data-task-cancel-edit>${escapeHtml(t('cancelEdit'))}</button>
           </div>
-          ${taskModalOpen ? renderTaskForm(editingTask || null, { master, ownerSuggestions }) : ''}
+          ${viewingTask ? renderTaskDetail(viewingTask, state.data.members || []) : taskModalOpen ? renderTaskForm(editingTask || null, { master, ownerSuggestions }) : ''}
           ${editingTask ? `<div style="font-size:.78rem;color:var(--muted);font-weight:800;margin-top:8px">${escapeHtml(t('editingTask'))}: ${escapeHtml(editingTask.name)}</div>` : ''}
         </div>
       </div>
