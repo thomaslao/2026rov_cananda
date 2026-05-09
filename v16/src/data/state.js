@@ -17,18 +17,13 @@ export function createInitialState() {
 export function loadAppState(storage = localStorage) {
   const state = createInitialState();
   const saved = safeJsonParse(storage.getItem(APP_STATE_STORAGE_KEY), null);
-  if (!saved?.data) return state;
+  if (!saved) return state;
   return {
     ...state,
-    ...saved,
-    data: {
-      ...state.data,
-      ...saved.data,
-      masterData: {
-        ...state.data.masterData,
-        ...(saved.data.masterData || {}),
-      },
-    },
+    currentPage: saved.currentPage || state.currentPage,
+    currentMode: saved.currentMode || state.currentMode,
+    currentSeason: saved.currentSeason || state.currentSeason,
+    savedAt: saved.savedAt || '',
     dirtyFlags: {},
   };
 }
@@ -36,7 +31,6 @@ export function loadAppState(storage = localStorage) {
 export function saveAppState(state, storage = localStorage) {
   const savedAt = new Date().toISOString();
   storage.setItem(APP_STATE_STORAGE_KEY, JSON.stringify({
-    data: state.data,
     currentPage: state.currentPage,
     currentMode: state.currentMode,
     currentSeason: state.currentSeason,

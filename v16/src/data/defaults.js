@@ -24,19 +24,7 @@ export const DEFAULT_TASK_CATEGORIES = [
 ];
 
 export const DEFAULT_STATE = {
-  tasks: [
-    {
-      id: 1,
-      name: 'Finalize mission checklist',
-      owner: 'Captain',
-      due: '',
-      priority: 'High',
-      status: 'Open',
-      category: 'Mission Run',
-      blocked: false,
-      notes: 'Seed task for v16 smoke testing.',
-    },
-  ],
+  tasks: [],
   members: [
     { id: 1, name: 'Captain', role: 'Lead', group: 'Operations' },
     { id: 2, name: 'Pilot', role: 'Pilot', group: 'Drive Team' },

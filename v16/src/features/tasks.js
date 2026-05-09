@@ -389,7 +389,7 @@ function renderTaskForm(editingTask = null, context = {}) {
       <label data-task-evidence-url>${escapeHtml(t('evidenceUrl'))}<input name="evidenceUrl" type="url" placeholder="https://..."></label>
       <label style="grid-column:1/-1">${escapeHtml(t('evidenceNote'))}<textarea name="evidenceNote" rows="2" placeholder="${escapeHtml(t('evidenceNote'))}"></textarea></label>
       <button class="btn btn-primary" type="submit">${escapeHtml(editingTask ? t('updateTask') : t('addTask'))}</button>
-      ${editingTask ? `<button class="btn" type="button" data-task-cancel-edit>${escapeHtml(t('cancelEdit'))}</button>` : `<button class="btn" type="button" data-task-close-modal>${escapeHtml(t('cancelEdit'))}</button>`}
+      ${editingTask ? `<button class="btn" type="button" data-task-cancel-edit>${escapeHtml(t('cancelEdit'))}</button>` : `<button class="btn" type="reset">${escapeHtml(t('cancelEdit'))}</button>`}
     </form>
     <datalist id="task-owner-list" data-task-owner-list>${ownerSuggestions.map(owner => `<option value="${escapeHtml(owner)}"></option>`).join('')}</datalist>
     ${editingTask && existingEvidence.length ? `<div data-task-evidence style="display:flex;gap:5px;flex-wrap:wrap;align-items:center;margin-top:8px"><strong style="font-size:.78rem;color:var(--muted)">${escapeHtml(t('existingEvidence'))}</strong>${existingEvidence.map(item => item.url ? `<a class="badge mid" href="${escapeHtml(item.url)}" target="_blank" rel="noreferrer">${escapeHtml(item.label || t('evidence'))}</a>` : `<span class="badge mid">${escapeHtml(item.label || t('evidence'))}</span>`).join('')}</div>` : ''}`;
@@ -415,6 +415,11 @@ export function renderTasksPage(state, options = {}) {
           <div class="page-top-summary">${escapeHtml(t('taskSummary'))}</div>
         </div>
         <div class="page-top-summary">${escapeHtml(t('openTasks'))} ${stats.open} | ${escapeHtml(t('overdue'))} ${stats.overdue} | ${escapeHtml(t('blocked'))} ${stats.blocked} | ${escapeHtml(t('visible'))} ${visibleTasks.length}/${tasks.length}</div>
+      </div>
+      <div class="card" id="${editingTask ? 'task-edit-form' : 'task-add-form'}">
+        <h2 style="margin:0 0 10px;color:var(--navy);font-size:1rem">${escapeHtml(editingTask ? t('editingTask') : t('addTask'))}</h2>
+        ${renderTaskForm(editingTask || null, { master, ownerSuggestions })}
+        ${editingTask ? `<div style="font-size:.78rem;color:var(--muted);font-weight:800;margin-top:8px">${escapeHtml(t('editingTask'))}: ${escapeHtml(editingTask.name)}</div>` : ''}
       </div>
       <div class="card">
         <div class="task-summary-row" data-task-evidence-summary data-task-health-summary>
@@ -477,7 +482,7 @@ export function renderTasksPage(state, options = {}) {
         </div>
         <div class="task-toolbar-actions" data-task-toolbar-actions>
           <button class="btn task-toolbar-btn task-toolbar-clear" type="button" data-task-clear-filters>${escapeHtml(t('clearFilters'))}</button>
-          <button class="btn btn-primary task-toolbar-btn" type="button" data-task-open-modal>${escapeHtml(t('addTask'))}</button>
+          <a class="btn btn-primary task-toolbar-btn" href="#task-add-form">${escapeHtml(t('addTask'))}</a>
           <button class="btn btn-primary task-toolbar-btn" type="button" data-action="export-tasks-csv">${escapeHtml(t('exportTasksCsv'))}</button>
           <div class="task-toolbar-search">
             <label><span class="sr-only">${escapeHtml(t('search'))}</span><input data-task-search value="${escapeHtml(filters.search)}" placeholder="${escapeHtml(t('searchTasks'))}"></label>
@@ -488,13 +493,6 @@ export function renderTasksPage(state, options = {}) {
           ${activeFilterChips.length ? `<strong style="font-size:.76rem;color:var(--muted)">${escapeHtml(t('activeFilters'))}</strong>${activeFilterChips.map(chip => `<button class="badge mid" type="button" data-task-remove-filter="${escapeHtml(chip.key)}" title="${escapeHtml(t('removeFilter'))}" style="cursor:pointer">${escapeHtml(chip.label)}: ${escapeHtml(chip.value)} x</button>`).join('')}` : `<span style="font-size:.76rem;color:var(--muted);font-weight:800">${escapeHtml(t('noActiveFilters'))}</span>`}
         </div>
         ${renderTaskTable(visibleTasks, state.data.members || [], { totalCount: tasks.length, filters, categories })}
-      </div>
-      <div class="modal-bg ${options.taskModalOpen || editingTask ? 'open' : ''}" data-task-modal-bg>
-        <div class="modal wide" role="dialog" aria-modal="true" aria-labelledby="task-modal-title" data-task-modal>
-          <h3 id="task-modal-title">${escapeHtml(editingTask ? t('editingTask') : t('addTask'))}</h3>
-          ${renderTaskForm(editingTask || null, { master, ownerSuggestions })}
-          ${editingTask ? `<div style="font-size:.78rem;color:var(--muted);font-weight:800;margin-top:8px">${escapeHtml(t('editingTask'))}: ${escapeHtml(editingTask.name)}</div>` : ''}
-        </div>
       </div>
     </section>`;
 }

@@ -111,7 +111,6 @@ let toastTimer = null;
 let undoState = loadUndoState();
 let undoClearTimer = null;
 let actionLog = loadActionLog();
-let taskModalOpen = false;
 const taskFilters = {
   search: '',
   owner: '',
@@ -150,7 +149,6 @@ const prepFilters = {
 };
 
 function clearEditingOutsidePage(page) {
-  if (page !== 'tasks') taskModalOpen = false;
   if (page !== 'tasks') editingTaskId = null;
   if (page !== 'members') editingMemberId = null;
   if (page !== 'competition') editingRunId = null;
@@ -605,6 +603,10 @@ function persistAndRender(message = t('saved'), options = {}) {
   if (!options.skipAutoSync) scheduleAutoSupabaseSync(0);
 }
 
+function persistRemoteAndRender(message = t('saved'), options = {}) {
+  persistAndRender(`${message} | Syncing to Supabase...`, options);
+}
+
 async function confirmSupabaseTasksSync(message = t('saved')) {
   try {
     const before = lastDbStatus?.data ? lastDbStatus : await loadSupabaseReadOnly();
@@ -626,7 +628,7 @@ async function confirmSupabaseTasksSync(message = t('saved')) {
     lastDbStatus = await loadSupabaseReadOnly();
     lastPostWritePreview = buildSupabaseSyncPreview(appState, lastDbStatus);
     const taskTable = lastPostWritePreview.tables.find(table => table.label === 'tasks');
-    if (taskTable?.create || taskTable?.update) {
+    if (taskTable?.create || taskTable?.update || taskTable?.remove) {
       setPendingLocalSync(true);
       showToast(`${message} | Local saved, but Supabase did not confirm the task update.`, 'error');
       recordAction('Task Supabase confirmation failed', 'error');
@@ -673,7 +675,7 @@ async function runAutoSupabaseSync() {
       lastDbStatus = await loadSupabaseReadOnly();
     }
     const preview = buildSupabaseSyncPreview(appState, lastDbStatus);
-    const hasWrites = preview.totalCreate + preview.totalUpdate > 0;
+    const hasWrites = preview.totalCreate + preview.totalUpdate + preview.totalRemove > 0;
     if (!hasWrites) {
       markLocalDataSynced();
       return;
@@ -691,7 +693,7 @@ async function runAutoSupabaseSync() {
     }
     lastDbStatus = await loadSupabaseReadOnly();
     lastPostWritePreview = buildSupabaseSyncPreview(appState, lastDbStatus);
-    if (lastPostWritePreview.totalCreate + lastPostWritePreview.totalUpdate === 0) {
+    if (lastPostWritePreview.totalCreate + lastPostWritePreview.totalUpdate + lastPostWritePreview.totalRemove === 0) {
       markLocalDataSynced();
     } else {
       setPendingLocalSync(true);
@@ -754,7 +756,7 @@ function loadSupabaseIntoApp({ silent = false, preserveLocal = false, forceImpor
     .then((payload) => {
       const importDelta = buildSupabaseReadOnlyImportDelta(appState.data, payload.data);
       payload.importDelta = importDelta;
-      const shouldPreserveLocal = !forceImport && (preserveLocal || hasPendingLocalSync());
+      const shouldPreserveLocal = false;
       if (!shouldPreserveLocal) {
         applySupabaseReadOnlyData(appState, payload);
         markLocalDataSynced();
@@ -784,7 +786,7 @@ function scheduleInitialSupabaseLoad() {
   if (initialSupabaseLoadStarted) return;
   initialSupabaseLoadStarted = true;
   const defer = typeof window?.setTimeout === 'function' ? window.setTimeout.bind(window) : setTimeout;
-  defer(() => loadSupabaseIntoApp({ silent: true, preserveLocal: hasPendingLocalSync() }), 250);
+  defer(() => loadSupabaseIntoApp({ silent: true, preserveLocal: false, forceImport: true }), 250);
 }
 
 async function refreshSupabaseFromRemote({ force = false } = {}) {
@@ -1452,7 +1454,7 @@ function renderDashboard() {
 
 function renderCurrentPage() {
   if (appState.currentPage === 'prep') return renderPrepCenter(appState, { editingGearId, editingChecklist, prepFocus, filters: prepFilters });
-  if (appState.currentPage === 'tasks') return renderTasksPage(appState, { editingTaskId, taskModalOpen, filters: taskFilters });
+  if (appState.currentPage === 'tasks') return renderTasksPage(appState, { editingTaskId, filters: taskFilters });
   if (appState.currentPage === 'members') return renderMembersPage(appState, { editingMemberId, filters: memberFilters });
   if (appState.currentPage === 'intel') return renderIntelPage(appState, { editingIntelId, editingStrategyId, intelFocus, filters: intelFilters });
   if (appState.currentPage === 'presentation') return renderPresentationPage(appState);
@@ -1997,25 +1999,10 @@ appRoot?.addEventListener('click', (event) => {
   const editTaskTarget = event.target.closest('[data-task-edit]');
   if (editTaskTarget) {
     editingTaskId = editTaskTarget.dataset.taskEdit;
-    taskModalOpen = true;
     renderAppShell();
     return;
   }
   if (event.target.closest('[data-task-cancel-edit]')) {
-    editingTaskId = null;
-    taskModalOpen = false;
-    renderAppShell();
-    return;
-  }
-  if (event.target.closest('[data-task-open-modal]')) {
-    editingTaskId = null;
-    taskModalOpen = true;
-    renderAppShell();
-    return;
-  }
-  const taskModalBg = event.target.closest('[data-task-modal-bg]');
-  if (event.target.closest('[data-task-close-modal]') || (taskModalBg && !event.target.closest('[data-task-modal]'))) {
-    taskModalOpen = false;
     editingTaskId = null;
     renderAppShell();
     return;
@@ -2369,11 +2356,9 @@ appRoot?.addEventListener('submit', (event) => {
   if (editingTaskId) {
     if (updateTask(appState, editingTaskId, task)) {
       editingTaskId = null;
-      taskModalOpen = false;
     }
   } else {
     addTask(appState, task);
-    taskModalOpen = false;
   }
   persistTaskAndConfirmSupabase(message);
 });
@@ -2554,8 +2539,7 @@ appRoot?.addEventListener('change', (event) => {
 });
 
 appRoot?.addEventListener('keydown', (event) => {
-  if (event.key === 'Escape' && (taskModalOpen || editingTaskId || editingMemberId || editingRunId || editingGearId || editingChecklist || editingIntelId || editingStrategyId)) {
-    taskModalOpen = false;
+  if (event.key === 'Escape' && (editingTaskId || editingMemberId || editingRunId || editingGearId || editingChecklist || editingIntelId || editingStrategyId)) {
     editingTaskId = null;
     editingMemberId = null;
     editingRunId = null;

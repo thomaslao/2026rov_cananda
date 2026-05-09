@@ -173,6 +173,19 @@ async function upsertRowsWithSchemaFallback(client, table, rows, conflict) {
   return { error: new Error('Schema fallback exceeded retry limit'), rows: nextRows, droppedFields };
 }
 
+async function deleteRows(client, table, rows = []) {
+  if (!rows.length) return { error: null, deleted: 0 };
+  const idColumn = table === 'checklist_items' || table === 'predive_checklist_items'
+    ? 'item_id'
+    : 'id';
+  const ids = rows
+    .map(row => row?.[idColumn] ?? row?.id ?? row?.item_id)
+    .filter(value => value !== undefined && value !== null && value !== '');
+  if (!ids.length) return { error: null, deleted: 0 };
+  const { error } = await client.from(table).delete().in(idColumn, ids);
+  return { error, deleted: error ? 0 : ids.length };
+}
+
 function getAllowedFields(table, schemaStatus = null) {
   const staticAllowed = WRITE_SCHEMA[table] || [];
   const probed = schemaStatus?.tables?.[table]?.existing;
@@ -284,9 +297,6 @@ export async function executeGuardedSupabaseWriteSync(client, appState, dbPayloa
   if (confirmText !== WRITE_CONFIRM_TEXT) {
     throw new Error(`Type ${WRITE_CONFIRM_TEXT} to enable guarded write sync`);
   }
-  if (allowDelete) {
-    throw new Error('Delete sync is disabled in v16 guarded write sync');
-  }
   if (!client) throw new Error('Supabase client is unavailable');
 
   const preview = buildSupabaseSyncPreview(appState, dbPayload);
@@ -296,6 +306,11 @@ export async function executeGuardedSupabaseWriteSync(client, appState, dbPayloa
     const localRows = appState.data[table.key] || [];
     const remoteRows = dbPayload.data[table.key] || [];
     const diff = diffRows(localRows, remoteRows);
+    let deleteResult = { error: null, deleted: 0 };
+    if (allowDelete && diff.remove.length) {
+      const remoteDeleteRows = toDbRows(table.label, diff.remove);
+      deleteResult = await deleteRows(client, table.label, remoteDeleteRows);
+    }
     const mappedRows = toDbRows(table.label, [...diff.create, ...diff.update]);
     const schemaViolations = validateRowsForSchema(table.label, mappedRows);
     if (schemaViolations.length) {
@@ -303,7 +318,8 @@ export async function executeGuardedSupabaseWriteSync(client, appState, dbPayloa
         table: table.label,
         ok: false,
         written: 0,
-        skippedDelete: diff.remove.length,
+        deleted: deleteResult.deleted,
+        skippedDelete: allowDelete ? 0 : diff.remove.length,
         error: `Schema validation failed: ${schemaViolations.map(v => v.field).join(', ')}`,
       });
       continue;
@@ -314,7 +330,15 @@ export async function executeGuardedSupabaseWriteSync(client, appState, dbPayloa
       return Object.keys(row).filter(field => !(field in filtered));
     }))];
     if (!rows.length) {
-      results.push({ table: table.label, ok: true, written: 0, skippedDelete: diff.remove.length, droppedFields });
+      results.push({
+        table: table.label,
+        ok: !deleteResult.error,
+        written: 0,
+        deleted: deleteResult.deleted,
+        skippedDelete: allowDelete ? 0 : diff.remove.length,
+        droppedFields,
+        error: deleteResult.error?.message || '',
+      });
       continue;
     }
     const conflict = table.label === 'checklist_items' || table.label === 'predive_checklist_items'
@@ -326,18 +350,19 @@ export async function executeGuardedSupabaseWriteSync(client, appState, dbPayloa
     const error = fallback.error;
     results.push({
       table: table.label,
-      ok: !error,
+      ok: !error && !deleteResult.error,
       written: error ? 0 : writtenRows.length,
-      skippedDelete: diff.remove.length,
+      deleted: deleteResult.deleted,
+      skippedDelete: allowDelete ? 0 : diff.remove.length,
       droppedFields: [...new Set([...droppedFields, ...droppedDuringWrite])],
-      error: error?.message || '',
+      error: error?.message || deleteResult.error?.message || '',
     });
   }
 
   return {
     ts: new Date().toISOString(),
     mode: 'guarded-write',
-    allowDelete: false,
+    allowDelete,
     results,
   };
 }
@@ -347,7 +372,7 @@ export async function executeAutoSupabaseWriteSync(client, appState, dbPayload, 
     ...options,
     confirmText: WRITE_CONFIRM_TEXT,
     tables: options.tables || WRITE_TABLE_WHITELIST,
-    allowDelete: false,
+    allowDelete: true,
   });
 }
 
@@ -357,6 +382,7 @@ export function summarizeWriteResult(writeResult) {
     ok: results.length > 0 && results.every(result => result.ok),
     tables: results.length,
     written: results.reduce((sum, result) => sum + Number(result.written || 0), 0),
+    deleted: results.reduce((sum, result) => sum + Number(result.deleted || 0), 0),
     skippedDelete: results.reduce((sum, result) => sum + Number(result.skippedDelete || 0), 0),
     errors: results.filter(result => !result.ok || result.error).map(result => ({
       table: result.table,
