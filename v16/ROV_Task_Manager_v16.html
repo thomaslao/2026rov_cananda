@@ -6583,10 +6583,9 @@ return { cleanMasterValue, uniqueSorted, getMasterData, ensureDefaultTaskCategor
 
 const __src_app_js = (() => {
 const { APP_STATE_STORAGE_KEY, loadAppState, saveAppState } = __src_data_state_js;
-const { importV15BackupPayload } = __src_data_migration_js;
 const { buildDiagnosticsPayload, downloadDiagnosticsPayload, parseDiagnosticsPayload } = __src_data_diagnostics_js;
 const { applySupabaseReadOnlyData, buildSupabaseReadOnlyImportDelta, DB_TABLES, ensureSupabaseClient, loadSupabaseReadOnly, probeSupabaseSchema } = __src_data_supabase_js;
-const { buildSupabaseSyncPreview, buildWriteAuditEntry, downloadLocalBackup, executeGuardedSupabaseWriteSync, executeAutoSupabaseWriteSync, getWriteAuditLog, restoreLocalBackupPayload, saveWriteAuditEntry, summarizeWriteResult } = __src_data_sync_js;
+const { buildSupabaseSyncPreview, buildWriteAuditEntry, executeGuardedSupabaseWriteSync, executeAutoSupabaseWriteSync, getWriteAuditLog, saveWriteAuditEntry, summarizeWriteResult } = __src_data_sync_js;
 const { addMissionEvent, clearMissionEvents, createMissionRun, deleteMissionRun, exportMissionRunsCsv, getRunDraftFromRun, getRunPayloadFromDom, normalizeRunFilters, renderCompetitionCenter, setCompetitionFlowStep, updateMissionRun } = __src_features_competition_js;
 const { getDataHealthIssues, getSmokeTestLog, renderSmokeTestPanel, saveSmokeTestResult } = __src_features_health_js;
 const { addKnowledgeItem, createKnowledgeItemFromForm, deleteKnowledgeItem, getNextKnowledgeStatus, normalizeKnowledgeFilters, renderIntelPage, updateKnowledgeStatus, updateKnowledgeItem, updateNotes } = __src_features_intel_js;
@@ -8143,18 +8142,6 @@ function currentElapsedSeconds() {
   return timer.running
     ? Math.floor((Date.now() - timer.startedAt) / 1000) + timer.baseSeconds
     : timer.baseSeconds;
-}
-
-function resetV16LocalDataWithBackup() {
-  const confirmText = window.prompt(`${t('resetLocalDataPrompt')} RESET V16`);
-  if (confirmText !== 'RESET V16') return;
-  downloadLocalBackup(appState);
-  const locale = localStorage.getItem('rov_v16_locale');
-  Object.keys(localStorage)
-    .filter(key => key.startsWith('rov_v16_'))
-    .forEach(key => localStorage.removeItem(key));
-  if (locale) localStorage.setItem('rov_v16_locale', locale);
-  window.location.reload();
 }
 
 window.ROV_V16 = {

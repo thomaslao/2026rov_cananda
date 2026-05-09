@@ -1,15 +1,12 @@
 import { APP_STATE_STORAGE_KEY, loadAppState, saveAppState } from './data/state.js';
-import { importV15BackupPayload } from './data/migration.js';
 import { buildDiagnosticsPayload, downloadDiagnosticsPayload, parseDiagnosticsPayload } from './data/diagnostics.js';
 import { applySupabaseReadOnlyData, buildSupabaseReadOnlyImportDelta, DB_TABLES, ensureSupabaseClient, loadSupabaseReadOnly, probeSupabaseSchema } from './data/supabase.js';
 import {
   buildSupabaseSyncPreview,
   buildWriteAuditEntry,
-  downloadLocalBackup,
   executeGuardedSupabaseWriteSync,
   executeAutoSupabaseWriteSync,
   getWriteAuditLog,
-  restoreLocalBackupPayload,
   saveWriteAuditEntry,
   summarizeWriteResult,
 } from './data/sync.js';
@@ -1620,18 +1617,6 @@ function currentElapsedSeconds() {
   return timer.running
     ? Math.floor((Date.now() - timer.startedAt) / 1000) + timer.baseSeconds
     : timer.baseSeconds;
-}
-
-function resetV16LocalDataWithBackup() {
-  const confirmText = window.prompt(`${t('resetLocalDataPrompt')} RESET V16`);
-  if (confirmText !== 'RESET V16') return;
-  downloadLocalBackup(appState);
-  const locale = localStorage.getItem('rov_v16_locale');
-  Object.keys(localStorage)
-    .filter(key => key.startsWith('rov_v16_'))
-    .forEach(key => localStorage.removeItem(key));
-  if (locale) localStorage.setItem('rov_v16_locale', locale);
-  window.location.reload();
 }
 
 window.ROV_V16 = {
