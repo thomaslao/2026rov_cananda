@@ -17,6 +17,7 @@ const modules = [
   'src/data/supabase.js',
   'src/data/sync.js',
   'src/features/tasks.js',
+  'src/features/student.js',
   'src/features/health.js',
   'src/features/navigation.js',
   'src/features/members.js',

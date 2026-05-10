@@ -14,6 +14,13 @@ function taskUpdatedAt(task = {}) {
   return clean(task.updatedAt || task.updated_at || task.modifiedAt || task.modified_at || task.createdAt || task.created_at);
 }
 
+function isStaleTask(task = {}, staleDays = 7) {
+  if (task.status === 'Done') return false;
+  const updated = Date.parse(taskUpdatedAt(task));
+  if (!Number.isFinite(updated)) return true;
+  return Date.now() - updated > staleDays * 24 * 60 * 60 * 1000;
+}
+
 function formatTaskUpdatedAt(value = '') {
   if (!value) return '';
   const date = new Date(value);
@@ -175,6 +182,7 @@ function taskMatchesHealthFilter(task, health = '', memberNames = new Set()) {
   if (health === 'unassigned') return task.status !== 'Done' && (!owner || owner === 'Unassigned');
   if (health === 'missing-owner') return task.status !== 'Done' && owner && owner !== 'Unassigned' && !memberNames.has(owner);
   if (health === 'high-no-due') return task.status !== 'Done' && task.priority === 'High' && !task.due;
+  if (health === 'stale') return isStaleTask(task);
   return true;
 }
 
@@ -253,6 +261,7 @@ function getTaskHealthBadges(task, memberNames = new Set()) {
     (!owner || owner === 'Unassigned') ? t('unassignedTasks') : '',
     (owner && owner !== 'Unassigned' && !memberNames.has(owner)) ? t('ownerNotInMembers') : '',
     (task.priority === 'High' && !task.due) ? t('highNoDue') : '',
+    isStaleTask(task) ? t('staleTasks') : '',
   ].filter(Boolean);
 }
 
@@ -262,6 +271,7 @@ function getTaskHealthSummary(tasks = [], members = []) {
     unassigned: tasks.filter(task => taskMatchesHealthFilter(task, 'unassigned', memberNames)).length,
     missingOwner: tasks.filter(task => taskMatchesHealthFilter(task, 'missing-owner', memberNames)).length,
     highNoDue: tasks.filter(task => taskMatchesHealthFilter(task, 'high-no-due', memberNames)).length,
+    stale: tasks.filter(task => taskMatchesHealthFilter(task, 'stale', memberNames)).length,
   };
 }
 
@@ -401,6 +411,7 @@ function getActiveFilterChips(filters = {}) {
     unassigned: t('unassignedTasks'),
     'missing-owner': t('ownerNotInMembers'),
     'high-no-due': t('highNoDue'),
+    stale: t('staleTasks'),
   };
   return [
     filters.search ? { key: 'search', label: t('search'), value: filters.search } : null,
@@ -650,6 +661,7 @@ export function renderTasksPage(state, options = {}) {
             [t('unassignedTasks'), healthSummary.unassigned, 'unassigned'],
             [t('ownerNotInMembers'), healthSummary.missingOwner, 'missing-owner'],
             [t('highNoDue'), healthSummary.highNoDue, 'high-no-due'],
+            [t('staleTasks'), healthSummary.stale, 'stale'],
           ].map(([label, value, health]) => {
             const active = filters.health === health;
             return `
@@ -682,6 +694,7 @@ export function renderTasksPage(state, options = {}) {
             ['unassigned', t('unassignedTasks')],
             ['missing-owner', t('ownerNotInMembers')],
             ['high-no-due', t('highNoDue')],
+            ['stale', t('staleTasks')],
           ].map(([value, label]) => `<option value="${escapeHtml(value)}" ${filters.health === value ? 'selected' : ''}>${escapeHtml(label)}</option>`).join('')}</select></label>
           <label>${escapeHtml(t('sort'))}<select data-task-sort>${[
             ['due-asc', t('sortDueAsc')],

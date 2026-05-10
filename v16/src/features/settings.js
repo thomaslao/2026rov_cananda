@@ -555,7 +555,7 @@ export function renderSettingsHub(container, options = {}) {
         </div>
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px">
           ${pageFeaturePages.map((page) => {
-            const locked = page.id === 'dashboard' || page.id === 'settings';
+            const locked = page.id === 'dashboard' || page.id === 'student' || page.id === 'settings';
             const checked = locked || visiblePageIds.has(page.id);
             return `
               <label style="display:flex;align-items:center;gap:8px;border:1px solid var(--border);border-radius:8px;background:var(--input-bg);padding:9px;font-weight:900;color:var(--navy)">

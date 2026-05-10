@@ -268,6 +268,92 @@
   .risk-green { background:var(--green); }
   .directive-card { border-left:5px solid var(--blue); padding:12px 14px; border-radius:8px; background:#F8FBFF; margin-bottom:8px; }
   .handoff-card { border:1px solid var(--border); border-radius:8px; padding:10px 12px; background:var(--white); }
+  .student-owner-control { display:flex; gap:8px; align-items:end; justify-content:flex-end; flex-wrap:wrap; }
+  .student-owner-control label { display:grid; grid-template-columns:auto minmax(180px,260px); gap:8px; align-items:center; font-size:.82rem; font-weight:900; color:var(--navy); }
+  .student-owner-control select { min-height:34px; margin:0; }
+  .student-owner-control .btn { min-height:34px; white-space:nowrap; }
+  .student-stat-row { position:sticky; top:104px; z-index:24; display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:8px; border:1px solid var(--border); border-radius:8px; background:var(--input-bg); padding:8px; box-shadow:0 4px 12px rgba(0,0,0,.06); }
+  .student-stat-card { min-height:54px; border:1px solid var(--border); border-radius:8px; background:var(--white); color:var(--navy); display:flex; align-items:center; justify-content:space-between; gap:10px; padding:8px 10px; cursor:pointer; text-align:left; }
+  .student-stat-card span { font-size:.78rem; font-weight:900; line-height:1.1; }
+  .student-stat-card strong { font-size:1.35rem; line-height:1; }
+  .student-stat-card.active { border-left:5px solid var(--blue); }
+  .student-stat-card.overdue { border-left:5px solid var(--red); background:#FFF1F1; }
+  .student-stat-card.week { border-left:5px solid var(--orange); }
+  .student-stat-card.blocked { border-left:5px solid var(--purple); }
+  .student-jump-row { position:sticky; top:190px; z-index:23; display:flex; gap:6px; align-items:center; flex-wrap:wrap; border:1px solid var(--border); border-radius:8px; background:var(--input-bg); padding:8px; box-shadow:0 4px 12px rgba(0,0,0,.06); }
+  .student-jump-row .btn { min-height:30px; font-size:.78rem; font-weight:900; }
+  #page-student .student-panel,
+  #page-student #student-mentor-overview { scroll-margin-top:250px; }
+  .student-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; align-items:start; }
+  .student-panel { margin:0; padding:10px 12px; }
+  .student-panel-wide { grid-column:1 / -1; }
+  .student-panel-head { display:flex; justify-content:space-between; gap:8px; align-items:center; margin-bottom:8px; }
+  .student-panel-head h2 { margin:0; font-size:1rem; color:var(--navy); }
+  .student-task-row { display:grid; grid-template-columns:minmax(320px,1fr) minmax(0,900px); gap:10px; align-items:center; min-height:38px; border:1px solid var(--border); border-radius:7px; background:var(--input-bg); padding:8px 10px; margin-bottom:7px; }
+  .student-today-focus-panel { border-left:5px solid var(--green); }
+  .student-today-focus-panel .student-task-row:first-of-type { border-left:4px solid var(--green); background:#F3FBF5; }
+  .student-task-main { min-width:0; display:grid; gap:2px; }
+  .student-task-main strong { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--navy); font-size:.84rem; }
+  .student-task-main span { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--muted); font-size:.74rem; font-weight:800; }
+  .student-task-main .student-task-updated { font-size:.68rem; color:var(--muted); font-weight:900; }
+  .student-task-reasons { display:flex; gap:4px; flex-wrap:wrap; align-items:center; margin-top:2px; }
+  .student-task-reasons .badge { padding:1px 7px; font-size:.68rem; line-height:1.35; }
+  .student-task-actions { display:grid; grid-template-columns:54px 140px 140px 140px minmax(150px,1fr) 66px 62px 62px; gap:7px; align-items:center; justify-content:end; }
+  .student-task-actions .badge { min-height:34px; display:flex; align-items:center; justify-content:center; text-align:center; white-space:normal; line-height:1.1; padding:4px 7px; }
+  .student-task-actions .btn { min-height:34px; padding:4px 8px; font-weight:900; white-space:normal; line-height:1.15; }
+  .student-status-select,
+  .student-priority-select,
+  .student-category-select { width:100%; min-height:34px; height:34px; margin:0; border-radius:7px; padding:4px 8px; font-size:.78rem; font-weight:900; }
+  .student-category-select { max-width:none; }
+  .student-due-input { width:100%; min-height:34px; height:34px; margin:0; border-radius:7px; padding:4px 8px; font-size:.78rem; font-weight:900; }
+  .student-empty { color:var(--muted); font-weight:900; padding:8px 0; }
+  .student-summary-panel { display:grid; gap:8px; }
+  .student-summary-text { width:100%; min-height:150px; margin:0; resize:vertical; font-size:.82rem; line-height:1.45; font-weight:800; color:var(--navy); background:var(--input-bg); }
+  .student-report-panel { display:grid; gap:8px; }
+  .student-evidence-panel { display:grid; gap:8px; }
+  .student-report-grid { display:grid; grid-template-columns:minmax(180px,.8fr) repeat(3,minmax(180px,1fr)); gap:8px; align-items:start; }
+  .student-evidence-grid { display:grid; grid-template-columns:minmax(180px,.8fr) minmax(180px,1fr) minmax(180px,1.2fr) minmax(180px,1fr); gap:8px; align-items:start; }
+  .student-report-grid label,
+  .student-evidence-grid label { display:grid; gap:4px; font-size:.78rem; font-weight:900; color:var(--navy); }
+  .student-report-grid select,
+  .student-report-grid textarea,
+  .student-evidence-grid select,
+  .student-evidence-grid input,
+  .student-evidence-grid textarea { margin:0; min-height:34px; }
+  .student-report-grid textarea,
+  .student-evidence-grid textarea { resize:vertical; min-height:58px; }
+  .student-report-actions { display:flex; justify-content:flex-end; }
+  .student-add-task-panel { display:grid; gap:8px; }
+  .student-add-task-grid { display:grid; grid-template-columns:minmax(180px,1.4fr) 150px 130px minmax(150px,1fr) auto; gap:8px; align-items:end; }
+  .student-add-task-grid label { display:grid; gap:4px; font-size:.78rem; font-weight:900; color:var(--navy); }
+  .student-add-task-grid input,
+  .student-add-task-grid select { margin:0; min-height:34px; }
+  .student-add-task-grid .btn { min-height:34px; white-space:nowrap; }
+  .student-mentor-panel { display:block; }
+  .student-mentor-summary { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:8px; align-items:center; cursor:pointer; list-style:none; }
+  .student-mentor-summary::-webkit-details-marker { display:none; }
+  .student-mentor-summary h2 { margin:0; }
+  .student-mentor-summary h2::before { content:'+'; display:inline-flex; width:20px; height:20px; margin-right:6px; border-radius:999px; align-items:center; justify-content:center; background:#E8EEF8; color:var(--navy); font-size:.82rem; font-weight:900; }
+  .student-mentor-panel[open] .student-mentor-summary h2::before { content:'-'; }
+  .student-mentor-summary-actions { display:flex; gap:6px; align-items:center; flex-wrap:wrap; justify-content:flex-end; }
+  .student-mentor-controls { display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-bottom:8px; padding:7px 8px; border:1px solid var(--border); border-radius:8px; background:var(--input-bg); }
+  .student-mentor-controls label { display:flex; align-items:center; gap:6px; margin:0; font-size:.78rem; font-weight:900; color:var(--navy); white-space:nowrap; }
+  .student-mentor-controls select { width:auto; min-width:150px; min-height:30px; margin:0; padding:4px 8px; font-size:.78rem; font-weight:900; }
+  .student-mentor-risk-panel { display:grid; gap:7px; margin-bottom:8px; border:1px solid rgba(192,0,0,.22); border-left:5px solid var(--red); border-radius:8px; background:#FFF7F7; padding:8px; }
+  .student-mentor-risk-title { font-size:.78rem; font-weight:900; color:var(--red); }
+  .student-mentor-risk-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:7px; }
+  .student-mentor-risk-card { display:grid; gap:6px; border:1px solid rgba(192,0,0,.18); border-radius:8px; background:#fff; padding:8px; min-width:0; }
+  .student-mentor-risk-card > div { display:flex; gap:5px; flex-wrap:wrap; align-items:center; }
+  .student-mentor-table { display:grid; border:1px solid var(--border); border-radius:8px; overflow:hidden; background:var(--white); }
+  .student-mentor-row { display:grid; grid-template-columns:minmax(130px,1fr) repeat(6,82px) auto; gap:8px; align-items:center; padding:7px 8px; border-top:1px solid var(--border); font-size:.78rem; font-weight:850; }
+  .student-mentor-row:first-child { border-top:0; }
+  .student-mentor-row.head { background:#EEF3FB; color:var(--navy); font-size:.72rem; font-weight:900; }
+  .student-mentor-owner { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--navy); border:0; background:transparent; padding:0; text-align:left; font-weight:900; cursor:pointer; }
+  .student-mentor-owner:hover { text-decoration:underline; }
+  .student-mentor-row .badge { justify-self:start; min-width:34px; justify-content:center; }
+  .student-mentor-count { border:0; cursor:pointer; }
+  .student-mentor-count:hover { filter:brightness(.96); transform:translateY(-1px); }
+  .student-mentor-actions { display:flex; gap:6px; justify-content:flex-end; align-items:center; }
   .prep-view-hidden { display:none !important; }
   .contact-team-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:12px; margin-bottom:14px; }
   .contact-team-card { border:1px solid var(--border); border-radius:10px; padding:12px; background:var(--white); }
@@ -602,6 +688,9 @@
   .task-modal { width: min(760px, 95vw); }
   .task-modal-head { display:flex; gap:10px; align-items:center; justify-content:space-between; margin-bottom:14px; }
   .task-modal-head h3 { margin:0; }
+  .confirm-modal { width:min(520px, 94vw); }
+  .confirm-message { color:var(--text); font-weight:900; line-height:1.45; overflow-wrap:anywhere; }
+  .confirm-detail { max-height:220px; overflow:auto; margin-top:10px; padding:10px; border:1px solid var(--border); border-radius:8px; background:var(--input-bg); color:var(--text); font-size:.82rem; white-space:pre-wrap; }
   .form-row { margin-bottom: 12px; }
   .form-row label { display: block; font-size: .82rem; font-weight: 600; margin-bottom: 4px; }
   .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 16px; }
@@ -682,6 +771,29 @@
     .task-toolbar-btn,
     [data-checklist-add],
     [data-gear-add] { min-height:46px; }
+    .student-stat-row,
+    .student-mentor-risk-grid,
+    .student-grid,
+    .student-add-task-grid,
+    .student-evidence-grid,
+    .student-report-grid { grid-template-columns:1fr; }
+    .student-stat-row,
+    .student-jump-row { position:static; top:auto; z-index:auto; }
+    .student-owner-control label { grid-template-columns:1fr; }
+    .student-task-row { grid-template-columns:1fr; }
+    .student-task-main strong,
+    .student-task-main span { white-space:normal; overflow:visible; text-overflow:clip; overflow-wrap:anywhere; }
+    .student-task-actions { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); justify-content:stretch; align-items:stretch; width:100%; }
+    .student-task-actions .badge,
+    .student-task-actions .btn,
+    .student-task-actions select,
+    .student-task-actions input { width:100%; max-width:none; min-height:36px; }
+    .student-task-actions .badge { display:flex; align-items:center; justify-content:center; }
+    .student-due-input { width:100%; }
+    .student-category-select { max-width:none; }
+    .student-mentor-table { overflow-x:auto; }
+    .student-mentor-row { min-width:780px; }
+    .student-owner-control { justify-content:flex-start; }
     .prep-section-heading { flex-wrap:wrap; }
     .prep-item-row,
     .prep-gear-row { grid-template-columns:minmax(0,1fr) auto; }
@@ -782,6 +894,19 @@
     .card-actions { width:100%; justify-content:flex-start; }
     .page-topbar { grid-template-columns:1fr; }
     .page-top-actions { justify-content:flex-start; }
+    #page-student { width:100%; max-width:100vw; overflow-x:hidden; }
+    #page-student .page-topbar,
+    #page-student .page-topbar > div:first-child,
+    #page-student .student-owner-control,
+    #page-student .student-stat-row,
+    #page-student .student-jump-row,
+    #page-student .card,
+    #page-student .student-panel-head,
+    #page-student .student-grid { width:100%; max-width:100%; min-width:0; }
+    #page-student .page-topbar > div:first-child { display:grid; white-space:normal; }
+    #page-student .student-owner-control { display:grid; grid-template-columns:1fr; }
+    #page-student .student-mentor-summary { grid-template-columns:1fr; }
+    #page-student .student-mentor-summary-actions { justify-content:flex-start; }
     .dashboard-safety-header { grid-template-columns:1fr; }
     .dashboard-safety-actions { justify-items:stretch; }
     .dashboard-action-group { justify-content:flex-start; }
@@ -990,7 +1115,40 @@ const LOCALE_STORAGE_KEY = 'rov_v16_locale';
 const STRINGS = {
   en: {
     appTitle: 'ROV Task Manager v16',
+    top: 'Top',
     dashboard: 'Dashboard',
+    studentWorkspaceShort: 'Student',
+    studentWorkspace: 'Student Workspace',
+    studentWorkspaceSummary: 'Personal task focus for students.',
+    student: 'Student',
+    todayFocus: 'Today focus',
+    todayNextActions: 'Next actions',
+    needsAttention: 'Needs attention',
+    quickProgressReport: 'Quick progress report',
+    quickEvidenceSubmit: 'Quick evidence submit',
+    mentorOverview: 'Mentor overview',
+    mentorFollowUpToday: 'Follow up today',
+    showRiskOnly: 'Show risk only',
+    sortRiskFirst: 'Risk first',
+    sortOverdueTasks: 'Overdue tasks',
+    sortBlockedTasks: 'Blocked tasks',
+    sortWeekTasks: 'This week tasks',
+    addMyTask: 'Add my task',
+    chooseTask: 'Choose task',
+    reportDone: 'Done today',
+    reportBlocker: 'Blocker / problem',
+    reportNext: 'Next step',
+    saveReport: 'Save report',
+    saveEvidence: 'Save evidence',
+    evidenceSaved: 'Evidence saved.',
+    evidenceReminder: 'Please add evidence.',
+    progressReportSaved: 'Progress report saved.',
+    markBlocked: 'Mark blocked',
+    unblockTask: 'Unblock',
+    dailyReportSummary: 'Daily report summary',
+    copySummary: 'Copy summary',
+    summaryCopied: 'Summary copied.',
+    healthTips: 'Health tips',
     prep: 'Prep',
     tasks: 'Tasks',
     competition: 'Competition',
@@ -1116,6 +1274,10 @@ const STRINGS = {
     dataHealth: 'Data Health',
     dataSafety: 'Data Safety',
     dataSafetyHint: 'Operational reports and recent UI actions. Working data is stored in Supabase.',
+    dataSource: 'Data source',
+    syncStatus: 'Sync status',
+    lastSupabaseConfirmed: 'Last Supabase confirmed',
+    pendingLocalChanges: 'Pending local changes',
     lastSaved: 'Last saved',
     notSavedYet: 'Not saved yet',
     recentActions: 'Recent actions',
@@ -1124,6 +1286,7 @@ const STRINGS = {
     available: 'Available',
     notAvailable: 'Not available',
     exportActionLog: 'Export Log',
+    exportCsv: 'Export CSV',
     clearActionLog: 'Clear Log',
     actionLogExported: 'Action log exported.',
     actionLogCleared: 'Action log cleared.',
@@ -1198,6 +1361,8 @@ const STRINGS = {
     withEvidence: 'With evidence',
     withoutEvidence: 'No evidence',
     needsEvidence: 'Needs evidence',
+    staleTasks: 'Not updated 7d',
+    noEvidenceNeeded: 'No evidence needed.',
     exportTasksCsv: 'Export visible tasks CSV',
     addTask: 'Add task',
     updateTask: 'Update task',
@@ -1221,6 +1386,7 @@ const STRINGS = {
     previousTask: 'Previous',
     nextTask: 'Next',
     delete: 'Delete',
+    cancel: 'Cancel',
     confirmDelete: 'Delete this item?',
     confirmBulkDeleteTasks: 'Delete selected tasks?',
     andMoreTasks: 'More tasks:',
@@ -1382,7 +1548,40 @@ const STRINGS = {
   },
   zh: {
     appTitle: 'ROV \u4efb\u52d9\u7ba1\u7406 v16',
+    top: '\u9802\u90e8',
     dashboard: '\u7e3d\u89bd',
+    studentWorkspaceShort: '\u5b78\u751f',
+    studentWorkspace: '\u5b78\u751f\u5de5\u4f5c\u53f0',
+    studentWorkspaceSummary: '\u8b93\u5b78\u751f\u96c6\u4e2d\u67e5\u770b\u81ea\u5df1\u9700\u8981\u5b8c\u6210\u7684\u4efb\u52d9\u3002',
+    student: '\u5b78\u751f',
+    todayFocus: '\u4eca\u65e5\u5de5\u4f5c\u91cd\u9ede',
+    todayNextActions: '\u4e0b\u4e00\u6b65\u884c\u52d5',
+    needsAttention: '\u9700\u8981\u8ddf\u9032',
+    quickProgressReport: '\u5feb\u901f\u9032\u5ea6\u56de\u5831',
+    quickEvidenceSubmit: '\u5feb\u901f\u63d0\u4ea4\u8b49\u64da',
+    mentorOverview: 'Mentor \u8ddf\u9032\u7e3d\u89bd',
+    mentorFollowUpToday: '\u4eca\u65e5\u9700\u8ddf\u9032',
+    showRiskOnly: '\u53ea\u986f\u793a\u6709\u98a8\u96aa\u5b78\u751f',
+    sortRiskFirst: '\u98a8\u96aa\u512a\u5148',
+    sortOverdueTasks: '\u903e\u671f\u4efb\u52d9',
+    sortBlockedTasks: '\u963b\u585e\u4efb\u52d9',
+    sortWeekTasks: '\u672c\u9031\u4efb\u52d9',
+    addMyTask: '\u65b0\u589e\u6211\u7684\u4efb\u52d9',
+    chooseTask: '\u9078\u64c7\u4efb\u52d9',
+    reportDone: '\u4eca\u65e5\u5b8c\u6210',
+    reportBlocker: '\u963b\u585e / \u554f\u984c',
+    reportNext: '\u4e0b\u4e00\u6b65',
+    saveReport: '\u5132\u5b58\u56de\u5831',
+    saveEvidence: '\u5132\u5b58\u8b49\u64da',
+    evidenceSaved: '\u8b49\u64da\u5df2\u5132\u5b58\u3002',
+    evidenceReminder: '\u8acb\u88dc\u5145\u8b49\u64da\u3002',
+    progressReportSaved: '\u9032\u5ea6\u56de\u5831\u5df2\u5132\u5b58\u3002',
+    markBlocked: '\u6a19\u8a18\u963b\u585e',
+    unblockTask: '\u89e3\u9664\u963b\u585e',
+    dailyReportSummary: '\u4eca\u65e5\u532f\u5831\u6458\u8981',
+    copySummary: '\u8907\u88fd\u6458\u8981',
+    summaryCopied: '\u6458\u8981\u5df2\u8907\u88fd\u3002',
+    healthTips: '\u5065\u5eb7\u63d0\u793a',
     prep: '\u5099\u6230',
     tasks: '\u4efb\u52d9',
     competition: '\u6bd4\u8cfd',
@@ -1508,6 +1707,10 @@ const STRINGS = {
     dataHealth: '\u8cc7\u6599\u5065\u5eb7',
     dataSafety: '\u8cc7\u6599\u4fdd\u8b77',
     dataSafetyHint: '\u986f\u793a Supabase \u72c0\u614b\u3001\u6700\u8fd1\u64cd\u4f5c\u8207\u8a3a\u65b7\u532f\u51fa\u3002\u5de5\u4f5c\u8cc7\u6599\u4ee5 Supabase \u70ba\u4e3b\u3002',
+    dataSource: '\u8cc7\u6599\u4f86\u6e90',
+    syncStatus: '\u540c\u6b65\u72c0\u614b',
+    lastSupabaseConfirmed: 'Supabase \u6700\u5f8c\u78ba\u8a8d',
+    pendingLocalChanges: '\u5f85\u540c\u6b65\u672c\u5730\u8b8a\u66f4',
     lastSaved: '\u6700\u5f8c\u4fdd\u5b58',
     notSavedYet: '\u5c1a\u672a\u4fdd\u5b58',
     recentActions: '\u6700\u8fd1\u64cd\u4f5c',
@@ -1516,6 +1719,7 @@ const STRINGS = {
     available: '\u53ef\u7528',
     notAvailable: '\u4e0d\u53ef\u7528',
     exportActionLog: '\u532f\u51fa\u7d00\u9304',
+    exportCsv: '\u532f\u51fa CSV',
     clearActionLog: '\u6e05\u9664\u7d00\u9304',
     actionLogExported: '\u64cd\u4f5c\u7d00\u9304\u5df2\u532f\u51fa\u3002',
     actionLogCleared: '\u64cd\u4f5c\u7d00\u9304\u5df2\u6e05\u9664\u3002',
@@ -1590,6 +1794,8 @@ const STRINGS = {
     withEvidence: '\u6709\u8b49\u64da',
     withoutEvidence: '\u7121\u8b49\u64da',
     needsEvidence: '\u9700\u88dc\u8b49\u64da',
+    staleTasks: '7\u65e5\u672a\u66f4\u65b0',
+    noEvidenceNeeded: '\u76ee\u524d\u6c92\u6709\u9700\u8981\u63d0\u4ea4\u8b49\u64da\u7684\u4efb\u52d9\u3002',
     exportTasksCsv: '\u532f\u51fa\u76ee\u524d\u4efb\u52d9 CSV',
     addTask: '\u65b0\u589e\u4efb\u52d9',
     updateTask: '\u66f4\u65b0\u4efb\u52d9',
@@ -1613,6 +1819,7 @@ const STRINGS = {
     previousTask: '\u4e0a\u4e00\u500b',
     nextTask: '\u4e0b\u4e00\u500b',
     delete: '\u522a\u9664',
+    cancel: '\u53d6\u6d88',
     confirmDelete: '\u78ba\u5b9a\u8981\u522a\u9664\u9019\u500b\u9805\u76ee\uff1f',
     confirmBulkDeleteTasks: '\u78ba\u5b9a\u8981\u522a\u9664\u5df2\u9078\u4efb\u52d9\uff1f',
     andMoreTasks: '\u9084\u6709\u4efb\u52d9\uff1a',
@@ -3011,6 +3218,13 @@ function taskUpdatedAt(task = {}) {
   return clean(task.updatedAt || task.updated_at || task.modifiedAt || task.modified_at || task.createdAt || task.created_at);
 }
 
+function isStaleTask(task = {}, staleDays = 7) {
+  if (task.status === 'Done') return false;
+  const updated = Date.parse(taskUpdatedAt(task));
+  if (!Number.isFinite(updated)) return true;
+  return Date.now() - updated > staleDays * 24 * 60 * 60 * 1000;
+}
+
 function formatTaskUpdatedAt(value = '') {
   if (!value) return '';
   const date = new Date(value);
@@ -3172,6 +3386,7 @@ function taskMatchesHealthFilter(task, health = '', memberNames = new Set()) {
   if (health === 'unassigned') return task.status !== 'Done' && (!owner || owner === 'Unassigned');
   if (health === 'missing-owner') return task.status !== 'Done' && owner && owner !== 'Unassigned' && !memberNames.has(owner);
   if (health === 'high-no-due') return task.status !== 'Done' && task.priority === 'High' && !task.due;
+  if (health === 'stale') return isStaleTask(task);
   return true;
 }
 
@@ -3250,6 +3465,7 @@ function getTaskHealthBadges(task, memberNames = new Set()) {
     (!owner || owner === 'Unassigned') ? t('unassignedTasks') : '',
     (owner && owner !== 'Unassigned' && !memberNames.has(owner)) ? t('ownerNotInMembers') : '',
     (task.priority === 'High' && !task.due) ? t('highNoDue') : '',
+    isStaleTask(task) ? t('staleTasks') : '',
   ].filter(Boolean);
 }
 
@@ -3259,6 +3475,7 @@ function getTaskHealthSummary(tasks = [], members = []) {
     unassigned: tasks.filter(task => taskMatchesHealthFilter(task, 'unassigned', memberNames)).length,
     missingOwner: tasks.filter(task => taskMatchesHealthFilter(task, 'missing-owner', memberNames)).length,
     highNoDue: tasks.filter(task => taskMatchesHealthFilter(task, 'high-no-due', memberNames)).length,
+    stale: tasks.filter(task => taskMatchesHealthFilter(task, 'stale', memberNames)).length,
   };
 }
 
@@ -3398,6 +3615,7 @@ function getActiveFilterChips(filters = {}) {
     unassigned: t('unassignedTasks'),
     'missing-owner': t('ownerNotInMembers'),
     'high-no-due': t('highNoDue'),
+    stale: t('staleTasks'),
   };
   return [
     filters.search ? { key: 'search', label: t('search'), value: filters.search } : null,
@@ -3647,6 +3865,7 @@ function renderTasksPage(state, options = {}) {
             [t('unassignedTasks'), healthSummary.unassigned, 'unassigned'],
             [t('ownerNotInMembers'), healthSummary.missingOwner, 'missing-owner'],
             [t('highNoDue'), healthSummary.highNoDue, 'high-no-due'],
+            [t('staleTasks'), healthSummary.stale, 'stale'],
           ].map(([label, value, health]) => {
             const active = filters.health === health;
             return `
@@ -3679,6 +3898,7 @@ function renderTasksPage(state, options = {}) {
             ['unassigned', t('unassignedTasks')],
             ['missing-owner', t('ownerNotInMembers')],
             ['high-no-due', t('highNoDue')],
+            ['stale', t('staleTasks')],
           ].map(([value, label]) => `<option value="${escapeHtml(value)}" ${filters.health === value ? 'selected' : ''}>${escapeHtml(label)}</option>`).join('')}</select></label>
           <label>${escapeHtml(t('sort'))}<select data-task-sort>${[
             ['due-asc', t('sortDueAsc')],
@@ -3749,6 +3969,434 @@ function renderTasksPage(state, options = {}) {
 }
 
 return { createTaskFromForm, addTask, updateTask, updateTaskStatus, deleteTask, getTaskStats, getVisibleTasks, buildTasksCsv, exportTasksCsv, renderTaskTable, renderTasksPage };
+})();
+
+const __src_features_student_js = (() => {
+const { escapeHtml } = __src_utils_index_js;
+const { getTaskDueInfo, isOverdue } = __src_utils_date_js;
+const { labelFor, t } = __src_utils_i18n_js;
+function clean(value) {
+  return String(value || '').trim();
+}
+
+function unique(values = []) {
+  return [...new Set(values.map(clean).filter(Boolean))];
+}
+
+function isOpenTask(task = {}) {
+  return task.status !== 'Done';
+}
+
+function isThisWeek(task = {}) {
+  const dueInfo = getTaskDueInfo(task);
+  return dueInfo.days !== null && dueInfo.days >= 0 && dueInfo.days <= 7;
+}
+
+function hasEvidence(task = {}) {
+  return Array.isArray(task.evidence) && task.evidence.some(item => clean(item?.label || item?.url || item?.note));
+}
+
+function needsEvidence(task = {}) {
+  return (task.priority === 'High' || task.status === 'Done') && !hasEvidence(task);
+}
+
+function taskUpdatedAt(task = {}) {
+  return clean(task.updatedAt || task.updated_at || task.modifiedAt || task.modified_at || task.createdAt || task.created_at);
+}
+
+function formatTaskUpdatedAt(value = '') {
+  if (!value) return '-';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return String(value);
+  return date.toLocaleString(undefined, { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
+}
+
+function isStaleTask(task = {}, staleDays = 7) {
+  if (!isOpenTask(task)) return false;
+  const updated = Date.parse(taskUpdatedAt(task));
+  if (!Number.isFinite(updated)) return true;
+  return Date.now() - updated > staleDays * 24 * 60 * 60 * 1000;
+}
+
+function sortByDue(tasks = []) {
+  return [...tasks].sort((a, b) => {
+    const aDue = a.due || '9999-12-31';
+    const bDue = b.due || '9999-12-31';
+    if (aDue !== bDue) return aDue.localeCompare(bDue);
+    return clean(a.priority).localeCompare(clean(b.priority));
+  });
+}
+
+function sortByStudentPriority(tasks = []) {
+  const priorityScore = task => (
+    (isOverdue(task.due) ? 100 : 0)
+    + (task.blocked ? 80 : 0)
+    + (task.priority === 'High' ? 50 : task.priority === 'Medium' ? 20 : 0)
+    + (isStaleTask(task) ? 25 : 0)
+    + (isThisWeek(task) ? 15 : 0)
+  );
+  return sortByDue(tasks).sort((a, b) => (priorityScore(b) - priorityScore(a)) || 0);
+}
+
+function taskBadge(task = {}) {
+  if (task.blocked) return `<span class="badge blocked">${escapeHtml(t('blocked'))}</span>`;
+  if (isOverdue(task.due)) return `<span class="badge overdue">${escapeHtml(t('overdue'))}</span>`;
+  if (task.priority === 'High') return `<span class="badge high">${escapeHtml(t('high'))}</span>`;
+  return `<span class="badge mid">${escapeHtml(labelFor(task.status || 'Open'))}</span>`;
+}
+
+function taskReasonBadges(task = {}) {
+  const reasons = [
+    isOverdue(task.due) ? ['urgent', t('overdue')] : null,
+    task.blocked ? ['blocked', t('blocked')] : null,
+    task.priority === 'High' ? ['high', t('high')] : null,
+    isStaleTask(task) ? ['high', t('staleTasks')] : null,
+    isThisWeek(task) ? ['mid', t('thisWeek')] : null,
+    needsEvidence(task) ? ['urgent', t('needsEvidence')] : null,
+  ].filter(Boolean);
+  if (!reasons.length) return '';
+  return `<div class="student-task-reasons">${reasons.map(([kind, label]) => `<span class="badge ${escapeHtml(kind)}">${escapeHtml(label)}</span>`).join('')}</div>`;
+}
+
+function renderStudentTaskList(tasks = [], emptyLabel = t('noOpenTasks'), categories = [], options = {}) {
+  const rows = (options.preserveOrder ? [...tasks] : sortByDue(tasks)).slice(0, 8);
+  const taskCategories = categories.length ? categories : ['General'];
+  if (!rows.length) return `<div class="student-empty">${escapeHtml(emptyLabel)}</div>`;
+  return rows.map((task) => {
+    const selectedCategory = taskCategories.includes(task.category) ? task.category : taskCategories[0] || 'General';
+    return `
+      <div class="student-task-row">
+        <div class="student-task-main">
+          <strong>${escapeHtml(task.name || t('task'))}</strong>
+          <span>${escapeHtml(task.due || '-')} | ${escapeHtml(labelFor(task.category || 'General'))}</span>
+          <span class="student-task-updated">${escapeHtml(t('lastUpdated'))}: ${escapeHtml(formatTaskUpdatedAt(taskUpdatedAt(task)))}</span>
+          ${taskReasonBadges(task)}
+        </div>
+        <div class="student-task-actions">
+          ${taskBadge(task)}
+          <select class="student-status-select" data-task-status="${escapeHtml(task.id)}" aria-label="${escapeHtml(t('status'))}">
+            ${['Open', 'In Progress', 'Done'].map(status => `<option value="${escapeHtml(status)}" ${task.status === status ? 'selected' : ''}>${escapeHtml(labelFor(status))}</option>`).join('')}
+          </select>
+          <select class="student-priority-select ${task.priority === 'High' ? 'urgent' : task.priority === 'Low' ? 'done' : 'mid'}" data-task-priority="${escapeHtml(task.id)}" aria-label="${escapeHtml(t('priority'))}">
+            ${['High', 'Medium', 'Low'].map(priority => `<option value="${escapeHtml(priority)}" ${task.priority === priority ? 'selected' : ''}>${escapeHtml(labelFor(priority))}</option>`).join('')}
+          </select>
+          <select class="student-category-select" data-task-category="${escapeHtml(task.id)}" aria-label="${escapeHtml(t('category'))}">
+            ${taskCategories.map(category => `<option value="${escapeHtml(category)}" ${selectedCategory === category ? 'selected' : ''}>${escapeHtml(labelFor(category))}</option>`).join('')}
+          </select>
+          <input class="student-due-input" type="date" data-task-due="${escapeHtml(task.id)}" value="${escapeHtml(task.due || '')}" aria-label="${escapeHtml(t('due'))}">
+          <button class="btn btn-sm ${task.blocked ? 'btn-danger' : ''}" type="button" data-student-blocked-toggle="${escapeHtml(task.id)}">${escapeHtml(task.blocked ? t('unblockTask') : t('markBlocked'))}</button>
+          ${task.status !== 'Done' ? `<button class="btn btn-sm btn-success" type="button" data-student-complete="${escapeHtml(task.id)}">${escapeHtml(labelFor('Done'))}</button>` : ''}
+          <button class="btn btn-sm" type="button" data-page="tasks" data-task-search-preset="${escapeHtml(task.name || '')}" data-student-task-open>${escapeHtml(t('open'))}</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function renderTodayFocusPanel(openTasks = [], categories = []) {
+  const rows = sortByStudentPriority(openTasks).slice(0, 3);
+  return `
+    <div class="card student-panel student-today-focus-panel">
+      <div class="student-panel-head">
+        <h2>${escapeHtml(t('todayFocus'))}</h2>
+        <button class="btn btn-sm" type="button" data-student-scroll-target="student-next-actions">${escapeHtml(t('todayNextActions'))}</button>
+      </div>
+      ${renderStudentTaskList(rows, t('noOpenTasks'), categories, { preserveOrder: true })}
+    </div>`;
+}
+
+function renderNeedsEvidenceList(tasks = []) {
+  const rows = sortByDue(tasks.filter(needsEvidence)).slice(0, 6);
+  if (!rows.length) return `<div class="student-empty">${escapeHtml(t('noEvidenceNeeded'))}</div>`;
+  return rows.map(task => `
+    <div class="student-task-row student-evidence-needed-row">
+      <div class="student-task-main">
+        <strong>${escapeHtml(task.name || t('task'))}</strong>
+        <span>${escapeHtml(task.due || '-')} | ${escapeHtml(labelFor(task.priority || 'Medium'))} | ${escapeHtml(labelFor(task.status || 'Open'))}</span>
+      </div>
+      <div class="student-task-actions">
+        <span class="badge urgent">${escapeHtml(t('needsEvidence'))}</span>
+        <button class="btn btn-sm btn-primary" type="button" data-student-evidence-focus="${escapeHtml(task.id)}">${escapeHtml(t('saveEvidence'))}</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderStudentReportForm(tasks = []) {
+  const rows = sortByDue(tasks);
+  return `
+    <div class="card student-panel student-report-panel" data-student-report-root>
+      <div class="student-panel-head">
+        <h2>${escapeHtml(t('quickProgressReport'))}</h2>
+      </div>
+      <div class="student-report-grid">
+        <label>${escapeHtml(t('task'))}<select data-student-report-task>
+          <option value="">${escapeHtml(t('chooseTask'))}</option>
+          ${rows.map(task => `<option value="${escapeHtml(task.id)}">${escapeHtml(task.name || t('task'))}</option>`).join('')}
+        </select></label>
+        <label>${escapeHtml(t('reportDone'))}<textarea rows="2" data-student-report-done placeholder="${escapeHtml(t('reportDone'))}"></textarea></label>
+        <label>${escapeHtml(t('reportBlocker'))}<textarea rows="2" data-student-report-blocker placeholder="${escapeHtml(t('reportBlocker'))}"></textarea></label>
+        <label>${escapeHtml(t('reportNext'))}<textarea rows="2" data-student-report-next placeholder="${escapeHtml(t('reportNext'))}"></textarea></label>
+      </div>
+      <div class="student-report-actions">
+        <button class="btn btn-primary" type="button" data-student-report-save>${escapeHtml(t('saveReport'))}</button>
+      </div>
+    </div>`;
+}
+
+function renderStudentEvidenceForm(tasks = []) {
+  const rows = sortByDue(tasks);
+  return `
+    <div class="card student-panel student-evidence-panel" data-student-evidence-root>
+      <div class="student-panel-head">
+        <h2>${escapeHtml(t('quickEvidenceSubmit'))}</h2>
+      </div>
+      <div class="student-evidence-grid">
+        <label>${escapeHtml(t('task'))}<select data-student-evidence-task>
+          <option value="">${escapeHtml(t('chooseTask'))}</option>
+          ${rows.map(task => `<option value="${escapeHtml(task.id)}">${escapeHtml(task.name || t('task'))}</option>`).join('')}
+        </select></label>
+        <label>${escapeHtml(t('evidenceLabel'))}<input data-student-evidence-label placeholder="${escapeHtml(t('evidenceLabel'))}"></label>
+        <label>${escapeHtml(t('evidenceUrl'))}<input data-student-evidence-url type="url" placeholder="https://..."></label>
+        <label>${escapeHtml(t('evidenceNote'))}<textarea rows="2" data-student-evidence-note placeholder="${escapeHtml(t('evidenceNote'))}"></textarea></label>
+      </div>
+      <div class="student-report-actions">
+        <button class="btn btn-primary" type="button" data-student-evidence-save>${escapeHtml(t('saveEvidence'))}</button>
+      </div>
+    </div>`;
+}
+
+function renderStudentAddTaskForm(selectedOwner = '', categories = []) {
+  const taskCategories = categories.length ? categories : ['General'];
+  return `
+    <div class="card student-panel student-add-task-panel" data-student-add-task-root>
+      <div class="student-panel-head">
+        <h2>${escapeHtml(t('addMyTask'))}</h2>
+      </div>
+      <div class="student-add-task-grid">
+        <label>${escapeHtml(t('task'))}<input data-student-task-name placeholder="${escapeHtml(t('task'))}"></label>
+        <label>${escapeHtml(t('due'))}<input data-student-task-due type="date"></label>
+        <label>${escapeHtml(t('priority'))}<select data-student-task-priority>
+          ${['High', 'Medium', 'Low'].map(priority => `<option value="${escapeHtml(priority)}" ${priority === 'Medium' ? 'selected' : ''}>${escapeHtml(labelFor(priority))}</option>`).join('')}
+        </select></label>
+        <label>${escapeHtml(t('category'))}<select data-student-task-category>
+          ${taskCategories.map(category => `<option value="${escapeHtml(category)}">${escapeHtml(labelFor(category))}</option>`).join('')}
+        </select></label>
+        <input type="hidden" data-student-task-owner value="${escapeHtml(selectedOwner)}">
+        <button class="btn btn-primary" type="button" data-student-task-add>${escapeHtml(t('addMyTask'))}</button>
+      </div>
+    </div>`;
+}
+
+function buildStudentDailySummary(owner = '', openTasks = [], overdueTasks = [], blockedTasks = [], evidenceTasks = [], nextTasks = []) {
+  const lineFor = task => `- ${task.name || t('task')} (${task.due || '-'})`;
+  return [
+    `${t('student')}: ${owner || '-'}`,
+    `${t('myActiveTasks')}: ${openTasks.length}`,
+    `${t('overdue')}: ${overdueTasks.length}`,
+    `${t('blocked')}: ${blockedTasks.length}`,
+    `${t('needsEvidence')}: ${evidenceTasks.length}`,
+    '',
+    `${t('todayNextActions')}:`,
+    ...(nextTasks.length ? nextTasks.slice(0, 5).map(lineFor) : [`- ${t('noOpenTasks')}`]),
+  ].join('\n');
+}
+
+function renderStudentDailySummary(owner = '', openTasks = [], overdueTasks = [], blockedTasks = [], evidenceTasks = [], nextTasks = []) {
+  return `
+    <div class="card student-panel student-summary-panel">
+      <div class="student-panel-head">
+        <h2>${escapeHtml(t('dailyReportSummary'))}</h2>
+        <button class="btn btn-sm btn-primary" type="button" data-student-summary-copy>${escapeHtml(t('copySummary'))}</button>
+      </div>
+      <textarea class="student-summary-text" data-student-summary-text readonly>${escapeHtml(buildStudentDailySummary(owner, openTasks, overdueTasks, blockedTasks, evidenceTasks, nextTasks))}</textarea>
+    </div>`;
+}
+
+function renderMentorOverview(members = [], tasks = []) {
+  const owners = unique([...members.map(member => member.name), ...tasks.map(task => task.owner)])
+    .filter(owner => owner !== 'Unassigned');
+  const rows = owners.map((owner) => {
+    const open = tasks.filter(task => clean(task.owner) === owner && isOpenTask(task));
+    return {
+      owner,
+      open: open.length,
+      overdue: open.filter(task => isOverdue(task.due)).length,
+      blocked: open.filter(task => task.blocked).length,
+      week: open.filter(isThisWeek).length,
+      evidence: tasks.filter(task => clean(task.owner) === owner && needsEvidence(task)).length,
+      stale: open.filter(isStaleTask).length,
+    };
+  }).sort((a, b) => (b.overdue - a.overdue) || (b.blocked - a.blocked) || (b.evidence - a.evidence) || (b.stale - a.stale) || (b.open - a.open) || a.owner.localeCompare(b.owner));
+  const riskRows = rows
+    .filter(row => row.overdue || row.blocked || row.evidence || row.stale || row.week)
+    .slice(0, 3);
+
+  return `
+    <details id="student-mentor-overview" class="card student-panel student-mentor-panel">
+      <summary class="student-mentor-summary">
+        <h2>${escapeHtml(t('mentorOverview'))}</h2>
+        <div class="student-mentor-summary-actions">
+          <button class="btn btn-sm btn-primary" type="button" data-mentor-summary-copy>${escapeHtml(t('copySummary'))}</button>
+          <button class="btn btn-sm" type="button" data-mentor-export-csv>${escapeHtml(t('exportCsv'))}</button>
+          <button class="btn btn-sm" type="button" data-page="members">${escapeHtml(t('members'))}</button>
+        </div>
+      </summary>
+      <div class="student-mentor-controls">
+        <label><input type="checkbox" data-mentor-risk-only> ${escapeHtml(t('showRiskOnly'))}</label>
+        <label>${escapeHtml(t('sort'))}<select data-mentor-sort>
+          <option value="risk">${escapeHtml(t('sortRiskFirst'))}</option>
+          <option value="owner">${escapeHtml(t('sortName'))}</option>
+          <option value="open">${escapeHtml(t('sortOpenTasks'))}</option>
+          <option value="overdue">${escapeHtml(t('sortOverdueTasks'))}</option>
+          <option value="blocked">${escapeHtml(t('sortBlockedTasks'))}</option>
+          <option value="evidence">${escapeHtml(t('needsEvidence'))}</option>
+          <option value="stale">${escapeHtml(t('staleTasks'))}</option>
+          <option value="week">${escapeHtml(t('sortWeekTasks'))}</option>
+        </select></label>
+      </div>
+      <div class="student-mentor-risk-panel">
+        <div class="student-mentor-risk-title">${escapeHtml(t('mentorFollowUpToday'))}</div>
+        <div class="student-mentor-risk-grid">
+          ${riskRows.map(row => `
+            <div class="student-mentor-risk-card">
+              <button class="student-mentor-owner" type="button" data-student-owner-switch="${escapeHtml(row.owner)}">${escapeHtml(row.owner)}</button>
+              <div>
+                ${row.overdue ? `<button class="badge urgent student-mentor-count" type="button" data-page="tasks" data-task-owner-preset="${escapeHtml(row.owner)}" data-task-health-preset="overdue">${escapeHtml(t('overdue'))}: ${escapeHtml(row.overdue)}</button>` : ''}
+                ${row.blocked ? `<button class="badge blocked student-mentor-count" type="button" data-page="tasks" data-task-owner-preset="${escapeHtml(row.owner)}" data-task-health-preset="blocked">${escapeHtml(t('blocked'))}: ${escapeHtml(row.blocked)}</button>` : ''}
+                ${row.evidence ? `<button class="badge urgent student-mentor-count" type="button" data-page="tasks" data-task-owner-preset="${escapeHtml(row.owner)}" data-task-evidence-preset="without">${escapeHtml(t('needsEvidence'))}: ${escapeHtml(row.evidence)}</button>` : ''}
+                ${row.stale ? `<button class="badge high student-mentor-count" type="button" data-page="tasks" data-task-owner-preset="${escapeHtml(row.owner)}" data-task-health-preset="stale" data-task-sort-preset="updated-desc">${escapeHtml(t('staleTasks'))}: ${escapeHtml(row.stale)}</button>` : ''}
+                ${row.week ? `<button class="badge mid student-mentor-count" type="button" data-page="tasks" data-task-owner-preset="${escapeHtml(row.owner)}" data-task-health-preset="this-week">${escapeHtml(t('thisWeek'))}: ${escapeHtml(row.week)}</button>` : ''}
+              </div>
+            </div>
+          `).join('') || `<div class="student-empty">${escapeHtml(t('noActionItems'))}</div>`}
+        </div>
+      </div>
+      <div class="student-mentor-table">
+        <div class="student-mentor-row head">
+          <span>${escapeHtml(t('student'))}</span>
+          <span>${escapeHtml(t('myActiveTasks'))}</span>
+          <span>${escapeHtml(t('overdue'))}</span>
+          <span>${escapeHtml(t('blocked'))}</span>
+          <span>${escapeHtml(t('needsEvidence'))}</span>
+          <span>${escapeHtml(t('staleTasks'))}</span>
+          <span>${escapeHtml(t('thisWeek'))}</span>
+          <span></span>
+        </div>
+        ${rows.map(row => `
+          <div class="student-mentor-row" data-mentor-summary-row data-owner="${escapeHtml(row.owner)}" data-open="${escapeHtml(row.open)}" data-overdue="${escapeHtml(row.overdue)}" data-blocked="${escapeHtml(row.blocked)}" data-evidence="${escapeHtml(row.evidence)}" data-stale="${escapeHtml(row.stale)}" data-week="${escapeHtml(row.week)}">
+            <button class="student-mentor-owner" type="button" data-student-owner-switch="${escapeHtml(row.owner)}">${escapeHtml(row.owner)}</button>
+            <button class="badge mid student-mentor-count" type="button" data-page="tasks" data-task-owner-preset="${escapeHtml(row.owner)}" data-task-status-preset="active" title="${escapeHtml(t('myActiveTasks'))}">${escapeHtml(row.open)}</button>
+            <button class="badge ${row.overdue ? 'urgent' : 'done'} student-mentor-count" type="button" data-page="tasks" data-task-owner-preset="${escapeHtml(row.owner)}" data-task-health-preset="overdue" title="${escapeHtml(t('overdue'))}">${escapeHtml(row.overdue)}</button>
+            <button class="badge ${row.blocked ? 'blocked' : 'done'} student-mentor-count" type="button" data-page="tasks" data-task-owner-preset="${escapeHtml(row.owner)}" data-task-health-preset="blocked" title="${escapeHtml(t('blocked'))}">${escapeHtml(row.blocked)}</button>
+            <button class="badge ${row.evidence ? 'urgent' : 'done'} student-mentor-count" type="button" data-page="tasks" data-task-owner-preset="${escapeHtml(row.owner)}" data-task-evidence-preset="without" title="${escapeHtml(t('needsEvidence'))}">${escapeHtml(row.evidence)}</button>
+            <button class="badge ${row.stale ? 'high' : 'done'} student-mentor-count" type="button" data-page="tasks" data-task-owner-preset="${escapeHtml(row.owner)}" data-task-health-preset="stale" data-task-sort-preset="updated-desc" title="${escapeHtml(t('staleTasks'))}">${escapeHtml(row.stale)}</button>
+            <button class="badge mid student-mentor-count" type="button" data-page="tasks" data-task-owner-preset="${escapeHtml(row.owner)}" data-task-health-preset="this-week" title="${escapeHtml(t('thisWeek'))}">${escapeHtml(row.week)}</button>
+            <div class="student-mentor-actions">
+              <button class="btn btn-sm" type="button" data-mentor-row-copy>${escapeHtml(t('copySummary'))}</button>
+              <button class="btn btn-sm" type="button" data-page="tasks" data-task-owner-preset="${escapeHtml(row.owner)}" data-task-status-preset="active">${escapeHtml(t('open'))}</button>
+            </div>
+          </div>
+        `).join('') || `<div class="student-empty">${escapeHtml(t('noMemberWorkload'))}</div>`}
+      </div>
+    </details>`;
+}
+
+function renderStudentWorkspace(state, options = {}) {
+  const tasks = Array.isArray(state.data.tasks) ? state.data.tasks : [];
+  const members = Array.isArray(state.data.members) ? state.data.members : [];
+  const taskCategories = state.data.masterData?.taskTypes || [];
+  const ownerSuggestions = unique([...members.map(member => member.name), ...tasks.map(task => task.owner)]);
+  const selectedOwner = clean(options.myOwner) || ownerSuggestions[0] || '';
+  const ownerTasks = tasks.filter(task => clean(task.owner) === selectedOwner);
+  const openTasks = ownerTasks.filter(isOpenTask);
+  const overdueTasks = openTasks.filter(task => isOverdue(task.due));
+  const thisWeekTasks = openTasks.filter(isThisWeek);
+  const blockedTasks = openTasks.filter(task => task.blocked);
+  const evidenceTasks = ownerTasks.filter(needsEvidence);
+  const nextTasks = sortByDue(openTasks).slice(0, 5);
+
+  return `
+    <section id="page-student" class="page active student-page" style="display:grid;gap:12px">
+      <div class="page-topbar">
+        <div>
+          <h1 style="margin:0;color:var(--navy)">${escapeHtml(t('studentWorkspace'))}</h1>
+          <div class="page-top-summary">${escapeHtml(t('studentWorkspaceSummary'))}</div>
+        </div>
+        <div class="student-owner-control">
+          <label>${escapeHtml(t('student'))}<select data-student-owner>
+            <option value="">${escapeHtml(t('chooseOwner'))}</option>
+            ${ownerSuggestions.map(owner => `<option value="${escapeHtml(owner)}" ${selectedOwner === owner ? 'selected' : ''}>${escapeHtml(owner)}</option>`).join('')}
+          </select></label>
+          <button class="btn btn-sm btn-primary" type="button" data-student-scroll-mentor>${escapeHtml(t('mentorOverview'))}</button>
+        </div>
+      </div>
+
+      <div class="student-stat-row">
+        ${[
+          [t('myActiveTasks'), openTasks.length, 'active'],
+          [t('overdue'), overdueTasks.length, 'overdue'],
+          [t('thisWeek'), thisWeekTasks.length, 'week'],
+          [t('blocked'), blockedTasks.length, 'blocked'],
+        ].map(([label, value, kind]) => `
+          <button class="student-stat-card ${escapeHtml(kind)}" type="button" data-page="tasks" data-task-owner-preset="${escapeHtml(selectedOwner)}" ${kind === 'overdue' ? 'data-task-health-preset="overdue"' : ''} ${kind === 'week' ? 'data-task-health-preset="this-week"' : ''} ${kind === 'blocked' ? 'data-task-health-preset="blocked"' : ''} ${kind === 'active' ? 'data-task-status-preset="active"' : ''}>
+            <span>${escapeHtml(label)}</span><strong>${escapeHtml(value)}</strong>
+          </button>
+        `).join('')}
+      </div>
+
+      <div class="student-jump-row">
+        ${[
+          ['page-student', t('top')],
+          ['student-next-actions', t('todayNextActions')],
+          ['student-week', t('thisWeek')],
+          ['student-evidence-needed', t('needsEvidence')],
+          ['student-report-panel', t('quickProgressReport')],
+          ['student-mentor-overview', t('mentorOverview')],
+        ].map(([target, label]) => `<button class="btn btn-sm" type="button" data-student-scroll-target="${escapeHtml(target)}">${escapeHtml(label)}</button>`).join('')}
+      </div>
+
+      ${renderTodayFocusPanel(openTasks, taskCategories)}
+
+      <div class="student-grid">
+        <div id="student-next-actions" class="card student-panel student-panel-wide student-today-focus-panel">
+          <div class="student-panel-head">
+            <h2>${escapeHtml(t('todayNextActions'))}</h2>
+            <button class="btn btn-sm" type="button" data-page="tasks" data-task-owner-preset="${escapeHtml(selectedOwner)}" data-task-status-preset="active">${escapeHtml(t('open'))}</button>
+          </div>
+          ${renderStudentTaskList(nextTasks, t('noOpenTasks'), taskCategories)}
+        </div>
+
+        <div id="student-week" class="card student-panel student-panel-wide">
+          <div class="student-panel-head">
+            <h2>${escapeHtml(t('thisWeek'))}</h2>
+            <button class="btn btn-sm" type="button" data-page="tasks" data-task-owner-preset="${escapeHtml(selectedOwner)}" data-task-health-preset="this-week">${escapeHtml(t('open'))}</button>
+          </div>
+          ${renderStudentTaskList(thisWeekTasks, t('noWeekFocus'), taskCategories)}
+        </div>
+        <div id="student-evidence-needed" class="card student-panel student-panel-wide">
+          <div class="student-panel-head">
+            <h2>${escapeHtml(t('needsEvidence'))}</h2>
+            <button class="btn btn-sm" type="button" data-page="tasks" data-task-owner-preset="${escapeHtml(selectedOwner)}" data-task-evidence-preset="without">${escapeHtml(t('open'))}</button>
+          </div>
+          ${renderNeedsEvidenceList(ownerTasks)}
+        </div>
+        <div id="student-report-panel" class="student-panel-wide">
+          ${renderStudentReportForm(openTasks)}
+        </div>
+        <div class="student-panel-wide">
+          ${renderStudentEvidenceForm(openTasks)}
+        </div>
+        <div class="student-panel-wide">
+          ${renderStudentAddTaskForm(selectedOwner, taskCategories)}
+        </div>
+      </div>
+      ${renderMentorOverview(members, tasks)}
+      ${renderStudentDailySummary(selectedOwner, openTasks, overdueTasks, blockedTasks, evidenceTasks, nextTasks)}
+    </section>`;
+}
+
+return { renderStudentWorkspace };
 })();
 
 const __src_features_health_js = (() => {
@@ -3941,6 +4589,7 @@ function showMode(state, modeId) {
 
 const V16_PAGES = [
   { id: 'dashboard', labelKey: 'dashboard' },
+  { id: 'student', labelKey: 'studentWorkspaceShort' },
   { id: 'prep', labelKey: 'prep' },
   { id: 'tasks', labelKey: 'tasks' },
   { id: 'members', labelKey: 'members' },
@@ -6095,7 +6744,7 @@ function renderSettingsHub(container, options = {}) {
         </div>
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px">
           ${pageFeaturePages.map((page) => {
-            const locked = page.id === 'dashboard' || page.id === 'settings';
+            const locked = page.id === 'dashboard' || page.id === 'student' || page.id === 'settings';
             const checked = locked || visiblePageIds.has(page.id);
             return `
               <label style="display:flex;align-items:center;gap:8px;border:1px solid var(--border);border-radius:8px;background:var(--input-bg);padding:9px;font-weight:900;color:var(--navy)">
@@ -6994,6 +7643,7 @@ const { addMissionEvent, clearMissionEvents, createMissionRun, deleteMissionRun,
 const { getDataHealthIssues, getSmokeTestLog, renderSmokeTestPanel, saveSmokeTestResult } = __src_features_health_js;
 const { addKnowledgeItem, createKnowledgeItemFromForm, deleteKnowledgeItem, getNextKnowledgeStatus, normalizeKnowledgeFilters, renderIntelPage, updateKnowledgeStatus, updateKnowledgeItem, updateNotes } = __src_features_intel_js;
 const { renderNavigation, showPage, V16_PAGES } = __src_features_navigation_js;
+const { renderStudentWorkspace } = __src_features_student_js;
 const { addMember, createMemberFromForm, deleteMember, normalizeMemberFilters, renderMembersPage, updateMember } = __src_features_members_js;
 const { addChecklistItem, addGearItem, deleteChecklistItem, deleteGearItem, getGearPayloadFromDom, normalizePrepFilters, renderPrepCenter, toggleChecklistItem, toggleGearItem, updateChecklistItem, updateGearItem } = __src_features_prep_js;
 const { addMasterDataValue, deleteMasterDataValue, ensureDefaultTaskCategories, exportHandoffReport, exportSettingsPack, importSettingsPackPayload, loadMasterData, renderSettingsHub, scrollSettingsSection } = __src_features_settings_js;
@@ -7009,7 +7659,9 @@ const PAGE_FEATURES_STORAGE_KEY = 'rov_v16_page_features';
 const MY_TASK_OWNER_STORAGE_KEY = 'rov_v16_my_task_owner';
 const TASK_COLUMNS_STORAGE_KEY = 'rov_v16_task_columns';
 const TASK_DENSITY_STORAGE_KEY = 'rov_v16_task_density';
-const DEFAULT_VISIBLE_PAGE_IDS = ['dashboard', 'prep', 'tasks', 'members', 'intel', 'competition', 'settings'];
+const LAST_SUPABASE_CONFIRM_KEY = 'rov_v16_last_supabase_confirmed_at';
+const LOCKED_PAGE_IDS = ['dashboard', 'student', 'settings'];
+const DEFAULT_VISIBLE_PAGE_IDS = ['dashboard', 'student', 'prep', 'tasks', 'members', 'intel', 'competition', 'settings'];
 const DEFAULT_TASK_COLUMNS = ['owner', 'due', 'priority', 'category', 'status', 'actions'];
 const ACTION_LOG_LIMIT = 8;
 const UNDO_BAR_AUTO_CLEAR_MS = 5000;
@@ -7052,14 +7704,15 @@ let toastTimer = null;
 let undoState = loadUndoState();
 let undoClearTimer = null;
 let actionLog = loadActionLog();
+let confirmDialog = null;
 let visiblePageIds = loadVisiblePageIds();
 let myTaskOwner = loadMyTaskOwner();
 let visibleTaskColumns = loadVisibleTaskColumns();
 let taskDensity = loadTaskDensity();
 let syncStatus = {
   state: hasPendingLocalSync() ? 'pending' : 'idle',
-  label: hasPendingLocalSync() ? 'Supabase pending' : 'Supabase ready',
-  detail: '',
+  label: hasPendingLocalSync() ? 'Supabase pending' : getConfirmedSupabaseStatus().label,
+  detail: hasPendingLocalSync() ? '' : getConfirmedSupabaseStatus().detail,
 };
 const taskFilters = {
   search: '',
@@ -7101,7 +7754,7 @@ const prepFilters = {
 function normalizeVisiblePageIds(ids = []) {
   const valid = new Set(V16_PAGES.map(page => page.id));
   const cleaned = [...new Set((Array.isArray(ids) ? ids : []).filter(id => valid.has(id)))];
-  return [...new Set(['dashboard', ...cleaned, 'settings'])];
+  return [...new Set([...LOCKED_PAGE_IDS, ...cleaned])];
 }
 
 function loadVisiblePageIds(storage = localStorage) {
@@ -7119,7 +7772,7 @@ function saveVisiblePageIds(storage = localStorage) {
 }
 
 function setPageFeature(pageId, enabled) {
-  if (['dashboard', 'settings'].includes(pageId)) return false;
+  if (LOCKED_PAGE_IDS.includes(pageId)) return false;
   const set = new Set(visiblePageIds);
   if (enabled) set.add(pageId);
   else set.delete(pageId);
@@ -7179,6 +7832,96 @@ function saveTaskDensity(value, storage = localStorage) {
   taskDensity = normalizeTaskDensity(value);
   storage.setItem(TASK_DENSITY_STORAGE_KEY, taskDensity);
   return taskDensity;
+}
+
+function getStudentStickyOffsetPx() {
+  const stickyRows = [...document.querySelectorAll('#page-student .student-stat-row, #page-student .student-jump-row')];
+  const stickyBottom = stickyRows.reduce((bottom, row) => {
+    const style = window.getComputedStyle(row);
+    if (style.position !== 'sticky' && style.position !== 'fixed') return bottom;
+    const rect = row.getBoundingClientRect();
+    return Math.max(bottom, rect.bottom);
+  }, 0);
+  return stickyBottom ? stickyBottom + 12 : 0;
+}
+
+function scrollStudentTargetIntoView(target) {
+  if (!target) return;
+  requestAnimationFrame(() => {
+    const offset = getStudentStickyOffsetPx();
+    if (!offset || target.id === 'page-student') {
+      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      return;
+    }
+    const top = target.getBoundingClientRect().top + window.scrollY - offset;
+    window.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
+  });
+}
+
+function getStudentReportPayload(root = document) {
+  return {
+    taskId: root.querySelector('[data-student-report-task]')?.value || '',
+    done: String(root.querySelector('[data-student-report-done]')?.value || '').trim(),
+    blocker: String(root.querySelector('[data-student-report-blocker]')?.value || '').trim(),
+    next: String(root.querySelector('[data-student-report-next]')?.value || '').trim(),
+  };
+}
+
+function getStudentEvidencePayload(root = document) {
+  return {
+    taskId: root.querySelector('[data-student-evidence-task]')?.value || '',
+    label: String(root.querySelector('[data-student-evidence-label]')?.value || '').trim(),
+    url: String(root.querySelector('[data-student-evidence-url]')?.value || '').trim(),
+    note: String(root.querySelector('[data-student-evidence-note]')?.value || '').trim(),
+  };
+}
+
+function buildStudentProgressNote(payload = {}, owner = '') {
+  const lines = [
+    `Progress report ${new Date().toLocaleString()}`,
+    owner ? `${t('student')}: ${owner}` : '',
+    payload.done ? `${t('reportDone')}: ${payload.done}` : '',
+    payload.blocker ? `${t('reportBlocker')}: ${payload.blocker}` : '',
+    payload.next ? `${t('reportNext')}: ${payload.next}` : '',
+  ].filter(Boolean);
+  return lines.join('\n');
+}
+
+function normalizeTaskEvidenceList(value) {
+  if (Array.isArray(value)) return value;
+  try {
+    const parsed = JSON.parse(String(value || '[]'));
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function taskHasEvidence(task = {}) {
+  return normalizeTaskEvidenceList(task.evidence).some(item => String(item?.label || item?.url || item?.note || '').trim());
+}
+
+function focusStudentEvidenceForm(taskId = '') {
+  const select = document.querySelector('[data-student-evidence-task]');
+  if (select) select.value = String(taskId || '');
+  document.querySelector('[data-student-evidence-root]')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  document.querySelector('[data-student-evidence-label]')?.focus();
+}
+
+function getStudentTaskPayload(root = document) {
+  return {
+    id: Date.now(),
+    name: String(root.querySelector('[data-student-task-name]')?.value || '').trim(),
+    owner: String(root.querySelector('[data-student-task-owner]')?.value || myTaskOwner || '').trim() || 'Unassigned',
+    due: root.querySelector('[data-student-task-due]')?.value || '',
+    priority: root.querySelector('[data-student-task-priority]')?.value || 'Medium',
+    status: 'Open',
+    category: root.querySelector('[data-student-task-category]')?.value || 'General',
+    blocked: false,
+    notes: '',
+    evidence: [],
+    updatedAt: new Date().toISOString(),
+  };
 }
 
 function applyMyTasksFilter() {
@@ -7394,6 +8137,22 @@ function showToast(message, type = 'success') {
   }, 3200);
 }
 
+function formatSyncTime(value = '') {
+  if (!value) return '';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+  return date.toLocaleString(undefined, { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
+}
+
+function getConfirmedSupabaseStatus(storage = localStorage) {
+  const confirmedAt = storage.getItem(LAST_SUPABASE_CONFIRM_KEY) || '';
+  const label = confirmedAt ? `Supabase OK ${formatSyncTime(confirmedAt)}` : 'Supabase ready';
+  const detail = confirmedAt
+    ? `Last confirmed Supabase write/read-back: ${new Date(confirmedAt).toLocaleString()}`
+    : 'Ready to read and write Supabase.';
+  return { label, detail, confirmedAt };
+}
+
 function setSyncStatus(state, label, detail = '') {
   syncStatus = { state, label, detail, ts: new Date().toISOString() };
 }
@@ -7457,6 +8216,8 @@ function exportSafetyReport(documentRef = document) {
       },
       source: 'browser-localStorage',
       supabaseTouched: false,
+      supabaseConfirmed: Boolean(localStorage.getItem(LAST_SUPABASE_CONFIRM_KEY)),
+      lastSupabaseConfirmedAt: localStorage.getItem(LAST_SUPABASE_CONFIRM_KEY) || '',
     },
     undo: undoState ? {
       available: true,
@@ -7504,6 +8265,69 @@ function renderToast() {
     <span>${escapeHtml(toastState.message)}</span>
     ${toastState.undo ? `<button class="toast-undo" type="button" data-action="undo-last-change">${escapeHtml(t('undo'))}</button>` : ''}
   </div>`;
+}
+
+function mentorSummaryLine(row) {
+  return `${row.dataset.owner || '-'} | ${t('myActiveTasks')}: ${row.dataset.open || 0} | ${t('overdue')}: ${row.dataset.overdue || 0} | ${t('blocked')}: ${row.dataset.blocked || 0} | ${t('needsEvidence')}: ${row.dataset.evidence || 0} | ${t('staleTasks')}: ${row.dataset.stale || 0} | ${t('thisWeek')}: ${row.dataset.week || 0}`;
+}
+
+function csvCell(value) {
+  return `"${String(value ?? '').replace(/"/g, '""')}"`;
+}
+
+function exportMentorOverviewCsv(documentRef = document) {
+  const header = [t('student'), t('myActiveTasks'), t('overdue'), t('blocked'), t('needsEvidence'), t('staleTasks'), t('thisWeek')];
+  const rows = [...document.querySelectorAll('[data-mentor-summary-row]')]
+    .filter(row => !row.hidden)
+    .map(row => [row.dataset.owner || '', row.dataset.open || 0, row.dataset.overdue || 0, row.dataset.blocked || 0, row.dataset.evidence || 0, row.dataset.stale || 0, row.dataset.week || 0]);
+  const csv = [header, ...rows].map(row => row.map(csvCell).join(',')).join('\n');
+  const blob = new Blob([`\ufeff${csv}`], { type: 'text/csv;charset=utf-8' });
+  const anchor = documentRef.createElement('a');
+  anchor.href = URL.createObjectURL(blob);
+  anchor.download = `rov_v16_mentor_overview_${new Date().toISOString().slice(0, 10)}.csv`;
+  anchor.click();
+  URL.revokeObjectURL(anchor.href);
+}
+
+function copyText(text) {
+  if (navigator.clipboard?.writeText) {
+    navigator.clipboard.writeText(text).then(() => showToast(t('summaryCopied'))).catch(() => showToast(text));
+  } else {
+    showToast(text);
+  }
+}
+
+function applyMentorOverviewControls() {
+  const table = document.querySelector('.student-mentor-table');
+  if (!table) return;
+  const riskOnly = Boolean(document.querySelector('[data-mentor-risk-only]')?.checked);
+  const sortMode = document.querySelector('[data-mentor-sort]')?.value || 'risk';
+  const rows = [...table.querySelectorAll('[data-mentor-summary-row]')];
+  const getData = row => ({
+    owner: row.dataset.owner || '',
+    open: Number(row.dataset.open || 0),
+    overdue: Number(row.dataset.overdue || 0),
+    blocked: Number(row.dataset.blocked || 0),
+    evidence: Number(row.dataset.evidence || 0),
+    stale: Number(row.dataset.stale || 0),
+    week: Number(row.dataset.week || 0),
+  });
+  rows.forEach((row) => {
+    const data = getData(row);
+    row.hidden = riskOnly && !(data.overdue || data.blocked || data.evidence || data.stale || data.week);
+  });
+  rows.sort((a, b) => {
+    const left = getData(a);
+    const right = getData(b);
+    if (sortMode === 'owner') return left.owner.localeCompare(right.owner);
+    if (sortMode === 'open') return (right.open - left.open) || left.owner.localeCompare(right.owner);
+    if (sortMode === 'overdue') return (right.overdue - left.overdue) || (right.blocked - left.blocked) || left.owner.localeCompare(right.owner);
+    if (sortMode === 'blocked') return (right.blocked - left.blocked) || (right.overdue - left.overdue) || left.owner.localeCompare(right.owner);
+    if (sortMode === 'evidence') return (right.evidence - left.evidence) || (right.overdue - left.overdue) || left.owner.localeCompare(right.owner);
+    if (sortMode === 'stale') return (right.stale - left.stale) || (right.overdue - left.overdue) || left.owner.localeCompare(right.owner);
+    if (sortMode === 'week') return (right.week - left.week) || (right.overdue - left.overdue) || left.owner.localeCompare(right.owner);
+    return (right.overdue - left.overdue) || (right.blocked - left.blocked) || (right.evidence - left.evidence) || (right.stale - left.stale) || (right.week - left.week) || (right.open - left.open) || left.owner.localeCompare(right.owner);
+  }).forEach(row => table.appendChild(row));
 }
 
 function renderUndoBar() {
@@ -7713,9 +8537,12 @@ async function upsertTaskEvidenceRows(client, task = {}) {
 }
 
 function markLocalDataSynced() {
+  const confirmedAt = new Date().toISOString();
+  localStorage.setItem(LAST_SUPABASE_CONFIRM_KEY, confirmedAt);
   localStorage.setItem(SYNCED_DATA_SIGNATURE_KEY, getLocalSyncSignature());
   setPendingLocalSync(false);
-  setSyncStatus('idle', 'Supabase synced', 'Latest changes are confirmed in Supabase.');
+  const confirmed = getConfirmedSupabaseStatus();
+  setSyncStatus('idle', confirmed.label, confirmed.detail);
 }
 
 function localDataNeedsSyncProtection() {
@@ -7862,16 +8689,51 @@ function actionMessage(baseMessage, label = '') {
   return cleanLabel ? `${stripSentenceEnd(baseMessage)}: ${cleanLabel}` : baseMessage;
 }
 
-function confirmDelete(label = t('item')) {
-  return window.confirm(`${t('confirmDelete')} ${label}`);
+function openConfirmDialog({ title = t('confirmDelete'), message = '', detail = '', action = null } = {}) {
+  confirmDialog = { title, message, detail, action };
+  renderAppShell();
 }
 
-function confirmBulkDeleteSelectedTasks() {
-  const selected = (appState.data.tasks || []).filter(task => selectedTaskIds.has(Number(task.id)));
-  if (!selected.length) return false;
-  const names = selected.slice(0, 12).map((task, index) => `${index + 1}. ${task.name || task.title || t('task')}`);
-  const more = selected.length > names.length ? `\n${t('andMoreTasks')} ${selected.length - names.length}` : '';
-  return window.confirm(`${t('confirmBulkDeleteTasks')} ${selected.length}\n\n${names.join('\n')}${more}`);
+function closeConfirmDialog() {
+  confirmDialog = null;
+  renderAppShell();
+}
+
+function renderConfirmDialog() {
+  if (!confirmDialog) return '';
+  return `
+    <div class="modal-bg open" data-confirm-modal-bg>
+      <div class="modal confirm-modal" role="dialog" aria-modal="true" aria-labelledby="confirm-modal-title" data-confirm-modal>
+        <h3 id="confirm-modal-title">${escapeHtml(confirmDialog.title || t('confirmDelete'))}</h3>
+        <div class="confirm-message">${escapeHtml(confirmDialog.message || '')}</div>
+        ${confirmDialog.detail ? `<pre class="confirm-detail">${escapeHtml(confirmDialog.detail)}</pre>` : ''}
+        <div class="modal-actions">
+          <button class="btn" type="button" data-confirm-cancel>${escapeHtml(t('cancel'))}</button>
+          <button class="btn btn-danger" type="button" data-confirm-run>${escapeHtml(t('delete'))}</button>
+        </div>
+      </div>
+    </div>`;
+}
+
+function requestDeleteConfirm(label = t('item'), action = null) {
+  openConfirmDialog({
+    title: t('confirmDelete'),
+    message: label,
+    action,
+  });
+}
+
+function requestClearSafetyMetadataConfirm() {
+  openConfirmDialog({
+    title: t('clearSafetyMetadata'),
+    message: t('confirmClearSafetyMetadata'),
+    action: () => {
+      clearSafetyMetadata();
+      showToast(t('safetyMetadataCleared'));
+      recordAction(t('safetyMetadataCleared'));
+      renderAppShell();
+    },
+  });
 }
 
 function updateTaskFiltersFromControl(target) {
@@ -8042,14 +8904,15 @@ function updatePrepFiltersFromControl(target) {
 function applyTaskFilterPreset(target) {
   const preset = target.closest('[data-task-search-preset], [data-task-health-preset], [data-task-evidence-preset], [data-task-priority-preset], [data-task-status-preset], [data-task-owner-preset], [data-task-category-preset], [data-task-sort-preset]');
   if (!preset) return false;
+  const hasPreset = key => Object.prototype.hasOwnProperty.call(preset.dataset, key);
   Object.assign(taskFilters, {
-    search: preset.dataset.taskSearchPreset || '',
-    owner: preset.dataset.taskOwnerPreset || '',
-    status: preset.dataset.taskStatusPreset || '',
-    priority: preset.dataset.taskPriorityPreset || '',
-    category: preset.dataset.taskCategoryPreset || '',
-    health: preset.dataset.taskHealthPreset || '',
-    evidence: preset.dataset.taskEvidencePreset || '',
+    search: hasPreset('taskSearchPreset') ? preset.dataset.taskSearchPreset : '',
+    owner: hasPreset('taskOwnerPreset') ? preset.dataset.taskOwnerPreset : '',
+    status: hasPreset('taskStatusPreset') ? preset.dataset.taskStatusPreset : '',
+    priority: hasPreset('taskPriorityPreset') ? preset.dataset.taskPriorityPreset : '',
+    category: hasPreset('taskCategoryPreset') ? preset.dataset.taskCategoryPreset : '',
+    health: hasPreset('taskHealthPreset') ? preset.dataset.taskHealthPreset : '',
+    evidence: hasPreset('taskEvidencePreset') ? preset.dataset.taskEvidencePreset : '',
     sort: preset.dataset.taskSortPreset || taskFilters.sort || 'due-asc',
   });
   return true;
@@ -8231,6 +9094,47 @@ function formatDashboardTaskUpdatedAt(value = '') {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return String(value);
   return date.toLocaleString(undefined, { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
+}
+
+function renderDashboardSafetyStatus() {
+  const confirmed = getConfirmedSupabaseStatus();
+  const pending = hasPendingLocalSync();
+  const localSavedAt = appState.savedAt ? formatDashboardTaskUpdatedAt(appState.savedAt) : t('notSavedYet');
+  const confirmedAt = confirmed.confirmedAt ? formatDashboardTaskUpdatedAt(confirmed.confirmedAt) : t('notLoadedYet');
+  const sourceLabel = pending ? 'Local pending' : 'Supabase';
+  const syncLabel = syncStatus?.label || confirmed.label;
+  return `
+    <div class="card dashboard-safety-card" data-dashboard-safety>
+      <div class="dashboard-safety-header">
+        <div class="dashboard-safety-copy">
+          <h2 style="margin:0">${escapeHtml(t('dataSafety'))}</h2>
+          <div class="dashboard-safety-hint">${escapeHtml(t('dataSafetyHint'))}</div>
+          <div class="dashboard-safety-save">${escapeHtml(t('lastSaved'))}: ${escapeHtml(localSavedAt)}</div>
+        </div>
+        <div class="dashboard-safety-actions">
+          <button class="btn btn-sm btn-primary" type="button" data-action="export-safety-report">${escapeHtml(t('exportSafetyReport'))}</button>
+          <button class="btn btn-sm" type="button" data-page="settings" data-settings-scroll="settings-sync-section">${escapeHtml(t('settings'))}</button>
+        </div>
+      </div>
+      <div class="dashboard-safety-status-grid">
+        <div class="dashboard-safety-status">
+          <div class="dashboard-safety-status-label">${escapeHtml(t('dataSource'))}</div>
+          <div class="dashboard-safety-status-value">${escapeHtml(sourceLabel)}</div>
+        </div>
+        <div class="dashboard-safety-status">
+          <div class="dashboard-safety-status-label">${escapeHtml(t('syncStatus'))}</div>
+          <div class="dashboard-safety-status-value">${escapeHtml(syncLabel)}</div>
+        </div>
+        <div class="dashboard-safety-status">
+          <div class="dashboard-safety-status-label">${escapeHtml(t('lastSupabaseConfirmed'))}</div>
+          <div class="dashboard-safety-status-value">${escapeHtml(confirmedAt)}</div>
+        </div>
+        <div class="dashboard-safety-status">
+          <div class="dashboard-safety-status-label">${escapeHtml(t('pendingLocalChanges'))}</div>
+          <div class="dashboard-safety-status-value">${escapeHtml(pending ? t('available') : t('notAvailable'))}</div>
+        </div>
+      </div>
+    </div>`;
 }
 
 function formatShortChartDate(date) {
@@ -8482,6 +9386,7 @@ function renderDashboard() {
           </button>
         `).join('')}
       </div>
+      ${renderDashboardSafetyStatus()}
       ${renderTaskCharts(data.tasks || [])}
       <div class="card" data-dashboard-week-focus>
         <div style="display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap">
@@ -8573,6 +9478,7 @@ function renderDashboard() {
 
 function renderCurrentPage() {
   if (appState.currentPage === 'prep') return renderPrepCenter(appState, { editingGearId, editingChecklist, addingPrepItem, prepFocus, filters: prepFilters, activeTab: prepActiveTab });
+  if (appState.currentPage === 'student') return renderStudentWorkspace(appState, { myOwner: myTaskOwner });
   if (appState.currentPage === 'tasks') {
     pruneSelectedTaskIds();
     return renderTasksPage(appState, { editingTaskId, addingTask, viewingTaskId, filters: taskFilters, myOwner: myTaskOwner, selectedTaskIds: [...selectedTaskIds], visibleColumns: visibleTaskColumns, taskDensity });
@@ -8592,7 +9498,7 @@ function renderCurrentPage() {
 function renderAppShell() {
   if (!appRoot) throw new Error('App root #app was not found.');
   if (!visiblePageIds.includes(appState.currentPage)) appState.currentPage = 'dashboard';
-  appRoot.innerHTML = `${renderNavigation(appState.currentPage, syncStatus, visiblePageIds)}${renderToast()}${renderUndoBar()}${renderCurrentPage()}`;
+  appRoot.innerHTML = `${renderNavigation(appState.currentPage, syncStatus, visiblePageIds)}${renderToast()}${renderUndoBar()}${renderCurrentPage()}${renderConfirmDialog()}`;
   scheduleUndoAutoClear();
   if (appState.currentPage === 'settings') {
     renderSettingsHub(document.getElementById('settings-host'), {
@@ -8646,6 +9552,7 @@ function runAndRenderSmokeTest() {
 
   [
     ['dashboard', '#page-dashboard'],
+    ['student', '#page-student'],
     ['prep', '#page-prep'],
     ['tasks', '#page-tasks'],
     ['members', '#page-members'],
@@ -8778,6 +9685,22 @@ scheduleInitialSupabaseLoad();
 startSupabaseRealtimeRefresh();
 
 appRoot?.addEventListener('click', (event) => {
+  if (event.target.closest('[data-confirm-cancel]')) {
+    closeConfirmDialog();
+    return;
+  }
+  if (event.target.closest('[data-confirm-run]')) {
+    const action = confirmDialog?.action;
+    confirmDialog = null;
+    if (typeof action === 'function') action();
+    else renderAppShell();
+    return;
+  }
+  const confirmModalBg = event.target.closest('[data-confirm-modal-bg]');
+  if (confirmModalBg && !event.target.closest('[data-confirm-modal]')) {
+    closeConfirmDialog();
+    return;
+  }
   const prepEditTarget = event.target.closest('[data-prep-edit]');
   if (prepEditTarget) {
     addingPrepItem = null;
@@ -8829,10 +9752,7 @@ appRoot?.addEventListener('click', (event) => {
     return;
   }
   if (event.target.closest('[data-action="clear-safety-metadata"]')) {
-    if (!window.confirm(t('confirmClearSafetyMetadata'))) return;
-    clearSafetyMetadata();
-    showToast(t('safetyMetadataCleared'));
-    renderAppShell();
+    requestClearSafetyMetadataConfirm();
     return;
   }
   const healthShortcut = event.target.closest('[data-task-health-shortcut]');
@@ -8875,10 +9795,24 @@ appRoot?.addEventListener('click', (event) => {
   }
   if (event.target.closest('[data-task-bulk-delete]')) {
     const count = selectedTaskIds.size;
-    if (!count || !confirmBulkDeleteSelectedTasks()) return;
-    const message = actionMessage(t('deleted'), `${count} ${t('tasks')}`);
-    captureUndo(message);
-    if (deleteSelectedTasks()) persistAndRender(message, { keepUndo: true });
+    if (!count) return;
+    const selectedCount = count;
+    const selectedIds = [...selectedTaskIds];
+    const names = (appState.data.tasks || [])
+      .filter(task => selectedIds.includes(Number(task.id)))
+      .slice(0, 12)
+      .map((task, index) => `${index + 1}. ${task.name || task.title || t('task')}`);
+    const more = selectedCount > names.length ? `\n${t('andMoreTasks')} ${selectedCount - names.length}` : '';
+    openConfirmDialog({
+      title: t('confirmBulkDeleteTasks'),
+      message: `${selectedCount}`,
+      detail: `${names.join('\n')}${more}`,
+      action: () => {
+        const message = actionMessage(t('deleted'), `${selectedCount} ${t('tasks')}`);
+        captureUndo(message);
+        if (deleteSelectedTasks()) persistTaskAndConfirmSupabase(message);
+      },
+    });
     return;
   }
   const myTasksButton = event.target.closest('[data-my-tasks]');
@@ -8936,6 +9870,134 @@ appRoot?.addEventListener('click', (event) => {
     addingPrepItem = prepActiveTab;
     editingChecklist = null;
     editingGearId = null;
+    renderAppShell();
+    return;
+  }
+  const studentReportSave = event.target.closest('[data-student-report-save]');
+  if (studentReportSave) {
+    const root = studentReportSave.closest('[data-student-report-root]') || studentReportSave.closest('.student-report-panel') || document;
+    const payload = getStudentReportPayload(root);
+    if (!payload.taskId || (!payload.done && !payload.blocker && !payload.next)) return;
+    const task = appState.data.tasks.find(row => Number(row.id) === Number(payload.taskId));
+    if (!task) return;
+    const reportNote = buildStudentProgressNote(payload, myTaskOwner);
+    const nextNotes = [String(task.notes || '').trim(), reportNote].filter(Boolean).join('\n\n');
+    const message = actionMessage(t('progressReportSaved'), task.name || t('task'));
+    captureUndo(message);
+    if (updateTask(appState, payload.taskId, { notes: nextNotes })) persistAndRender(message, { keepUndo: true });
+    return;
+  }
+  const studentTaskAdd = event.target.closest('[data-student-task-add]');
+  if (studentTaskAdd) {
+    const root = studentTaskAdd.closest('[data-student-add-task-root]') || document;
+    const task = getStudentTaskPayload(root);
+    if (!task.name) return;
+    const message = actionMessage(t('saved'), task.name || t('task'));
+    captureUndo(message);
+    addTask(appState, task);
+    persistTaskAndConfirmSupabase(message);
+    return;
+  }
+  const studentEvidenceSave = event.target.closest('[data-student-evidence-save]');
+  if (studentEvidenceSave) {
+    const root = studentEvidenceSave.closest('[data-student-evidence-root]') || document;
+    const payload = getStudentEvidencePayload(root);
+    if (!payload.taskId || (!payload.label && !payload.url && !payload.note)) return;
+    const task = appState.data.tasks.find(row => Number(row.id) === Number(payload.taskId));
+    if (!task) return;
+    const evidence = normalizeTaskEvidenceList(task.evidence);
+    const nextEvidence = [
+      ...evidence,
+      {
+        id: Date.now(),
+        label: payload.label || payload.url || t('evidence'),
+        url: payload.url,
+        note: payload.note,
+        type: payload.url ? 'link' : 'note',
+      },
+    ];
+    const message = actionMessage(t('evidenceSaved'), task.name || t('task'));
+    captureUndo(message);
+    if (updateTask(appState, payload.taskId, { evidence: nextEvidence })) persistAndRender(message, { keepUndo: true });
+    return;
+  }
+  const studentEvidenceFocus = event.target.closest('[data-student-evidence-focus]');
+  if (studentEvidenceFocus) {
+    focusStudentEvidenceForm(studentEvidenceFocus.dataset.studentEvidenceFocus || '');
+    return;
+  }
+  const studentBlockedToggle = event.target.closest('[data-student-blocked-toggle]');
+  if (studentBlockedToggle) {
+    const task = appState.data.tasks.find(row => Number(row.id) === Number(studentBlockedToggle.dataset.studentBlockedToggle));
+    if (!task) return;
+    const blocked = !Boolean(task.blocked);
+    const message = actionMessage(t('saved'), `${task.name || t('task')} -> ${blocked ? t('blocked') : t('unblockTask')}`);
+    captureUndo(message);
+    if (updateTask(appState, studentBlockedToggle.dataset.studentBlockedToggle, { blocked })) persistAndRender(message, { keepUndo: true });
+    return;
+  }
+  const studentComplete = event.target.closest('[data-student-complete]');
+  if (studentComplete) {
+    const task = appState.data.tasks.find(row => Number(row.id) === Number(studentComplete.dataset.studentComplete));
+    if (!task || task.status === 'Done') return;
+    const needsEvidenceReminder = !taskHasEvidence(task);
+    const message = actionMessage(t('statusUpdated'), `${task.name || t('task')} -> ${labelFor('Done')}`);
+    captureUndo(message);
+    if (updateTaskStatus(appState, studentComplete.dataset.studentComplete, 'Done')) {
+      persistAndRender(needsEvidenceReminder ? `${message} | ${t('evidenceReminder')}` : message, { keepUndo: true });
+      if (needsEvidenceReminder) setTimeout(() => focusStudentEvidenceForm(studentComplete.dataset.studentComplete), 80);
+    }
+    return;
+  }
+  if (event.target.closest('[data-student-summary-copy]')) {
+    const textarea = document.querySelector('[data-student-summary-text]');
+    const text = textarea?.value || '';
+    if (!text) return;
+    if (navigator.clipboard?.writeText) {
+      navigator.clipboard.writeText(text).then(() => showToast(t('summaryCopied'))).catch(() => {
+        textarea?.select();
+        showToast(t('summaryCopied'));
+      });
+    } else {
+      textarea?.select();
+      showToast(t('summaryCopied'));
+    }
+    return;
+  }
+  if (event.target.closest('[data-mentor-summary-copy]')) {
+    const rows = [...document.querySelectorAll('[data-mentor-summary-row]')].filter(row => !row.hidden).map(mentorSummaryLine);
+    const text = [`${t('mentorOverview')} ${new Date().toLocaleString()}`, ...rows].join('\n');
+    copyText(text);
+    return;
+  }
+  if (event.target.closest('[data-mentor-export-csv]')) {
+    exportMentorOverviewCsv();
+    showToast(t('exported'));
+    recordAction(actionMessage(t('exported'), t('mentorOverview')));
+    return;
+  }
+  const mentorRowCopy = event.target.closest('[data-mentor-row-copy]');
+  if (mentorRowCopy) {
+    const row = mentorRowCopy.closest('[data-mentor-summary-row]');
+    if (row) copyText(`${t('mentorOverview')} ${new Date().toLocaleString()}\n${mentorSummaryLine(row)}`);
+    return;
+  }
+  if (event.target.closest('[data-student-scroll-mentor]')) {
+    const mentorOverview = document.getElementById('student-mentor-overview');
+    if (mentorOverview) mentorOverview.open = true;
+    scrollStudentTargetIntoView(mentorOverview);
+    return;
+  }
+  const studentScrollTarget = event.target.closest('[data-student-scroll-target]');
+  if (studentScrollTarget) {
+    const target = document.getElementById(studentScrollTarget.dataset.studentScrollTarget || '');
+    if (target?.id === 'student-mentor-overview') target.open = true;
+    scrollStudentTargetIntoView(target);
+    return;
+  }
+  const studentOwnerSwitch = event.target.closest('[data-student-owner-switch]');
+  if (studentOwnerSwitch) {
+    saveMyTaskOwner(studentOwnerSwitch.dataset.studentOwnerSwitch || '');
     renderAppShell();
     return;
   }
@@ -9026,7 +10088,8 @@ appRoot?.addEventListener('click', (event) => {
         renderAppShell();
       })
       .catch((error) => {
-        alert(`Schema probe failed: ${error.message || error}`);
+        showToast(`Schema probe failed: ${error.message || error}`, 'error');
+        renderAppShell();
       });
     return;
   }
@@ -9115,33 +10178,36 @@ appRoot?.addEventListener('click', (event) => {
   }
   const deleteMasterTarget = event.target.closest('[data-master-delete]');
   if (deleteMasterTarget) {
-    if (!confirmDelete(deleteMasterTarget.dataset.masterValue || t('item'))) return;
-    const message = actionMessage(t('deleted'), deleteMasterTarget.dataset.masterValue || t('item'));
-    captureUndo(message);
     const type = deleteMasterTarget.dataset.masterDelete;
     const value = deleteMasterTarget.dataset.masterValue;
-    if (deleteMasterDataValue(appState, type, value)) {
-      if (type === 'taskTypes') {
-        const fallbackCategory = appState.data.masterData?.taskTypes?.[0] || 'General';
-        appState.data.tasks.forEach((task) => {
-          if (task.category === value) task.category = fallbackCategory;
-        });
-        appState.dirtyFlags.tasks = true;
+    requestDeleteConfirm(value || t('item'), () => {
+      const message = actionMessage(t('deleted'), value || t('item'));
+      captureUndo(message);
+      if (deleteMasterDataValue(appState, type, value)) {
+        if (type === 'taskTypes') {
+          const fallbackCategory = appState.data.masterData?.taskTypes?.[0] || 'General';
+          appState.data.tasks.forEach((task) => {
+            if (task.category === value) task.category = fallbackCategory;
+          });
+          appState.dirtyFlags.tasks = true;
+        }
+        persistAndRender(message, { keepUndo: true });
       }
-      persistAndRender(message, { keepUndo: true });
-    }
+    });
     return;
   }
   const deleteTaskTarget = event.target.closest('[data-task-delete]');
   if (deleteTaskTarget) {
     const task = appState.data.tasks.find(row => Number(row.id) === Number(deleteTaskTarget.dataset.taskDelete));
-    if (!confirmDelete(task?.title || t('task'))) return;
     const label = task?.name || task?.title || t('task');
-    captureUndo(actionMessage(t('deleted'), label));
-    if (Number(editingTaskId) === Number(deleteTaskTarget.dataset.taskDelete)) editingTaskId = null;
-    if (Number(viewingTaskId) === Number(deleteTaskTarget.dataset.taskDelete)) viewingTaskId = null;
-    selectedTaskIds.delete(Number(deleteTaskTarget.dataset.taskDelete));
-    if (deleteTask(appState, deleteTaskTarget.dataset.taskDelete)) persistAndRender(actionMessage(t('deleted'), label), { keepUndo: true });
+    const taskId = deleteTaskTarget.dataset.taskDelete;
+    requestDeleteConfirm(label, () => {
+      captureUndo(actionMessage(t('deleted'), label));
+      if (Number(editingTaskId) === Number(taskId)) editingTaskId = null;
+      if (Number(viewingTaskId) === Number(taskId)) viewingTaskId = null;
+      selectedTaskIds.delete(Number(taskId));
+      if (deleteTask(appState, taskId)) persistTaskAndConfirmSupabase(actionMessage(t('deleted'), label));
+    });
     return;
   }
   const viewTaskTarget = event.target.closest('[data-task-view]');
@@ -9202,11 +10268,13 @@ appRoot?.addEventListener('click', (event) => {
   const deleteMemberTarget = event.target.closest('[data-member-delete]');
   if (deleteMemberTarget) {
     const member = appState.data.members.find(row => Number(row.id) === Number(deleteMemberTarget.dataset.memberDelete));
-    if (!confirmDelete(member?.name || t('members'))) return;
     const label = member?.name || t('members');
-    captureUndo(actionMessage(t('deleted'), label));
-    if (Number(editingMemberId) === Number(deleteMemberTarget.dataset.memberDelete)) editingMemberId = null;
-    if (deleteMember(appState, deleteMemberTarget.dataset.memberDelete)) persistAndRender(actionMessage(t('deleted'), label), { keepUndo: true });
+    const memberId = deleteMemberTarget.dataset.memberDelete;
+    requestDeleteConfirm(label, () => {
+      captureUndo(actionMessage(t('deleted'), label));
+      if (Number(editingMemberId) === Number(memberId)) editingMemberId = null;
+      if (deleteMember(appState, memberId)) persistAndRender(actionMessage(t('deleted'), label), { keepUndo: true });
+    });
     return;
   }
   const editMemberTarget = event.target.closest('[data-member-edit]');
@@ -9328,11 +10396,13 @@ appRoot?.addEventListener('click', (event) => {
   const deleteRunTarget = event.target.closest('[data-run-delete]');
   if (deleteRunTarget) {
     const run = appState.data.missionRuns.find(row => Number(row.id) === Number(deleteRunTarget.dataset.runDelete));
-    if (!confirmDelete(run?.name || t('missionRun'))) return;
     const label = `${t('missionRun')} ${run?.score ?? ''}`.trim();
-    captureUndo(actionMessage(t('deleted'), label));
-    if (Number(editingRunId) === Number(deleteRunTarget.dataset.runDelete)) editingRunId = null;
-    if (deleteMissionRun(appState, deleteRunTarget.dataset.runDelete)) persistAndRender(actionMessage(t('deleted'), label), { keepUndo: true });
+    const runId = deleteRunTarget.dataset.runDelete;
+    requestDeleteConfirm(label, () => {
+      captureUndo(actionMessage(t('deleted'), label));
+      if (Number(editingRunId) === Number(runId)) editingRunId = null;
+      if (deleteMissionRun(appState, runId)) persistAndRender(actionMessage(t('deleted'), label), { keepUndo: true });
+    });
     return;
   }
   const addChecklistTarget = event.target.closest('[data-checklist-add]');
@@ -9390,20 +10460,16 @@ appRoot?.addEventListener('click', (event) => {
   }
   const deleteChecklistTarget = event.target.closest('[data-checklist-delete]');
   if (deleteChecklistTarget) {
-    const list = appState.data[deleteChecklistTarget.dataset.checklistDelete] || [];
-    const item = list.find((row, index) => Number(prepChecklistItemId(row, index)) === Number(deleteChecklistTarget.dataset.checkId));
-    if (!confirmDelete(item?.label || t('checklist'))) return;
-    const message = actionMessage(t('deleted'), item?.label || t('checklist'));
-    captureUndo(message);
-    if (
-      editingChecklist?.listName === deleteChecklistTarget.dataset.checklistDelete
-      && Number(editingChecklist.id) === Number(deleteChecklistTarget.dataset.checkId)
-    ) {
-      editingChecklist = null;
-    }
-    if (deleteChecklistItem(appState, deleteChecklistTarget.dataset.checklistDelete, deleteChecklistTarget.dataset.checkId)) {
-      persistAndRender(message, { keepUndo: true });
-    }
+    const listName = deleteChecklistTarget.dataset.checklistDelete;
+    const checkId = deleteChecklistTarget.dataset.checkId;
+    const list = appState.data[listName] || [];
+    const item = list.find((row, index) => Number(prepChecklistItemId(row, index)) === Number(checkId));
+    requestDeleteConfirm(item?.label || t('checklist'), () => {
+      const message = actionMessage(t('deleted'), item?.label || t('checklist'));
+      captureUndo(message);
+      if (editingChecklist?.listName === listName && Number(editingChecklist.id) === Number(checkId)) editingChecklist = null;
+      if (deleteChecklistItem(appState, listName, checkId)) persistAndRender(message, { keepUndo: true });
+    });
     return;
   }
   const toggleChecklistTarget = event.target.closest('[data-checklist-toggle]');
@@ -9462,11 +10528,13 @@ appRoot?.addEventListener('click', (event) => {
   const deleteGearTarget = event.target.closest('[data-gear-delete]');
   if (deleteGearTarget) {
     const item = appState.data.gearItems.find(row => Number(row.id) === Number(deleteGearTarget.dataset.gearDelete));
-    if (!confirmDelete(item?.name || t('gearItems'))) return;
-    const message = actionMessage(t('deleted'), item?.name || t('gearItems'));
-    captureUndo(message);
-    if (Number(editingGearId) === Number(deleteGearTarget.dataset.gearDelete)) editingGearId = null;
-    if (deleteGearItem(appState, deleteGearTarget.dataset.gearDelete)) persistAndRender(message, { keepUndo: true });
+    const gearId = deleteGearTarget.dataset.gearDelete;
+    requestDeleteConfirm(item?.name || t('gearItems'), () => {
+      const message = actionMessage(t('deleted'), item?.name || t('gearItems'));
+      captureUndo(message);
+      if (Number(editingGearId) === Number(gearId)) editingGearId = null;
+      if (deleteGearItem(appState, gearId)) persistAndRender(message, { keepUndo: true });
+    });
     return;
   }
   const toggleGearTarget = event.target.closest('[data-gear-toggle]');
@@ -9521,14 +10589,17 @@ appRoot?.addEventListener('click', (event) => {
   }
   const deleteKnowledgeTarget = event.target.closest('[data-knowledge-delete]');
   if (deleteKnowledgeTarget) {
-    const list = appState.data[deleteKnowledgeTarget.dataset.knowledgeDelete] || [];
-    const item = list.find(row => Number(row.id) === Number(deleteKnowledgeTarget.dataset.knowledgeId));
-    if (!confirmDelete(item?.title || t('item'))) return;
-    const message = actionMessage(t('deleted'), item?.title || t('item'));
-    captureUndo(message);
-    if (deleteKnowledgeTarget.dataset.knowledgeDelete === 'intel' && Number(editingIntelId) === Number(deleteKnowledgeTarget.dataset.knowledgeId)) editingIntelId = null;
-    if (deleteKnowledgeTarget.dataset.knowledgeDelete === 'strategy' && Number(editingStrategyId) === Number(deleteKnowledgeTarget.dataset.knowledgeId)) editingStrategyId = null;
-    if (deleteKnowledgeItem(appState, deleteKnowledgeTarget.dataset.knowledgeDelete, deleteKnowledgeTarget.dataset.knowledgeId)) persistAndRender(message, { keepUndo: true });
+    const listName = deleteKnowledgeTarget.dataset.knowledgeDelete;
+    const knowledgeId = deleteKnowledgeTarget.dataset.knowledgeId;
+    const list = appState.data[listName] || [];
+    const item = list.find(row => Number(row.id) === Number(knowledgeId));
+    requestDeleteConfirm(item?.title || t('item'), () => {
+      const message = actionMessage(t('deleted'), item?.title || t('item'));
+      captureUndo(message);
+      if (listName === 'intel' && Number(editingIntelId) === Number(knowledgeId)) editingIntelId = null;
+      if (listName === 'strategy' && Number(editingStrategyId) === Number(knowledgeId)) editingStrategyId = null;
+      if (deleteKnowledgeItem(appState, listName, knowledgeId)) persistAndRender(message, { keepUndo: true });
+    });
     return;
   }
   const prepModalBg = event.target.closest('[data-prep-modal-bg]');
@@ -9621,6 +10692,10 @@ appRoot?.addEventListener('submit', (event) => {
 });
 
 appRoot?.addEventListener('change', (event) => {
+  if (event.target.closest('[data-mentor-risk-only], [data-mentor-sort]')) {
+    applyMentorOverviewControls();
+    return;
+  }
   if (
     event.target.closest('[data-score-item-value]')
     || event.target.closest('[data-score-item-status]')
@@ -9643,6 +10718,7 @@ appRoot?.addEventListener('change', (event) => {
   const status = event.target.closest('[data-task-status]');
   if (status) {
     const task = appState.data.tasks.find(row => Number(row.id) === Number(status.dataset.taskStatus));
+    if (task && String(task.status || 'Open') === status.value) return;
     const message = actionMessage(t('statusUpdated'), task ? `${task.name || t('task')} -> ${status.value}` : '');
     captureUndo(message);
     if (updateTaskStatus(appState, status.dataset.taskStatus, status.value)) persistAndRender(message, { keepUndo: true });
@@ -9822,7 +10898,8 @@ appRoot?.addEventListener('change', (event) => {
       }
       persistAndRender(t('imported'), { keepUndo: Boolean(input) });
     } catch (error) {
-      alert(`Import failed: ${error.message || error}`);
+      showToast(`Import failed: ${error.message || error}`, 'error');
+      renderAppShell();
     } finally {
       if (input) input.value = '';
       if (diagnosticsInput) diagnosticsInput.value = '';
@@ -9832,6 +10909,11 @@ appRoot?.addEventListener('change', (event) => {
 });
 
 appRoot?.addEventListener('keydown', (event) => {
+  if (event.key === 'Escape' && confirmDialog) {
+    confirmDialog = null;
+    renderAppShell();
+    return;
+  }
   if (event.key === 'Escape' && (editingTaskId || addingTask || viewingTaskId || editingMemberId || editingRunId || editingGearId || editingChecklist || addingPrepItem || editingIntelId || editingStrategyId)) {
     editingTaskId = null;
     addingTask = false;
@@ -9921,6 +11003,11 @@ appRoot?.addEventListener('keydown', (event) => {
 appRoot?.addEventListener('input', (event) => {
   if (event.target.closest('[data-member-search]')) {
     updateMemberFiltersFromControl(event.target);
+    renderAppShell();
+    return;
+  }
+  if (event.target.closest('[data-student-owner]')) {
+    saveMyTaskOwner(event.target.value);
     renderAppShell();
     return;
   }

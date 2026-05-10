@@ -29,6 +29,7 @@ import {
   updateNotes,
 } from './features/intel.js';
 import { renderNavigation, showPage, V16_PAGES } from './features/navigation.js';
+import { renderStudentWorkspace } from './features/student.js';
 import { addMember, createMemberFromForm, deleteMember, normalizeMemberFilters, renderMembersPage, updateMember } from './features/members.js';
 import {
   addChecklistItem,
@@ -75,7 +76,9 @@ const PAGE_FEATURES_STORAGE_KEY = 'rov_v16_page_features';
 const MY_TASK_OWNER_STORAGE_KEY = 'rov_v16_my_task_owner';
 const TASK_COLUMNS_STORAGE_KEY = 'rov_v16_task_columns';
 const TASK_DENSITY_STORAGE_KEY = 'rov_v16_task_density';
-const DEFAULT_VISIBLE_PAGE_IDS = ['dashboard', 'prep', 'tasks', 'members', 'intel', 'competition', 'settings'];
+const LAST_SUPABASE_CONFIRM_KEY = 'rov_v16_last_supabase_confirmed_at';
+const LOCKED_PAGE_IDS = ['dashboard', 'student', 'settings'];
+const DEFAULT_VISIBLE_PAGE_IDS = ['dashboard', 'student', 'prep', 'tasks', 'members', 'intel', 'competition', 'settings'];
 const DEFAULT_TASK_COLUMNS = ['owner', 'due', 'priority', 'category', 'status', 'actions'];
 const ACTION_LOG_LIMIT = 8;
 const UNDO_BAR_AUTO_CLEAR_MS = 5000;
@@ -118,14 +121,15 @@ let toastTimer = null;
 let undoState = loadUndoState();
 let undoClearTimer = null;
 let actionLog = loadActionLog();
+let confirmDialog = null;
 let visiblePageIds = loadVisiblePageIds();
 let myTaskOwner = loadMyTaskOwner();
 let visibleTaskColumns = loadVisibleTaskColumns();
 let taskDensity = loadTaskDensity();
 let syncStatus = {
   state: hasPendingLocalSync() ? 'pending' : 'idle',
-  label: hasPendingLocalSync() ? 'Supabase pending' : 'Supabase ready',
-  detail: '',
+  label: hasPendingLocalSync() ? 'Supabase pending' : getConfirmedSupabaseStatus().label,
+  detail: hasPendingLocalSync() ? '' : getConfirmedSupabaseStatus().detail,
 };
 const taskFilters = {
   search: '',
@@ -167,7 +171,7 @@ const prepFilters = {
 function normalizeVisiblePageIds(ids = []) {
   const valid = new Set(V16_PAGES.map(page => page.id));
   const cleaned = [...new Set((Array.isArray(ids) ? ids : []).filter(id => valid.has(id)))];
-  return [...new Set(['dashboard', ...cleaned, 'settings'])];
+  return [...new Set([...LOCKED_PAGE_IDS, ...cleaned])];
 }
 
 function loadVisiblePageIds(storage = localStorage) {
@@ -185,7 +189,7 @@ function saveVisiblePageIds(storage = localStorage) {
 }
 
 function setPageFeature(pageId, enabled) {
-  if (['dashboard', 'settings'].includes(pageId)) return false;
+  if (LOCKED_PAGE_IDS.includes(pageId)) return false;
   const set = new Set(visiblePageIds);
   if (enabled) set.add(pageId);
   else set.delete(pageId);
@@ -245,6 +249,96 @@ function saveTaskDensity(value, storage = localStorage) {
   taskDensity = normalizeTaskDensity(value);
   storage.setItem(TASK_DENSITY_STORAGE_KEY, taskDensity);
   return taskDensity;
+}
+
+function getStudentStickyOffsetPx() {
+  const stickyRows = [...document.querySelectorAll('#page-student .student-stat-row, #page-student .student-jump-row')];
+  const stickyBottom = stickyRows.reduce((bottom, row) => {
+    const style = window.getComputedStyle(row);
+    if (style.position !== 'sticky' && style.position !== 'fixed') return bottom;
+    const rect = row.getBoundingClientRect();
+    return Math.max(bottom, rect.bottom);
+  }, 0);
+  return stickyBottom ? stickyBottom + 12 : 0;
+}
+
+function scrollStudentTargetIntoView(target) {
+  if (!target) return;
+  requestAnimationFrame(() => {
+    const offset = getStudentStickyOffsetPx();
+    if (!offset || target.id === 'page-student') {
+      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      return;
+    }
+    const top = target.getBoundingClientRect().top + window.scrollY - offset;
+    window.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
+  });
+}
+
+function getStudentReportPayload(root = document) {
+  return {
+    taskId: root.querySelector('[data-student-report-task]')?.value || '',
+    done: String(root.querySelector('[data-student-report-done]')?.value || '').trim(),
+    blocker: String(root.querySelector('[data-student-report-blocker]')?.value || '').trim(),
+    next: String(root.querySelector('[data-student-report-next]')?.value || '').trim(),
+  };
+}
+
+function getStudentEvidencePayload(root = document) {
+  return {
+    taskId: root.querySelector('[data-student-evidence-task]')?.value || '',
+    label: String(root.querySelector('[data-student-evidence-label]')?.value || '').trim(),
+    url: String(root.querySelector('[data-student-evidence-url]')?.value || '').trim(),
+    note: String(root.querySelector('[data-student-evidence-note]')?.value || '').trim(),
+  };
+}
+
+function buildStudentProgressNote(payload = {}, owner = '') {
+  const lines = [
+    `Progress report ${new Date().toLocaleString()}`,
+    owner ? `${t('student')}: ${owner}` : '',
+    payload.done ? `${t('reportDone')}: ${payload.done}` : '',
+    payload.blocker ? `${t('reportBlocker')}: ${payload.blocker}` : '',
+    payload.next ? `${t('reportNext')}: ${payload.next}` : '',
+  ].filter(Boolean);
+  return lines.join('\n');
+}
+
+function normalizeTaskEvidenceList(value) {
+  if (Array.isArray(value)) return value;
+  try {
+    const parsed = JSON.parse(String(value || '[]'));
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function taskHasEvidence(task = {}) {
+  return normalizeTaskEvidenceList(task.evidence).some(item => String(item?.label || item?.url || item?.note || '').trim());
+}
+
+function focusStudentEvidenceForm(taskId = '') {
+  const select = document.querySelector('[data-student-evidence-task]');
+  if (select) select.value = String(taskId || '');
+  document.querySelector('[data-student-evidence-root]')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  document.querySelector('[data-student-evidence-label]')?.focus();
+}
+
+function getStudentTaskPayload(root = document) {
+  return {
+    id: Date.now(),
+    name: String(root.querySelector('[data-student-task-name]')?.value || '').trim(),
+    owner: String(root.querySelector('[data-student-task-owner]')?.value || myTaskOwner || '').trim() || 'Unassigned',
+    due: root.querySelector('[data-student-task-due]')?.value || '',
+    priority: root.querySelector('[data-student-task-priority]')?.value || 'Medium',
+    status: 'Open',
+    category: root.querySelector('[data-student-task-category]')?.value || 'General',
+    blocked: false,
+    notes: '',
+    evidence: [],
+    updatedAt: new Date().toISOString(),
+  };
 }
 
 function applyMyTasksFilter() {
@@ -460,6 +554,22 @@ function showToast(message, type = 'success') {
   }, 3200);
 }
 
+function formatSyncTime(value = '') {
+  if (!value) return '';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+  return date.toLocaleString(undefined, { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
+}
+
+function getConfirmedSupabaseStatus(storage = localStorage) {
+  const confirmedAt = storage.getItem(LAST_SUPABASE_CONFIRM_KEY) || '';
+  const label = confirmedAt ? `Supabase OK ${formatSyncTime(confirmedAt)}` : 'Supabase ready';
+  const detail = confirmedAt
+    ? `Last confirmed Supabase write/read-back: ${new Date(confirmedAt).toLocaleString()}`
+    : 'Ready to read and write Supabase.';
+  return { label, detail, confirmedAt };
+}
+
 function setSyncStatus(state, label, detail = '') {
   syncStatus = { state, label, detail, ts: new Date().toISOString() };
 }
@@ -523,6 +633,8 @@ function exportSafetyReport(documentRef = document) {
       },
       source: 'browser-localStorage',
       supabaseTouched: false,
+      supabaseConfirmed: Boolean(localStorage.getItem(LAST_SUPABASE_CONFIRM_KEY)),
+      lastSupabaseConfirmedAt: localStorage.getItem(LAST_SUPABASE_CONFIRM_KEY) || '',
     },
     undo: undoState ? {
       available: true,
@@ -570,6 +682,69 @@ function renderToast() {
     <span>${escapeHtml(toastState.message)}</span>
     ${toastState.undo ? `<button class="toast-undo" type="button" data-action="undo-last-change">${escapeHtml(t('undo'))}</button>` : ''}
   </div>`;
+}
+
+function mentorSummaryLine(row) {
+  return `${row.dataset.owner || '-'} | ${t('myActiveTasks')}: ${row.dataset.open || 0} | ${t('overdue')}: ${row.dataset.overdue || 0} | ${t('blocked')}: ${row.dataset.blocked || 0} | ${t('needsEvidence')}: ${row.dataset.evidence || 0} | ${t('staleTasks')}: ${row.dataset.stale || 0} | ${t('thisWeek')}: ${row.dataset.week || 0}`;
+}
+
+function csvCell(value) {
+  return `"${String(value ?? '').replace(/"/g, '""')}"`;
+}
+
+function exportMentorOverviewCsv(documentRef = document) {
+  const header = [t('student'), t('myActiveTasks'), t('overdue'), t('blocked'), t('needsEvidence'), t('staleTasks'), t('thisWeek')];
+  const rows = [...document.querySelectorAll('[data-mentor-summary-row]')]
+    .filter(row => !row.hidden)
+    .map(row => [row.dataset.owner || '', row.dataset.open || 0, row.dataset.overdue || 0, row.dataset.blocked || 0, row.dataset.evidence || 0, row.dataset.stale || 0, row.dataset.week || 0]);
+  const csv = [header, ...rows].map(row => row.map(csvCell).join(',')).join('\n');
+  const blob = new Blob([`\ufeff${csv}`], { type: 'text/csv;charset=utf-8' });
+  const anchor = documentRef.createElement('a');
+  anchor.href = URL.createObjectURL(blob);
+  anchor.download = `rov_v16_mentor_overview_${new Date().toISOString().slice(0, 10)}.csv`;
+  anchor.click();
+  URL.revokeObjectURL(anchor.href);
+}
+
+function copyText(text) {
+  if (navigator.clipboard?.writeText) {
+    navigator.clipboard.writeText(text).then(() => showToast(t('summaryCopied'))).catch(() => showToast(text));
+  } else {
+    showToast(text);
+  }
+}
+
+function applyMentorOverviewControls() {
+  const table = document.querySelector('.student-mentor-table');
+  if (!table) return;
+  const riskOnly = Boolean(document.querySelector('[data-mentor-risk-only]')?.checked);
+  const sortMode = document.querySelector('[data-mentor-sort]')?.value || 'risk';
+  const rows = [...table.querySelectorAll('[data-mentor-summary-row]')];
+  const getData = row => ({
+    owner: row.dataset.owner || '',
+    open: Number(row.dataset.open || 0),
+    overdue: Number(row.dataset.overdue || 0),
+    blocked: Number(row.dataset.blocked || 0),
+    evidence: Number(row.dataset.evidence || 0),
+    stale: Number(row.dataset.stale || 0),
+    week: Number(row.dataset.week || 0),
+  });
+  rows.forEach((row) => {
+    const data = getData(row);
+    row.hidden = riskOnly && !(data.overdue || data.blocked || data.evidence || data.stale || data.week);
+  });
+  rows.sort((a, b) => {
+    const left = getData(a);
+    const right = getData(b);
+    if (sortMode === 'owner') return left.owner.localeCompare(right.owner);
+    if (sortMode === 'open') return (right.open - left.open) || left.owner.localeCompare(right.owner);
+    if (sortMode === 'overdue') return (right.overdue - left.overdue) || (right.blocked - left.blocked) || left.owner.localeCompare(right.owner);
+    if (sortMode === 'blocked') return (right.blocked - left.blocked) || (right.overdue - left.overdue) || left.owner.localeCompare(right.owner);
+    if (sortMode === 'evidence') return (right.evidence - left.evidence) || (right.overdue - left.overdue) || left.owner.localeCompare(right.owner);
+    if (sortMode === 'stale') return (right.stale - left.stale) || (right.overdue - left.overdue) || left.owner.localeCompare(right.owner);
+    if (sortMode === 'week') return (right.week - left.week) || (right.overdue - left.overdue) || left.owner.localeCompare(right.owner);
+    return (right.overdue - left.overdue) || (right.blocked - left.blocked) || (right.evidence - left.evidence) || (right.stale - left.stale) || (right.week - left.week) || (right.open - left.open) || left.owner.localeCompare(right.owner);
+  }).forEach(row => table.appendChild(row));
 }
 
 function renderUndoBar() {
@@ -779,9 +954,12 @@ async function upsertTaskEvidenceRows(client, task = {}) {
 }
 
 function markLocalDataSynced() {
+  const confirmedAt = new Date().toISOString();
+  localStorage.setItem(LAST_SUPABASE_CONFIRM_KEY, confirmedAt);
   localStorage.setItem(SYNCED_DATA_SIGNATURE_KEY, getLocalSyncSignature());
   setPendingLocalSync(false);
-  setSyncStatus('idle', 'Supabase synced', 'Latest changes are confirmed in Supabase.');
+  const confirmed = getConfirmedSupabaseStatus();
+  setSyncStatus('idle', confirmed.label, confirmed.detail);
 }
 
 function localDataNeedsSyncProtection() {
@@ -928,16 +1106,51 @@ function actionMessage(baseMessage, label = '') {
   return cleanLabel ? `${stripSentenceEnd(baseMessage)}: ${cleanLabel}` : baseMessage;
 }
 
-function confirmDelete(label = t('item')) {
-  return window.confirm(`${t('confirmDelete')} ${label}`);
+function openConfirmDialog({ title = t('confirmDelete'), message = '', detail = '', action = null } = {}) {
+  confirmDialog = { title, message, detail, action };
+  renderAppShell();
 }
 
-function confirmBulkDeleteSelectedTasks() {
-  const selected = (appState.data.tasks || []).filter(task => selectedTaskIds.has(Number(task.id)));
-  if (!selected.length) return false;
-  const names = selected.slice(0, 12).map((task, index) => `${index + 1}. ${task.name || task.title || t('task')}`);
-  const more = selected.length > names.length ? `\n${t('andMoreTasks')} ${selected.length - names.length}` : '';
-  return window.confirm(`${t('confirmBulkDeleteTasks')} ${selected.length}\n\n${names.join('\n')}${more}`);
+function closeConfirmDialog() {
+  confirmDialog = null;
+  renderAppShell();
+}
+
+function renderConfirmDialog() {
+  if (!confirmDialog) return '';
+  return `
+    <div class="modal-bg open" data-confirm-modal-bg>
+      <div class="modal confirm-modal" role="dialog" aria-modal="true" aria-labelledby="confirm-modal-title" data-confirm-modal>
+        <h3 id="confirm-modal-title">${escapeHtml(confirmDialog.title || t('confirmDelete'))}</h3>
+        <div class="confirm-message">${escapeHtml(confirmDialog.message || '')}</div>
+        ${confirmDialog.detail ? `<pre class="confirm-detail">${escapeHtml(confirmDialog.detail)}</pre>` : ''}
+        <div class="modal-actions">
+          <button class="btn" type="button" data-confirm-cancel>${escapeHtml(t('cancel'))}</button>
+          <button class="btn btn-danger" type="button" data-confirm-run>${escapeHtml(t('delete'))}</button>
+        </div>
+      </div>
+    </div>`;
+}
+
+function requestDeleteConfirm(label = t('item'), action = null) {
+  openConfirmDialog({
+    title: t('confirmDelete'),
+    message: label,
+    action,
+  });
+}
+
+function requestClearSafetyMetadataConfirm() {
+  openConfirmDialog({
+    title: t('clearSafetyMetadata'),
+    message: t('confirmClearSafetyMetadata'),
+    action: () => {
+      clearSafetyMetadata();
+      showToast(t('safetyMetadataCleared'));
+      recordAction(t('safetyMetadataCleared'));
+      renderAppShell();
+    },
+  });
 }
 
 function updateTaskFiltersFromControl(target) {
@@ -1108,14 +1321,15 @@ function updatePrepFiltersFromControl(target) {
 function applyTaskFilterPreset(target) {
   const preset = target.closest('[data-task-search-preset], [data-task-health-preset], [data-task-evidence-preset], [data-task-priority-preset], [data-task-status-preset], [data-task-owner-preset], [data-task-category-preset], [data-task-sort-preset]');
   if (!preset) return false;
+  const hasPreset = key => Object.prototype.hasOwnProperty.call(preset.dataset, key);
   Object.assign(taskFilters, {
-    search: preset.dataset.taskSearchPreset || '',
-    owner: preset.dataset.taskOwnerPreset || '',
-    status: preset.dataset.taskStatusPreset || '',
-    priority: preset.dataset.taskPriorityPreset || '',
-    category: preset.dataset.taskCategoryPreset || '',
-    health: preset.dataset.taskHealthPreset || '',
-    evidence: preset.dataset.taskEvidencePreset || '',
+    search: hasPreset('taskSearchPreset') ? preset.dataset.taskSearchPreset : '',
+    owner: hasPreset('taskOwnerPreset') ? preset.dataset.taskOwnerPreset : '',
+    status: hasPreset('taskStatusPreset') ? preset.dataset.taskStatusPreset : '',
+    priority: hasPreset('taskPriorityPreset') ? preset.dataset.taskPriorityPreset : '',
+    category: hasPreset('taskCategoryPreset') ? preset.dataset.taskCategoryPreset : '',
+    health: hasPreset('taskHealthPreset') ? preset.dataset.taskHealthPreset : '',
+    evidence: hasPreset('taskEvidencePreset') ? preset.dataset.taskEvidencePreset : '',
     sort: preset.dataset.taskSortPreset || taskFilters.sort || 'due-asc',
   });
   return true;
@@ -1297,6 +1511,47 @@ function formatDashboardTaskUpdatedAt(value = '') {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return String(value);
   return date.toLocaleString(undefined, { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
+}
+
+function renderDashboardSafetyStatus() {
+  const confirmed = getConfirmedSupabaseStatus();
+  const pending = hasPendingLocalSync();
+  const localSavedAt = appState.savedAt ? formatDashboardTaskUpdatedAt(appState.savedAt) : t('notSavedYet');
+  const confirmedAt = confirmed.confirmedAt ? formatDashboardTaskUpdatedAt(confirmed.confirmedAt) : t('notLoadedYet');
+  const sourceLabel = pending ? 'Local pending' : 'Supabase';
+  const syncLabel = syncStatus?.label || confirmed.label;
+  return `
+    <div class="card dashboard-safety-card" data-dashboard-safety>
+      <div class="dashboard-safety-header">
+        <div class="dashboard-safety-copy">
+          <h2 style="margin:0">${escapeHtml(t('dataSafety'))}</h2>
+          <div class="dashboard-safety-hint">${escapeHtml(t('dataSafetyHint'))}</div>
+          <div class="dashboard-safety-save">${escapeHtml(t('lastSaved'))}: ${escapeHtml(localSavedAt)}</div>
+        </div>
+        <div class="dashboard-safety-actions">
+          <button class="btn btn-sm btn-primary" type="button" data-action="export-safety-report">${escapeHtml(t('exportSafetyReport'))}</button>
+          <button class="btn btn-sm" type="button" data-page="settings" data-settings-scroll="settings-sync-section">${escapeHtml(t('settings'))}</button>
+        </div>
+      </div>
+      <div class="dashboard-safety-status-grid">
+        <div class="dashboard-safety-status">
+          <div class="dashboard-safety-status-label">${escapeHtml(t('dataSource'))}</div>
+          <div class="dashboard-safety-status-value">${escapeHtml(sourceLabel)}</div>
+        </div>
+        <div class="dashboard-safety-status">
+          <div class="dashboard-safety-status-label">${escapeHtml(t('syncStatus'))}</div>
+          <div class="dashboard-safety-status-value">${escapeHtml(syncLabel)}</div>
+        </div>
+        <div class="dashboard-safety-status">
+          <div class="dashboard-safety-status-label">${escapeHtml(t('lastSupabaseConfirmed'))}</div>
+          <div class="dashboard-safety-status-value">${escapeHtml(confirmedAt)}</div>
+        </div>
+        <div class="dashboard-safety-status">
+          <div class="dashboard-safety-status-label">${escapeHtml(t('pendingLocalChanges'))}</div>
+          <div class="dashboard-safety-status-value">${escapeHtml(pending ? t('available') : t('notAvailable'))}</div>
+        </div>
+      </div>
+    </div>`;
 }
 
 function formatShortChartDate(date) {
@@ -1548,6 +1803,7 @@ function renderDashboard() {
           </button>
         `).join('')}
       </div>
+      ${renderDashboardSafetyStatus()}
       ${renderTaskCharts(data.tasks || [])}
       <div class="card" data-dashboard-week-focus>
         <div style="display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap">
@@ -1639,6 +1895,7 @@ function renderDashboard() {
 
 function renderCurrentPage() {
   if (appState.currentPage === 'prep') return renderPrepCenter(appState, { editingGearId, editingChecklist, addingPrepItem, prepFocus, filters: prepFilters, activeTab: prepActiveTab });
+  if (appState.currentPage === 'student') return renderStudentWorkspace(appState, { myOwner: myTaskOwner });
   if (appState.currentPage === 'tasks') {
     pruneSelectedTaskIds();
     return renderTasksPage(appState, { editingTaskId, addingTask, viewingTaskId, filters: taskFilters, myOwner: myTaskOwner, selectedTaskIds: [...selectedTaskIds], visibleColumns: visibleTaskColumns, taskDensity });
@@ -1658,7 +1915,7 @@ function renderCurrentPage() {
 function renderAppShell() {
   if (!appRoot) throw new Error('App root #app was not found.');
   if (!visiblePageIds.includes(appState.currentPage)) appState.currentPage = 'dashboard';
-  appRoot.innerHTML = `${renderNavigation(appState.currentPage, syncStatus, visiblePageIds)}${renderToast()}${renderUndoBar()}${renderCurrentPage()}`;
+  appRoot.innerHTML = `${renderNavigation(appState.currentPage, syncStatus, visiblePageIds)}${renderToast()}${renderUndoBar()}${renderCurrentPage()}${renderConfirmDialog()}`;
   scheduleUndoAutoClear();
   if (appState.currentPage === 'settings') {
     renderSettingsHub(document.getElementById('settings-host'), {
@@ -1712,6 +1969,7 @@ function runAndRenderSmokeTest() {
 
   [
     ['dashboard', '#page-dashboard'],
+    ['student', '#page-student'],
     ['prep', '#page-prep'],
     ['tasks', '#page-tasks'],
     ['members', '#page-members'],
@@ -1844,6 +2102,22 @@ scheduleInitialSupabaseLoad();
 startSupabaseRealtimeRefresh();
 
 appRoot?.addEventListener('click', (event) => {
+  if (event.target.closest('[data-confirm-cancel]')) {
+    closeConfirmDialog();
+    return;
+  }
+  if (event.target.closest('[data-confirm-run]')) {
+    const action = confirmDialog?.action;
+    confirmDialog = null;
+    if (typeof action === 'function') action();
+    else renderAppShell();
+    return;
+  }
+  const confirmModalBg = event.target.closest('[data-confirm-modal-bg]');
+  if (confirmModalBg && !event.target.closest('[data-confirm-modal]')) {
+    closeConfirmDialog();
+    return;
+  }
   const prepEditTarget = event.target.closest('[data-prep-edit]');
   if (prepEditTarget) {
     addingPrepItem = null;
@@ -1895,10 +2169,7 @@ appRoot?.addEventListener('click', (event) => {
     return;
   }
   if (event.target.closest('[data-action="clear-safety-metadata"]')) {
-    if (!window.confirm(t('confirmClearSafetyMetadata'))) return;
-    clearSafetyMetadata();
-    showToast(t('safetyMetadataCleared'));
-    renderAppShell();
+    requestClearSafetyMetadataConfirm();
     return;
   }
   const healthShortcut = event.target.closest('[data-task-health-shortcut]');
@@ -1941,10 +2212,24 @@ appRoot?.addEventListener('click', (event) => {
   }
   if (event.target.closest('[data-task-bulk-delete]')) {
     const count = selectedTaskIds.size;
-    if (!count || !confirmBulkDeleteSelectedTasks()) return;
-    const message = actionMessage(t('deleted'), `${count} ${t('tasks')}`);
-    captureUndo(message);
-    if (deleteSelectedTasks()) persistAndRender(message, { keepUndo: true });
+    if (!count) return;
+    const selectedCount = count;
+    const selectedIds = [...selectedTaskIds];
+    const names = (appState.data.tasks || [])
+      .filter(task => selectedIds.includes(Number(task.id)))
+      .slice(0, 12)
+      .map((task, index) => `${index + 1}. ${task.name || task.title || t('task')}`);
+    const more = selectedCount > names.length ? `\n${t('andMoreTasks')} ${selectedCount - names.length}` : '';
+    openConfirmDialog({
+      title: t('confirmBulkDeleteTasks'),
+      message: `${selectedCount}`,
+      detail: `${names.join('\n')}${more}`,
+      action: () => {
+        const message = actionMessage(t('deleted'), `${selectedCount} ${t('tasks')}`);
+        captureUndo(message);
+        if (deleteSelectedTasks()) persistTaskAndConfirmSupabase(message);
+      },
+    });
     return;
   }
   const myTasksButton = event.target.closest('[data-my-tasks]');
@@ -2002,6 +2287,134 @@ appRoot?.addEventListener('click', (event) => {
     addingPrepItem = prepActiveTab;
     editingChecklist = null;
     editingGearId = null;
+    renderAppShell();
+    return;
+  }
+  const studentReportSave = event.target.closest('[data-student-report-save]');
+  if (studentReportSave) {
+    const root = studentReportSave.closest('[data-student-report-root]') || studentReportSave.closest('.student-report-panel') || document;
+    const payload = getStudentReportPayload(root);
+    if (!payload.taskId || (!payload.done && !payload.blocker && !payload.next)) return;
+    const task = appState.data.tasks.find(row => Number(row.id) === Number(payload.taskId));
+    if (!task) return;
+    const reportNote = buildStudentProgressNote(payload, myTaskOwner);
+    const nextNotes = [String(task.notes || '').trim(), reportNote].filter(Boolean).join('\n\n');
+    const message = actionMessage(t('progressReportSaved'), task.name || t('task'));
+    captureUndo(message);
+    if (updateTask(appState, payload.taskId, { notes: nextNotes })) persistAndRender(message, { keepUndo: true });
+    return;
+  }
+  const studentTaskAdd = event.target.closest('[data-student-task-add]');
+  if (studentTaskAdd) {
+    const root = studentTaskAdd.closest('[data-student-add-task-root]') || document;
+    const task = getStudentTaskPayload(root);
+    if (!task.name) return;
+    const message = actionMessage(t('saved'), task.name || t('task'));
+    captureUndo(message);
+    addTask(appState, task);
+    persistTaskAndConfirmSupabase(message);
+    return;
+  }
+  const studentEvidenceSave = event.target.closest('[data-student-evidence-save]');
+  if (studentEvidenceSave) {
+    const root = studentEvidenceSave.closest('[data-student-evidence-root]') || document;
+    const payload = getStudentEvidencePayload(root);
+    if (!payload.taskId || (!payload.label && !payload.url && !payload.note)) return;
+    const task = appState.data.tasks.find(row => Number(row.id) === Number(payload.taskId));
+    if (!task) return;
+    const evidence = normalizeTaskEvidenceList(task.evidence);
+    const nextEvidence = [
+      ...evidence,
+      {
+        id: Date.now(),
+        label: payload.label || payload.url || t('evidence'),
+        url: payload.url,
+        note: payload.note,
+        type: payload.url ? 'link' : 'note',
+      },
+    ];
+    const message = actionMessage(t('evidenceSaved'), task.name || t('task'));
+    captureUndo(message);
+    if (updateTask(appState, payload.taskId, { evidence: nextEvidence })) persistAndRender(message, { keepUndo: true });
+    return;
+  }
+  const studentEvidenceFocus = event.target.closest('[data-student-evidence-focus]');
+  if (studentEvidenceFocus) {
+    focusStudentEvidenceForm(studentEvidenceFocus.dataset.studentEvidenceFocus || '');
+    return;
+  }
+  const studentBlockedToggle = event.target.closest('[data-student-blocked-toggle]');
+  if (studentBlockedToggle) {
+    const task = appState.data.tasks.find(row => Number(row.id) === Number(studentBlockedToggle.dataset.studentBlockedToggle));
+    if (!task) return;
+    const blocked = !Boolean(task.blocked);
+    const message = actionMessage(t('saved'), `${task.name || t('task')} -> ${blocked ? t('blocked') : t('unblockTask')}`);
+    captureUndo(message);
+    if (updateTask(appState, studentBlockedToggle.dataset.studentBlockedToggle, { blocked })) persistAndRender(message, { keepUndo: true });
+    return;
+  }
+  const studentComplete = event.target.closest('[data-student-complete]');
+  if (studentComplete) {
+    const task = appState.data.tasks.find(row => Number(row.id) === Number(studentComplete.dataset.studentComplete));
+    if (!task || task.status === 'Done') return;
+    const needsEvidenceReminder = !taskHasEvidence(task);
+    const message = actionMessage(t('statusUpdated'), `${task.name || t('task')} -> ${labelFor('Done')}`);
+    captureUndo(message);
+    if (updateTaskStatus(appState, studentComplete.dataset.studentComplete, 'Done')) {
+      persistAndRender(needsEvidenceReminder ? `${message} | ${t('evidenceReminder')}` : message, { keepUndo: true });
+      if (needsEvidenceReminder) setTimeout(() => focusStudentEvidenceForm(studentComplete.dataset.studentComplete), 80);
+    }
+    return;
+  }
+  if (event.target.closest('[data-student-summary-copy]')) {
+    const textarea = document.querySelector('[data-student-summary-text]');
+    const text = textarea?.value || '';
+    if (!text) return;
+    if (navigator.clipboard?.writeText) {
+      navigator.clipboard.writeText(text).then(() => showToast(t('summaryCopied'))).catch(() => {
+        textarea?.select();
+        showToast(t('summaryCopied'));
+      });
+    } else {
+      textarea?.select();
+      showToast(t('summaryCopied'));
+    }
+    return;
+  }
+  if (event.target.closest('[data-mentor-summary-copy]')) {
+    const rows = [...document.querySelectorAll('[data-mentor-summary-row]')].filter(row => !row.hidden).map(mentorSummaryLine);
+    const text = [`${t('mentorOverview')} ${new Date().toLocaleString()}`, ...rows].join('\n');
+    copyText(text);
+    return;
+  }
+  if (event.target.closest('[data-mentor-export-csv]')) {
+    exportMentorOverviewCsv();
+    showToast(t('exported'));
+    recordAction(actionMessage(t('exported'), t('mentorOverview')));
+    return;
+  }
+  const mentorRowCopy = event.target.closest('[data-mentor-row-copy]');
+  if (mentorRowCopy) {
+    const row = mentorRowCopy.closest('[data-mentor-summary-row]');
+    if (row) copyText(`${t('mentorOverview')} ${new Date().toLocaleString()}\n${mentorSummaryLine(row)}`);
+    return;
+  }
+  if (event.target.closest('[data-student-scroll-mentor]')) {
+    const mentorOverview = document.getElementById('student-mentor-overview');
+    if (mentorOverview) mentorOverview.open = true;
+    scrollStudentTargetIntoView(mentorOverview);
+    return;
+  }
+  const studentScrollTarget = event.target.closest('[data-student-scroll-target]');
+  if (studentScrollTarget) {
+    const target = document.getElementById(studentScrollTarget.dataset.studentScrollTarget || '');
+    if (target?.id === 'student-mentor-overview') target.open = true;
+    scrollStudentTargetIntoView(target);
+    return;
+  }
+  const studentOwnerSwitch = event.target.closest('[data-student-owner-switch]');
+  if (studentOwnerSwitch) {
+    saveMyTaskOwner(studentOwnerSwitch.dataset.studentOwnerSwitch || '');
     renderAppShell();
     return;
   }
@@ -2092,7 +2505,8 @@ appRoot?.addEventListener('click', (event) => {
         renderAppShell();
       })
       .catch((error) => {
-        alert(`Schema probe failed: ${error.message || error}`);
+        showToast(`Schema probe failed: ${error.message || error}`, 'error');
+        renderAppShell();
       });
     return;
   }
@@ -2181,33 +2595,36 @@ appRoot?.addEventListener('click', (event) => {
   }
   const deleteMasterTarget = event.target.closest('[data-master-delete]');
   if (deleteMasterTarget) {
-    if (!confirmDelete(deleteMasterTarget.dataset.masterValue || t('item'))) return;
-    const message = actionMessage(t('deleted'), deleteMasterTarget.dataset.masterValue || t('item'));
-    captureUndo(message);
     const type = deleteMasterTarget.dataset.masterDelete;
     const value = deleteMasterTarget.dataset.masterValue;
-    if (deleteMasterDataValue(appState, type, value)) {
-      if (type === 'taskTypes') {
-        const fallbackCategory = appState.data.masterData?.taskTypes?.[0] || 'General';
-        appState.data.tasks.forEach((task) => {
-          if (task.category === value) task.category = fallbackCategory;
-        });
-        appState.dirtyFlags.tasks = true;
+    requestDeleteConfirm(value || t('item'), () => {
+      const message = actionMessage(t('deleted'), value || t('item'));
+      captureUndo(message);
+      if (deleteMasterDataValue(appState, type, value)) {
+        if (type === 'taskTypes') {
+          const fallbackCategory = appState.data.masterData?.taskTypes?.[0] || 'General';
+          appState.data.tasks.forEach((task) => {
+            if (task.category === value) task.category = fallbackCategory;
+          });
+          appState.dirtyFlags.tasks = true;
+        }
+        persistAndRender(message, { keepUndo: true });
       }
-      persistAndRender(message, { keepUndo: true });
-    }
+    });
     return;
   }
   const deleteTaskTarget = event.target.closest('[data-task-delete]');
   if (deleteTaskTarget) {
     const task = appState.data.tasks.find(row => Number(row.id) === Number(deleteTaskTarget.dataset.taskDelete));
-    if (!confirmDelete(task?.title || t('task'))) return;
     const label = task?.name || task?.title || t('task');
-    captureUndo(actionMessage(t('deleted'), label));
-    if (Number(editingTaskId) === Number(deleteTaskTarget.dataset.taskDelete)) editingTaskId = null;
-    if (Number(viewingTaskId) === Number(deleteTaskTarget.dataset.taskDelete)) viewingTaskId = null;
-    selectedTaskIds.delete(Number(deleteTaskTarget.dataset.taskDelete));
-    if (deleteTask(appState, deleteTaskTarget.dataset.taskDelete)) persistAndRender(actionMessage(t('deleted'), label), { keepUndo: true });
+    const taskId = deleteTaskTarget.dataset.taskDelete;
+    requestDeleteConfirm(label, () => {
+      captureUndo(actionMessage(t('deleted'), label));
+      if (Number(editingTaskId) === Number(taskId)) editingTaskId = null;
+      if (Number(viewingTaskId) === Number(taskId)) viewingTaskId = null;
+      selectedTaskIds.delete(Number(taskId));
+      if (deleteTask(appState, taskId)) persistTaskAndConfirmSupabase(actionMessage(t('deleted'), label));
+    });
     return;
   }
   const viewTaskTarget = event.target.closest('[data-task-view]');
@@ -2268,11 +2685,13 @@ appRoot?.addEventListener('click', (event) => {
   const deleteMemberTarget = event.target.closest('[data-member-delete]');
   if (deleteMemberTarget) {
     const member = appState.data.members.find(row => Number(row.id) === Number(deleteMemberTarget.dataset.memberDelete));
-    if (!confirmDelete(member?.name || t('members'))) return;
     const label = member?.name || t('members');
-    captureUndo(actionMessage(t('deleted'), label));
-    if (Number(editingMemberId) === Number(deleteMemberTarget.dataset.memberDelete)) editingMemberId = null;
-    if (deleteMember(appState, deleteMemberTarget.dataset.memberDelete)) persistAndRender(actionMessage(t('deleted'), label), { keepUndo: true });
+    const memberId = deleteMemberTarget.dataset.memberDelete;
+    requestDeleteConfirm(label, () => {
+      captureUndo(actionMessage(t('deleted'), label));
+      if (Number(editingMemberId) === Number(memberId)) editingMemberId = null;
+      if (deleteMember(appState, memberId)) persistAndRender(actionMessage(t('deleted'), label), { keepUndo: true });
+    });
     return;
   }
   const editMemberTarget = event.target.closest('[data-member-edit]');
@@ -2394,11 +2813,13 @@ appRoot?.addEventListener('click', (event) => {
   const deleteRunTarget = event.target.closest('[data-run-delete]');
   if (deleteRunTarget) {
     const run = appState.data.missionRuns.find(row => Number(row.id) === Number(deleteRunTarget.dataset.runDelete));
-    if (!confirmDelete(run?.name || t('missionRun'))) return;
     const label = `${t('missionRun')} ${run?.score ?? ''}`.trim();
-    captureUndo(actionMessage(t('deleted'), label));
-    if (Number(editingRunId) === Number(deleteRunTarget.dataset.runDelete)) editingRunId = null;
-    if (deleteMissionRun(appState, deleteRunTarget.dataset.runDelete)) persistAndRender(actionMessage(t('deleted'), label), { keepUndo: true });
+    const runId = deleteRunTarget.dataset.runDelete;
+    requestDeleteConfirm(label, () => {
+      captureUndo(actionMessage(t('deleted'), label));
+      if (Number(editingRunId) === Number(runId)) editingRunId = null;
+      if (deleteMissionRun(appState, runId)) persistAndRender(actionMessage(t('deleted'), label), { keepUndo: true });
+    });
     return;
   }
   const addChecklistTarget = event.target.closest('[data-checklist-add]');
@@ -2456,20 +2877,16 @@ appRoot?.addEventListener('click', (event) => {
   }
   const deleteChecklistTarget = event.target.closest('[data-checklist-delete]');
   if (deleteChecklistTarget) {
-    const list = appState.data[deleteChecklistTarget.dataset.checklistDelete] || [];
-    const item = list.find((row, index) => Number(prepChecklistItemId(row, index)) === Number(deleteChecklistTarget.dataset.checkId));
-    if (!confirmDelete(item?.label || t('checklist'))) return;
-    const message = actionMessage(t('deleted'), item?.label || t('checklist'));
-    captureUndo(message);
-    if (
-      editingChecklist?.listName === deleteChecklistTarget.dataset.checklistDelete
-      && Number(editingChecklist.id) === Number(deleteChecklistTarget.dataset.checkId)
-    ) {
-      editingChecklist = null;
-    }
-    if (deleteChecklistItem(appState, deleteChecklistTarget.dataset.checklistDelete, deleteChecklistTarget.dataset.checkId)) {
-      persistAndRender(message, { keepUndo: true });
-    }
+    const listName = deleteChecklistTarget.dataset.checklistDelete;
+    const checkId = deleteChecklistTarget.dataset.checkId;
+    const list = appState.data[listName] || [];
+    const item = list.find((row, index) => Number(prepChecklistItemId(row, index)) === Number(checkId));
+    requestDeleteConfirm(item?.label || t('checklist'), () => {
+      const message = actionMessage(t('deleted'), item?.label || t('checklist'));
+      captureUndo(message);
+      if (editingChecklist?.listName === listName && Number(editingChecklist.id) === Number(checkId)) editingChecklist = null;
+      if (deleteChecklistItem(appState, listName, checkId)) persistAndRender(message, { keepUndo: true });
+    });
     return;
   }
   const toggleChecklistTarget = event.target.closest('[data-checklist-toggle]');
@@ -2528,11 +2945,13 @@ appRoot?.addEventListener('click', (event) => {
   const deleteGearTarget = event.target.closest('[data-gear-delete]');
   if (deleteGearTarget) {
     const item = appState.data.gearItems.find(row => Number(row.id) === Number(deleteGearTarget.dataset.gearDelete));
-    if (!confirmDelete(item?.name || t('gearItems'))) return;
-    const message = actionMessage(t('deleted'), item?.name || t('gearItems'));
-    captureUndo(message);
-    if (Number(editingGearId) === Number(deleteGearTarget.dataset.gearDelete)) editingGearId = null;
-    if (deleteGearItem(appState, deleteGearTarget.dataset.gearDelete)) persistAndRender(message, { keepUndo: true });
+    const gearId = deleteGearTarget.dataset.gearDelete;
+    requestDeleteConfirm(item?.name || t('gearItems'), () => {
+      const message = actionMessage(t('deleted'), item?.name || t('gearItems'));
+      captureUndo(message);
+      if (Number(editingGearId) === Number(gearId)) editingGearId = null;
+      if (deleteGearItem(appState, gearId)) persistAndRender(message, { keepUndo: true });
+    });
     return;
   }
   const toggleGearTarget = event.target.closest('[data-gear-toggle]');
@@ -2587,14 +3006,17 @@ appRoot?.addEventListener('click', (event) => {
   }
   const deleteKnowledgeTarget = event.target.closest('[data-knowledge-delete]');
   if (deleteKnowledgeTarget) {
-    const list = appState.data[deleteKnowledgeTarget.dataset.knowledgeDelete] || [];
-    const item = list.find(row => Number(row.id) === Number(deleteKnowledgeTarget.dataset.knowledgeId));
-    if (!confirmDelete(item?.title || t('item'))) return;
-    const message = actionMessage(t('deleted'), item?.title || t('item'));
-    captureUndo(message);
-    if (deleteKnowledgeTarget.dataset.knowledgeDelete === 'intel' && Number(editingIntelId) === Number(deleteKnowledgeTarget.dataset.knowledgeId)) editingIntelId = null;
-    if (deleteKnowledgeTarget.dataset.knowledgeDelete === 'strategy' && Number(editingStrategyId) === Number(deleteKnowledgeTarget.dataset.knowledgeId)) editingStrategyId = null;
-    if (deleteKnowledgeItem(appState, deleteKnowledgeTarget.dataset.knowledgeDelete, deleteKnowledgeTarget.dataset.knowledgeId)) persistAndRender(message, { keepUndo: true });
+    const listName = deleteKnowledgeTarget.dataset.knowledgeDelete;
+    const knowledgeId = deleteKnowledgeTarget.dataset.knowledgeId;
+    const list = appState.data[listName] || [];
+    const item = list.find(row => Number(row.id) === Number(knowledgeId));
+    requestDeleteConfirm(item?.title || t('item'), () => {
+      const message = actionMessage(t('deleted'), item?.title || t('item'));
+      captureUndo(message);
+      if (listName === 'intel' && Number(editingIntelId) === Number(knowledgeId)) editingIntelId = null;
+      if (listName === 'strategy' && Number(editingStrategyId) === Number(knowledgeId)) editingStrategyId = null;
+      if (deleteKnowledgeItem(appState, listName, knowledgeId)) persistAndRender(message, { keepUndo: true });
+    });
     return;
   }
   const prepModalBg = event.target.closest('[data-prep-modal-bg]');
@@ -2687,6 +3109,10 @@ appRoot?.addEventListener('submit', (event) => {
 });
 
 appRoot?.addEventListener('change', (event) => {
+  if (event.target.closest('[data-mentor-risk-only], [data-mentor-sort]')) {
+    applyMentorOverviewControls();
+    return;
+  }
   if (
     event.target.closest('[data-score-item-value]')
     || event.target.closest('[data-score-item-status]')
@@ -2709,6 +3135,7 @@ appRoot?.addEventListener('change', (event) => {
   const status = event.target.closest('[data-task-status]');
   if (status) {
     const task = appState.data.tasks.find(row => Number(row.id) === Number(status.dataset.taskStatus));
+    if (task && String(task.status || 'Open') === status.value) return;
     const message = actionMessage(t('statusUpdated'), task ? `${task.name || t('task')} -> ${status.value}` : '');
     captureUndo(message);
     if (updateTaskStatus(appState, status.dataset.taskStatus, status.value)) persistAndRender(message, { keepUndo: true });
@@ -2888,7 +3315,8 @@ appRoot?.addEventListener('change', (event) => {
       }
       persistAndRender(t('imported'), { keepUndo: Boolean(input) });
     } catch (error) {
-      alert(`Import failed: ${error.message || error}`);
+      showToast(`Import failed: ${error.message || error}`, 'error');
+      renderAppShell();
     } finally {
       if (input) input.value = '';
       if (diagnosticsInput) diagnosticsInput.value = '';
@@ -2898,6 +3326,11 @@ appRoot?.addEventListener('change', (event) => {
 });
 
 appRoot?.addEventListener('keydown', (event) => {
+  if (event.key === 'Escape' && confirmDialog) {
+    confirmDialog = null;
+    renderAppShell();
+    return;
+  }
   if (event.key === 'Escape' && (editingTaskId || addingTask || viewingTaskId || editingMemberId || editingRunId || editingGearId || editingChecklist || addingPrepItem || editingIntelId || editingStrategyId)) {
     editingTaskId = null;
     addingTask = false;
@@ -2987,6 +3420,11 @@ appRoot?.addEventListener('keydown', (event) => {
 appRoot?.addEventListener('input', (event) => {
   if (event.target.closest('[data-member-search]')) {
     updateMemberFiltersFromControl(event.target);
+    renderAppShell();
+    return;
+  }
+  if (event.target.closest('[data-student-owner]')) {
+    saveMyTaskOwner(event.target.value);
     renderAppShell();
     return;
   }

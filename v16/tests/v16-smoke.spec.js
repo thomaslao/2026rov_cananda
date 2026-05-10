@@ -186,6 +186,15 @@ test('tasks flow supports add modal, search, sort, status, edit and delete', asy
   await expect(page.locator('tbody tr', { hasText: editedName })).toContainText('證據');
 
   await page.locator('tbody tr', { hasText: editedName }).locator('[data-task-delete]').evaluate(button => button.click());
+  await expect(page.locator('[data-confirm-modal]')).toBeVisible();
+  await expect(page.locator('[data-confirm-modal]')).toContainText(editedName);
+  await page.locator('[data-confirm-cancel]').click();
+  await expect(page.locator('[data-confirm-modal]')).not.toBeVisible();
+  await expect(page.locator('#page-tasks')).toContainText(editedName);
+
+  await page.locator('tbody tr', { hasText: editedName }).locator('[data-task-delete]').evaluate(button => button.click());
+  await expect(page.locator('[data-confirm-modal]')).toBeVisible();
+  await page.locator('[data-confirm-run]').click();
   await expect(page.locator('#page-tasks')).not.toContainText(editedName);
 });
 

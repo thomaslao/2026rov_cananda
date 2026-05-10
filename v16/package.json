@@ -16,7 +16,8 @@
     "smoke:server:local": "powershell -ExecutionPolicy Bypass -File validate-local.ps1",
     "validate": "npm run check:js && npm run smoke && npm run build:single && npm run smoke:single && npm run smoke:server:local",
     "e2e:ready": "node e2e-readiness.mjs",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "test:e2e:desktop": "playwright test --project=chromium-desktop"
   },
   "devDependencies": {
     "@playwright/test": "^1.52.0"

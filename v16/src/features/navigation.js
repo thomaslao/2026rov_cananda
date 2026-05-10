@@ -12,6 +12,7 @@ export function showMode(state, modeId) {
 
 export const V16_PAGES = [
   { id: 'dashboard', labelKey: 'dashboard' },
+  { id: 'student', labelKey: 'studentWorkspaceShort' },
   { id: 'prep', labelKey: 'prep' },
   { id: 'tasks', labelKey: 'tasks' },
   { id: 'members', labelKey: 'members' },
