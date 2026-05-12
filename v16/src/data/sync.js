@@ -223,16 +223,18 @@ export function buildSupabaseSyncPreview(appState, dbPayload) {
   }
 
   const tables = SYNC_TABLE_MAP.map(({ key, label }) => {
-    const diff = diffRows(appState.data[key] || [], dbPayload.data[key] || []);
+    const localRows = toDbRows(label, appState.data[key] || []);
+    const remoteRows = toDbRows(label, dbPayload.data[key] || []);
+    const diff = diffRows(localRows, remoteRows);
     return {
       key,
       label,
-      local: (appState.data[key] || []).length,
-      remote: (dbPayload.data[key] || []).length,
+      local: localRows.length,
+      remote: remoteRows.length,
       create: diff.create.length,
       update: diff.update.length,
       remove: diff.remove.length,
-      details: diffRowDetails(appState.data[key] || [], dbPayload.data[key] || []),
+      details: diffRowDetails(localRows, remoteRows),
     };
   });
 
@@ -263,15 +265,14 @@ export async function executeGuardedSupabaseWriteSync(client, appState, dbPayloa
   const results = [];
   for (const table of preview.tables) {
     if (!tables.includes(table.label)) continue;
-    const localRows = appState.data[table.key] || [];
-    const remoteRows = dbPayload.data[table.key] || [];
+    const localRows = toDbRows(table.label, appState.data[table.key] || []);
+    const remoteRows = toDbRows(table.label, dbPayload.data[table.key] || []);
     const diff = diffRows(localRows, remoteRows);
     let deleteResult = { error: null, deleted: 0 };
     if (allowDelete && diff.remove.length) {
-      const remoteDeleteRows = toDbRows(table.label, diff.remove);
-      deleteResult = await deleteRows(client, table.label, remoteDeleteRows);
+      deleteResult = await deleteRows(client, table.label, diff.remove);
     }
-    const mappedRows = toDbRows(table.label, [...diff.create, ...diff.update]);
+    const mappedRows = [...diff.create, ...diff.update];
     const schemaViolations = validateRowsForSchema(table.label, mappedRows);
     if (schemaViolations.length) {
       results.push({
